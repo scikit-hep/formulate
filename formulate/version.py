@@ -1,0 +1,15 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+
+__all__ = [
+    '__version__',
+    'version',
+    'version_info',
+]
+
+
+__version__ = "0.0.1"
+version = __version__
+version_info = __version__.split('.')

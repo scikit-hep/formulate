@@ -1,5 +1,5 @@
 import logging
 
 logging.basicConfig()
-logger = logging.getLogger('selections.backends.ROOT')
+logger = logging.getLogger('formulate.backends.ROOT')
 logger.setLevel(logging.DEBUG)

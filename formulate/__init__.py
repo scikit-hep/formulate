@@ -8,6 +8,7 @@ from .backends import from_numexpr, to_numexpr
 from .backends import from_root, to_root
 from .expression import Expression
 from .parser import ParsingException
+from .version import __version__
 
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     # ROOT
     'from_root',
     'to_root',
+    '__version__',
 ]
 
 

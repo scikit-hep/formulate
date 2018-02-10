@@ -1,6 +1,10 @@
-from selections import Expression
-from selections import from_numexpr
-from selections.identifiers import IDs
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+from formulate import Expression
+from formulate import from_numexpr
+from formulate.identifiers import IDs
 
 
 def assert_equal_expressions(lhs, rhs):
