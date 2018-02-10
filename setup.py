@@ -34,6 +34,7 @@ setup(name='formulate',
       test_suite='tests',
       install_requires=['numpy', 'pyparsing', 'colorlog'] +
                        (['enum34'] if sys.version_info < (3, 4) else []),
+      setup_requires=['pytest-runner'],
       tests_require=['pytest'],
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',
