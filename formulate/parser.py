@@ -31,7 +31,7 @@ handler.setFormatter(colorlog.ColoredFormatter(
 
 logger = colorlog.getLogger('formulate.parser')
 logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARN)
 
 
 def add_logging(func):
