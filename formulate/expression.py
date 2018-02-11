@@ -17,7 +17,9 @@ class Expression(object):
         self._args = args
 
     def __repr__(self):
-        return f'{self.__class__.__name__}<{self._id.name}>({", ".join(map(repr, self._args))})'
+        return '{class_name}<{id_name}>({args})'.format(
+            class_name=self.__class__.__name__, id_name=self._id.name,
+            args=", ".join(map(repr, self._args)))
 
     def __str__(self):
         return repr(self)

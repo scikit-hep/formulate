@@ -36,9 +36,9 @@ logger.setLevel(logging.DEBUG)
 def add_logging(func):
     @wraps(func)
     def new_func(*args, **kwargs):
-        logger.debug(f'Calling {func.__qualname__} with {args} and {kwargs}')
+        logger.debug('Calling '+func.__qualname__+' with '+repr(args)+' and '+repr(kwargs))
         result = func(*args, **kwargs)
-        logger.debug(f' - Got result {result}')
+        logger.debug(' - Got result '+repr(result))
         return result
     return new_func
 
@@ -78,17 +78,18 @@ class Function(object):
         self._n_args = n_args
 
     def __str__(self):
-        return f'{self._name}<{self._n_args}>'
+        return '{name}<{n_args}>'.format(name=self._name, n_args=self._n_args)
 
     def __repr__(self):
-        return f'{self.__class__.__name__}<{self._id.name},{self._name},n_args={self._n_args}>'
+        return '{class_name}<{id_name},{name},n_args={n_args}>'.format(
+            class_name=self.__class__.__name__, id_name=self._id.name,
+            name=self._name, n_args=self._n_args)
 
     @add_logging
     def __call__(self, *args):
         if len(args) != self._n_args:
             raise TypeError('Function({name}) requires {n} arguments, {x} given'
                             .format(name=self._name, n=self._n_args, x=len(args)))
-        # return f'F[{self._name}({", ".join(map(str, args))})]'
         return Expression(self._id, *args)
 
     @property
@@ -120,7 +121,7 @@ class Function(object):
             else:
                 arg = str(arg)
             args.append(arg)
-        return f'{self.name}({", ".join(args)})'
+        return self.name+'('+", ".join(args)+')'
 
 
 class Operator(object):
@@ -148,10 +149,12 @@ class Operator(object):
         self._rhs_only = rhs_only
 
     def __str__(self):
-        return f'{self._name}<{self._n_args}>'
+        return self._name+'<'+str(self._n_args)+'>'
 
     def __repr__(self):
-        return f'{self.__class__.__name__}<{self._id.name},{self._op},rhs_only={self._rhs_only}>'
+        return '{class_name}<{id_name},{op_name},rhs_only={rhs_only}>'.format(
+            class_name=self.__class__.__name__, id_name=self._id.name,
+            op_name=self._op, rhs_only=self._rhs_only)
 
     # Used to set order of operations
     def __gt__(self, other):
