@@ -37,7 +37,12 @@ logger.setLevel(logging.DEBUG)
 def add_logging(func):
     @wraps(func)
     def new_func(*args, **kwargs):
-        logger.debug('Calling '+func.__qualname__+' with '+repr(args)+' and '+repr(kwargs))
+        try:
+            func_name = func.__qualname__
+        except AttributeError:
+            # Python 2 doesn't have __qualname__
+            func_name = func.__name__
+        logger.debug('Calling '+func_name+' with '+repr(args)+' and '+repr(kwargs))
         result = func(*args, **kwargs)
         logger.debug(' - Got result '+repr(result))
         return result
