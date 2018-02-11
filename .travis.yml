@@ -21,10 +21,10 @@ install:
   - pip install --upgrade pip
   - pip install coveralls
   - pip install pytest
+  - pip install pytest-cov
 
 script:
-  coverage run --source=formulate setup.py test
-  # TODO Add pytest --run-slow
+  py.test --cov=formulate --verbose --run-slow
 
 after_success:
   coveralls
