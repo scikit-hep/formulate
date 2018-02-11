@@ -7,6 +7,7 @@ from __future__ import print_function
 from collections import defaultdict
 from functools import wraps
 import logging
+import sys
 
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc
@@ -227,7 +228,10 @@ class Parser(object):
             logger.error('               '+' '*e.loc + '▲')
             logger.error('               '+' '*e.loc + '┃')
             logger.error('               '+' '*e.loc + '┗━━━━━━ Error here or shortly after')
-            raise ParsingException() from None
+            if sys.version_info < (3, 0):
+                raise ParsingException()
+            else:
+                raise ParsingException() from None
         else:
             return result
 
