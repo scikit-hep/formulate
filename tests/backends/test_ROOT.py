@@ -105,3 +105,5 @@ TestMixFloats = _create_test_type('TestMixFloats', 1.2, -3.4, 4.5, -6.7)
 TestPosScientific = _create_test_type('TestPosScientific', 1e-2, 3.4e5, 6.7e8, 9e10)
 TestNegScientific = _create_test_type('TestNegScientific', -1e-2, -3.4e5, -6.7e8, -9e10)
 TestMixScientific = _create_test_type('TestMixScientific', 1e-2, -3.4e5, 6.7e8, -9e10)
+
+TestVariables = _create_test_type('TestVariables', 'A', 'Bee', 'C_is_4', '_Dxyz')

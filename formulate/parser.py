@@ -9,7 +9,7 @@ from functools import wraps
 import logging
 
 import pyparsing
-from pyparsing import Literal, Suppress, pyparsing_common, opAssoc
+from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
 
 from .expression import Expression
 from .identifiers import order_of_operations
@@ -47,10 +47,6 @@ def add_logging(func):
         logger.debug(' - Got result '+repr(result))
         return result
     return new_func
-
-
-# EXPRESSION = pyparsing.Forward()
-NUMBER = pyparsing.Or([pyparsing_common.number, pyparsing_common.sci_real])
 
 
 class Constant(object):
@@ -251,9 +247,18 @@ class ParsingException(Exception):
 def create_parser(config):
     EXPRESSION = pyparsing.Forward()
 
+    VARIABLE = Word(pyparsing.alphas+'_', pyparsing.alphanums+'_-')
+    VARIABLE.setName('Variable')
+    VARIABLE.setParseAction(lambda x: str(x[0]))
+
+    NUMBER = pyparsing.Or([
+        pyparsing_common.number,
+        pyparsing_common.sci_real
+    ])
+
     COMPONENT = pyparsing.Or(
         [f.get_parser(EXPRESSION) for f in config if isinstance(f, Function)] +
-        [NUMBER]
+        [NUMBER, VARIABLE]
     )
 
     # TODO Generating operators_config should be rewritten
