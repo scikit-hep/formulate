@@ -3,73 +3,104 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numbers
+
 from formulate import Expression
-from formulate import from_root
+from formulate import from_numexpr, to_numexpr
 from formulate.identifiers import IDs
 
-
-def assert_equal_expressions(lhs, rhs):
-    assert isinstance(lhs, Expression)
-    assert isinstance(rhs, Expression)
-    assert lhs._id == rhs._id
-    assert len(lhs._args) == len(rhs._args)
-    for a, b in zip(lhs._args, rhs._args):
-        assert isinstance(b, a.__class__)
-        if isinstance(a, Expression):
-            assert_equal_expressions(a, b)
-        else:
-            assert a == b
-    # TODO Check the equivalent method always gets it right
-    # assert lhs.equivilent(rhs)
-    # assert rhs.equivilent(lhs)
+from ..utils import make_check_result
 
 
-# def test_empty():
-#     from_root('')
-
-# TODO What should this do? Just a number?
-# assert_equal_expressions(from_root('-1'), Expression(ID, 1, 1))
-
-def test_basic_parsing():
-    assert_equal_expressions(from_root('1 + 1'), Expression(IDs.ADD, 1, 1))
-    assert_equal_expressions(from_root('sqrt(1)'), Expression(IDs.SQRT, 1))
-    assert_equal_expressions(from_root('TMath::Sqrt(1)'), Expression(IDs.SQRT, 1))
-    assert_equal_expressions(from_root('arctan2(1, 1)'), Expression(IDs.ATAN2, 1, 1))
-    assert_equal_expressions(from_root('TMath::ATan2(1, 1)'), Expression(IDs.ATAN2, 1, 1))
+check_result = make_check_result(from_numexpr, to_numexpr)
 
 
-def test_nested_parsing():
-    assert_equal_expressions(
-        from_root('-(1 + 1)'),
-        Expression(IDs.MINUS, Expression(IDs.ADD, 1, 1))
-    )
-    assert_equal_expressions(
-        from_root('+sqrt(3)'),
-        Expression(IDs.PLUS, Expression(IDs.SQRT, 3))
-    )
-    assert_equal_expressions(
-        from_root('+TMath::Sqrt(3)'),
-        Expression(IDs.PLUS, Expression(IDs.SQRT, 3))
-    )
-    assert_equal_expressions(
-        from_root('-(4) * (3)'),
-        Expression(IDs.MUL, Expression(IDs.MINUS, 4), 3)
-    )
-    assert_equal_expressions(
-        from_root('-(1 + 1) * +(5 + 4)'),
-        Expression(IDs.MUL,
-                   Expression(IDs.MINUS, Expression(IDs.ADD, 1, 1)),
-                   Expression(IDs.PLUS, Expression(IDs.ADD, 5, 4)))
-    )
-    assert_equal_expressions(
-        from_root('-sqrt(3 + 4) / arctan2(5 + sqrt(4), 1)'),
-        Expression(IDs.DIV,
-                   Expression(IDs.MINUS, Expression(IDs.SQRT, Expression(IDs.ADD, 3, 4))),
-                   Expression(IDs.ATAN2, Expression(IDs.ADD, 5, Expression(IDs.SQRT, 4)), 1))
-    )
-    assert_equal_expressions(
-        from_root('-TMath::Sqrt(3 + 4) / TMath::ATan2(5 + TMath::Sqrt(4), 1)'),
-        Expression(IDs.DIV,
-                   Expression(IDs.MINUS, Expression(IDs.SQRT, Expression(IDs.ADD, 3, 4))),
-                   Expression(IDs.ATAN2, Expression(IDs.ADD, 5, Expression(IDs.SQRT, 4)), 1))
-    )
+def _create_test_type(name, A, B, C, D):
+    kwargs = {'A': str(A), 'B': str(B), 'C': str(C), 'D': str(D)}
+
+    class NewTestClass(object):
+        def test_basic_math(self):
+            if isinstance(A, numbers.Number):
+                # TODO
+                pass
+            else:
+                check_result('+{A}', Expression(IDs.PLUS, A), **kwargs)
+                check_result('-{A}', Expression(IDs.MINUS, A), **kwargs)
+            check_result('{A} + {B}', Expression(IDs.ADD, A, B), **kwargs)
+            check_result('{A} - {B}', Expression(IDs.SUB, A, B), **kwargs)
+            check_result('{A} * {B}', Expression(IDs.MUL, A, B), **kwargs)
+            check_result('{A} / {B}', Expression(IDs.DIV, A, B), **kwargs)
+            check_result('{A} % {B}', Expression(IDs.MOD, A, B), **kwargs)
+
+        def test_chain_math(self):
+            check_result('{A} + {B} + {C}', Expression(IDs.ADD, A, B, C), **kwargs)
+            check_result('{A} - {B} - {C}', Expression(IDs.SUB, A, B, C), **kwargs)
+            check_result('{A} * {B} * {C}', Expression(IDs.MUL, A, B, C), **kwargs)
+            check_result('{A} / {B} / {C}', Expression(IDs.DIV, A, B, C), **kwargs)
+            check_result('{A} % {B} % {C}', Expression(IDs.MOD, A, B, C), **kwargs)
+
+        def test_basic_boolean_operations(self):
+            check_result('~{A}', Expression(IDs.NOT, A), **kwargs)
+            check_result('{A} & {B}', Expression(IDs.AND, A, B), **kwargs)
+            check_result('{A} | {B}', Expression(IDs.OR, A, B), **kwargs)
+            check_result('{A} == {B}', Expression(IDs.EQ, A, B), **kwargs)
+            check_result('{A} != {B}', Expression(IDs.NEQ, A, B), **kwargs)
+            check_result('{A} > {B}', Expression(IDs.GT, A, B), **kwargs)
+            check_result('{A} >= {B}', Expression(IDs.GTEQ, A, B), **kwargs)
+            check_result('{A} < {B}', Expression(IDs.LT, A, B), **kwargs)
+            check_result('{A} <= {B}', Expression(IDs.LTEQ, A, B), **kwargs)
+
+        # def test_chain_boolean_operations(self):
+        #     check_result('{A} & {B} & {C}', Expression(IDs.AND, A, Expression(IDs.AND, B, C)), **kwargs)
+
+        def test_basic_functions(self):
+            check_result('sqrt({A})', Expression(IDs.SQRT, A), **kwargs)
+            check_result('arctan2({A}, {B})', Expression(IDs.ATAN2, A, B), **kwargs)
+
+        def test_signed_functions(self):
+            check_result('sqrt({A})', Expression(IDs.SQRT, A), **kwargs)
+            check_result('arctan2({A}, {B})', Expression(IDs.ATAN2, A, B), **kwargs)
+            check_result('-sqrt({A})', Expression(IDs.MINUS, Expression(IDs.SQRT, A)), **kwargs)
+            check_result('+sqrt({A})', Expression(IDs.PLUS, Expression(IDs.SQRT, A)), **kwargs)
+            check_result('- arctan2({A}, {B})', Expression(IDs.MINUS, Expression(IDs.ATAN2, A, B)), **kwargs)
+            check_result(' + arctan2({A}, {B})', Expression(IDs.PLUS, Expression(IDs.ATAN2, A, B)), **kwargs)
+
+        def test_math_with_functions(self):
+            if isinstance(A, numbers.Number):
+                # TODO
+                pass
+            else:
+                check_result('sqrt(-{A})', Expression(IDs.SQRT, Expression(IDs.MINUS, A)), **kwargs)
+                check_result('sqrt(+ {A})', Expression(IDs.SQRT, Expression(IDs.PLUS, A)), **kwargs)
+            check_result('sqrt({A} + {B})', Expression(IDs.SQRT, Expression(IDs.ADD, A, B)), **kwargs)
+            check_result('arctan2({A} - {B}, {B} % {A})', Expression(IDs.ATAN2, Expression(IDs.SUB, A, B), Expression(IDs.MOD, B, A)), **kwargs)
+            check_result('sqrt({A})+sqrt({B})', Expression(IDs.ADD, Expression(IDs.SQRT, A), Expression(IDs.SQRT, B)), **kwargs)
+            check_result('sqrt({A})*sqrt({A})', Expression(IDs.MUL, Expression(IDs.SQRT, A), Expression(IDs.SQRT, A)), **kwargs)
+            check_result('arctan2({A}, {B})/sqrt({B})', Expression(IDs.DIV, Expression(IDs.ATAN2, A, B), Expression(IDs.SQRT, B)), **kwargs)
+
+        def test_functions_of_functions(self):
+            check_result('sqrt(sqrt({A}))', Expression(IDs.SQRT, Expression(IDs.SQRT, A)), **kwargs)
+            check_result('sqrt(arctan2({A}, {B}))', Expression(IDs.SQRT, Expression(IDs.ATAN2, A, B)), **kwargs)
+            check_result('arctan2(sqrt({A}), {B})', Expression(IDs.ATAN2, Expression(IDs.SQRT, A), B), **kwargs)
+
+        def test_nested(self):
+            check_result('sqrt(-sqrt({A}))', Expression(IDs.SQRT, Expression(IDs.MINUS, Expression(IDs.SQRT, A))), **kwargs)
+            check_result('sqrt(sqrt({A}) + {B})', Expression(IDs.SQRT, Expression(IDs.ADD, Expression(IDs.SQRT, A), B)), **kwargs)
+            check_result('sqrt(sqrt({A}) + sqrt({B}))', Expression(IDs.SQRT, Expression(IDs.ADD, Expression(IDs.SQRT, A), Expression(IDs.SQRT, B))), **kwargs)
+
+    NewTestClass.__name__ = name
+
+    return NewTestClass
+
+
+TestPosInts = _create_test_type('TestPosInts', 1, 2, 3, 4)
+TestNegInts = _create_test_type('TestNegInts', -1, -2, -3, -4)
+TestMixInts = _create_test_type('TestMixInts', 1, -2, 3, -4)
+
+TestPosFloats = _create_test_type('TestPosFloats', 1.2, 3.4, 4.5, 6.7)
+TestNegFloats = _create_test_type('TestNegFloats', -1.2, -3.4, -4.5, -6.7)
+TestMixFloats = _create_test_type('TestMixFloats', 1.2, -3.4, 4.5, -6.7)
+
+TestPosScientific = _create_test_type('TestPosScientific', 1e-2, 3.4e5, 6.7e8, 9e10)
+TestNegScientific = _create_test_type('TestNegScientific', -1e-2, -3.4e5, -6.7e8, -9e10)
+TestMixScientific = _create_test_type('TestMixScientific', 1e-2, -3.4e5, 6.7e8, -9e10)

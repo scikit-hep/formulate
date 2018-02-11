@@ -19,6 +19,18 @@ config = [
     Operator(IDs.SUB, '-'),
     Operator(IDs.MUL, '*'),
     Operator(IDs.DIV, '/'),
+    Operator(IDs.MOD, '%'),
+
+    Operator(IDs.EQ, '=='),
+    Operator(IDs.NEQ, '!='),
+    Operator(IDs.GT, '>'),
+    Operator(IDs.GTEQ, '>='),
+    Operator(IDs.LT, '<'),
+    Operator(IDs.LTEQ, '<='),
+
+    Operator(IDs.AND, '&'),
+    Operator(IDs.OR, '|'),
+    Operator(IDs.NOT, '~', rhs_only=True),
 
     Function(IDs.SQRT, 'sqrt'),
     Function(IDs.ABS, 'abs'),

@@ -42,7 +42,8 @@ def add_logging(func):
     return new_func
 
 
-EXPRESSION = pyparsing.Forward()
+# EXPRESSION = pyparsing.Forward()
+NUMBER = pyparsing.Or([pyparsing_common.number, pyparsing_common.sci_real])
 
 
 class Constant(object):
@@ -90,7 +91,14 @@ class Function(object):
         return Expression(self._id, *args)
 
     @property
-    def parser(self):
+    def id(self):
+        return self._id
+
+    @property
+    def name(self):
+        return self._name
+
+    def get_parser(self, EXPRESSION):
         result = Suppress(self._name) + Suppress('(') + EXPRESSION
         for i in range(1, self._n_args):
             result += Suppress(',') + EXPRESSION
@@ -102,6 +110,16 @@ class Function(object):
     def _parse_action(self, string, location, result):
         # TODO Replace with logging decorator
         return self(*result)
+
+    def to_string(self, expression, config):
+        args = []
+        for arg in expression.args:
+            if isinstance(arg, Expression):
+                arg = arg.to_string(config)
+            else:
+                arg = str(arg)
+            args.append(arg)
+        return f'{self.name}({", ".join(args)})'
 
 
 class Operator(object):
@@ -134,7 +152,7 @@ class Operator(object):
     def __repr__(self):
         return f'{self.__class__.__name__}<{self._id.name},{self._op},rhs_only={self._rhs_only}>'
 
-    # Set order of operations
+    # Used to set order of operations
     def __gt__(self, other):
         return self.__class__.__lt__(other, self)
 
@@ -142,33 +160,58 @@ class Operator(object):
         return order_of_operations.index(self._id) < order_of_operations.index(other._id)
 
     @add_logging
-    def __call__(self, a, b=None):
-        if self._rhs_only:
-            assert b is None
-            return Expression(self._id, a)
-        else:
-            assert b is not None
-            return Expression(self._id, a, b)
+    def __call__(self, *args):
+        return Expression(self._id, *args)
 
     @property
-    def parser_description(self):
+    def id(self):
+        return self._id
+
+    @property
+    def op(self):
+        return self._op
+
+    def get_parser_description(self):
+        from .identifiers import IDs
+        # TODO This is a hack, is there a nicer way?
+        if self.id in (IDs.MINUS, IDs.PLUS):
+            assert self._rhs_only
+            parser = Suppress(self._op) + ~pyparsing.FollowedBy(NUMBER)
+            return (parser, 1, opAssoc.RIGHT, self._parse_action)
+
         if self._rhs_only:
             return (Suppress(self._op), 1, opAssoc.RIGHT, self._parse_action)
         else:
             return (Suppress(self._op), 2, opAssoc.LEFT, self._parse_action)
 
     def _parse_action(self, string, location, result):
-        # TODO Replace with logging decorator
         assert len(result) == 1, result
         result = result[0]
-        assert len(result) in [1, 2], result
-        assert len(result) == 2 or self._rhs_only, result
+        # TODO Replace with logging decorator
+        assert len(result) >= 2 or self._rhs_only, result
         return self(*result)
+
+    def to_string(self, expression, config):
+        args = []
+        for arg in expression.args:
+            if isinstance(arg, Expression):
+                arg = arg.to_string(config)
+            else:
+                arg = str(arg)
+            args.append(arg)
+
+        if self._rhs_only:
+            assert len(args) == 1, args
+            return self.op + args[0]
+        else:
+            assert len(args) >= 2, args
+            return (' '+self.op+' ').join(args)
 
 
 class Parser(object):
     def __init__(self, name, config):
         self._name = name
+        self._config = config
         self._parser = create_parser(config)
 
     def to_expression(self, string):
@@ -177,17 +220,17 @@ class Parser(object):
             assert len(result) == 1, result
             result = result[0]
         except pyparsing.ParseException as e:
-            logger.error('TODO TRACEBACK:', e.args)
-            logger.error('Error parsing:', e.line)
-            logger.error('              ', ' '*e.loc + '▲')
-            logger.error('              ', ' '*e.loc + '┃')
-            logger.error('              ', ' '*e.loc + '┗━━━━━━ Error here or shortly after')
-            raise ParsingException()
+            logger.error('TODO TRACEBACK: '+repr(e.args))
+            logger.error('Error parsing: '+e.line)
+            logger.error('               '+' '*e.loc + '▲')
+            logger.error('               '+' '*e.loc + '┃')
+            logger.error('               '+' '*e.loc + '┗━━━━━━ Error here or shortly after')
+            raise ParsingException() from None
         else:
             return result
 
-    def to_string():
-        raise NotImplemented
+    def to_string(self, expression):
+        return expression.to_string({x.id: x for x in self._config})
 
 
 class ParsingException(Exception):
@@ -195,15 +238,17 @@ class ParsingException(Exception):
 
 
 def create_parser(config):
+    EXPRESSION = pyparsing.Forward()
+
     COMPONENT = pyparsing.Or(
-        [f.parser for f in config if isinstance(f, Function)] +
-        [pyparsing_common.number, pyparsing_common.sci_real]
+        [f.get_parser(EXPRESSION) for f in config if isinstance(f, Function)] +
+        [NUMBER]
     )
 
+    operations = [o for o in config if isinstance(o, Operator)]
     # Sort the order of operations as appropriate
     # TODO should this be in the backend configuration?
-    operations = [o for o in config if isinstance(o, Operator)]
-    operations = [o.parser_description for o in sorted(operations)]
+    operations = [o.get_parser_description() for o in sorted(operations)]
     EXPRESSION << pyparsing.infixNotation(COMPONENT, operations)
 
     return EXPRESSION

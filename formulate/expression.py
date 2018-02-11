@@ -26,8 +26,19 @@ class Expression(object):
         """Check if two expression objects are the same"""
         raise NotImplementedError()
         if isinstance(other, self.__class__):
-            return self._id == other._id and self._args == other._args
+            return self.id == other.id and self._args == other._args
         return False
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def args(self):
+        return self._args
+
+    def to_string(self, config):
+        return config[self.id].to_string(self, config)
 
     # Binary arithmetic operators
     def __add__(self, value):
@@ -50,107 +61,107 @@ class Expression(object):
 
     def __truediv__(self, value):
         # TODO Is this correct for both Python 2 and 3?
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __rtruediv__(self, value):
         # TODO Is this correct for both Python 2 and 3?
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __floordiv__(self, value):
         # TODO Is this correct for both Python 2 and 3?
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __rfloordiv__(self, value):
         # TODO Is this correct for both Python 2 and 3?
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __abs__(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __pow__(self, other):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __mod__(self, other):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __lshift__(self, other):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __rshift__(self, other):
-        raise NotImplemented
+        raise NotImplementedError()
 
     # Functions
     def where(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def sin(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def cos(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def tan(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def arcsin(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def arccos(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def arctan(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def arctan2(self, other):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def sinh(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def cosh(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def tanh(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def arcsinh(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def arccosh(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def arctanh(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def log(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def log10(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def log1p(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def exp(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def expm1(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def sqrt(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def abs(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def conj(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def real(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def imag(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def complex(self):
-        raise NotImplemented
+        raise NotImplementedError()

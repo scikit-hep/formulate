@@ -19,10 +19,21 @@ class IDs(Enum):
     SUB = auto()
     MUL = auto()
     DIV = auto()
+    MOD = auto()
+
+    LSHIFT = auto()
+    RSHIFT = auto()
 
     AND = auto()
     OR = auto()
-    XOR = auto()
+    NOT = auto()
+
+    EQ = auto()
+    NEQ = auto()
+    GT = auto()
+    GTEQ = auto()
+    LT = auto()
+    LTEQ = auto()
 
     SQRT = auto()
     ABS = auto()
@@ -56,12 +67,24 @@ order_of_operations = [
     IDs.MINUS,
     IDs.PLUS,
 
+    IDs.NOT,
+
     IDs.DIV,
     IDs.MUL,
+    IDs.MOD,
     IDs.ADD,
     IDs.SUB,
 
+    IDs.LSHIFT,
+    IDs.RSHIFT,
+
+    IDs.GT,
+    IDs.GTEQ,
+    IDs.LT,
+    IDs.LTEQ,
+    IDs.EQ,
+    IDs.NEQ,
+
     IDs.AND,
     IDs.OR,
-    IDs.XOR,
 ]
