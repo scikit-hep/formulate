@@ -7,7 +7,6 @@ from __future__ import print_function
 from collections import defaultdict
 from functools import wraps
 import logging
-import sys
 
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc
@@ -228,10 +227,11 @@ class Parser(object):
             logger.error('               '+' '*e.loc + '▲')
             logger.error('               '+' '*e.loc + '┃')
             logger.error('               '+' '*e.loc + '┗━━━━━━ Error here or shortly after')
-            if sys.version_info < (3, 0):
-                raise ParsingException()
-            else:
-                raise ParsingException() from None
+            # Remove the context from the exception
+            # Can't use "raise X from None" with Python 2
+            exception = ParsingException()
+            exception.__context__ = None
+            raise exception
         else:
             return result
 
