@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
+
 import pytest
 
 from formulate import Expression
@@ -13,6 +15,8 @@ from .utils import make_check_result
 
 
 check_result = make_check_result(from_numexpr, to_numexpr)
+if sys.version_info < (3, 5):
+    RecursionError = RuntimeError
 
 
 @pytest.mark.slow
