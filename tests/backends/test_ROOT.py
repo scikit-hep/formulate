@@ -34,11 +34,11 @@ def _create_test_type(name, A, B, C, D):
             check_result('{A} % {B}', Expression(IDs.MOD, A, B), **kwargs)
 
         def test_chain_math(self):
-            check_result('{A} + {B} + {C}', Expression(IDs.ADD, A, B, C), **kwargs)
-            check_result('{A} - {B} - {C}', Expression(IDs.SUB, A, B, C), **kwargs)
-            check_result('{A} * {B} * {C}', Expression(IDs.MUL, A, B, C), **kwargs)
-            check_result('{A} / {B} / {C}', Expression(IDs.DIV, A, B, C), **kwargs)
-            check_result('{A} % {B} % {C}', Expression(IDs.MOD, A, B, C), **kwargs)
+            check_result('{A} + {B} + {C} + {D}', Expression(IDs.ADD, A, B, C, D), **kwargs)
+            check_result('{A} - {B} - {C} - {D}', Expression(IDs.SUB, A, B, C, D), **kwargs)
+            check_result('{A} * {B} * {C} * {D}', Expression(IDs.MUL, A, B, C, D), **kwargs)
+            check_result('{A} / {B} / {C} / {D}', Expression(IDs.DIV, A, B, C, D), **kwargs)
+            check_result('{A} % {B} % {C} % {D}', Expression(IDs.MOD, A, B, C, D), **kwargs)
 
         def test_basic_boolean_operations(self):
             check_result('!{A}', Expression(IDs.NOT, A), **kwargs)

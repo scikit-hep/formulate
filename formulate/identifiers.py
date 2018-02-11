@@ -63,28 +63,24 @@ class IDs(Enum):
     ATANH = auto()
 
 
+# Based on http://en.cppreference.com/w/cpp/language/operator_precedence
 order_of_operations = [
-    IDs.MINUS,
-    IDs.PLUS,
-
-    IDs.NOT,
-
-    IDs.DIV,
-    IDs.MUL,
-    IDs.MOD,
-    IDs.ADD,
-    IDs.SUB,
-
-    IDs.LSHIFT,
-    IDs.RSHIFT,
-
-    IDs.GT,
-    IDs.GTEQ,
-    IDs.LT,
-    IDs.LTEQ,
-    IDs.EQ,
-    IDs.NEQ,
-
-    IDs.AND,
-    IDs.OR,
+    # 3
+    [IDs.MINUS, IDs.PLUS],
+    [IDs.NOT],
+    # 5
+    [IDs.MUL, IDs.DIV, IDs.MOD],
+    # 6
+    [IDs.ADD, IDs.SUB],
+    # 7
+    [IDs.LSHIFT, IDs.RSHIFT],
+    # 9
+    [IDs.LT, IDs.LTEQ],
+    [IDs.GT, IDs.GTEQ],
+    # 10
+    [IDs.EQ, IDs.NEQ],
+    # 14
+    [IDs.AND],
+    # 15
+    [IDs.OR],
 ]

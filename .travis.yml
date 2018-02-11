@@ -24,6 +24,7 @@ install:
 
 script:
   coverage run --source=formulate setup.py test
+  # TODO Add pytest --run-slow
 
 after_success:
   coveralls

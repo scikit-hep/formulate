@@ -3,11 +3,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from collections import defaultdict
 from functools import wraps
 import logging
 
 import pyparsing
-from pyparsing import Suppress, pyparsing_common, opAssoc
+from pyparsing import Literal, Suppress, pyparsing_common, opAssoc
 
 from .expression import Expression
 from .identifiers import order_of_operations
@@ -154,10 +155,10 @@ class Operator(object):
 
     # Used to set order of operations
     def __gt__(self, other):
-        return self.__class__.__lt__(other, self)
+        return self.precedence > other.precedence
 
     def __lt__(self, other):
-        return order_of_operations.index(self._id) < order_of_operations.index(other._id)
+        return self.precedence < other.precedence
 
     @add_logging
     def __call__(self, *args):
@@ -171,18 +172,15 @@ class Operator(object):
     def op(self):
         return self._op
 
-    def get_parser_description(self):
-        from .identifiers import IDs
-        # TODO This is a hack, is there a nicer way?
-        if self.id in (IDs.MINUS, IDs.PLUS):
-            assert self._rhs_only
-            parser = Suppress(self._op) + ~pyparsing.FollowedBy(NUMBER)
-            return (parser, 1, opAssoc.RIGHT, self._parse_action)
+    @property
+    def rhs_only(self):
+        return self._rhs_only
 
-        if self._rhs_only:
-            return (Suppress(self._op), 1, opAssoc.RIGHT, self._parse_action)
-        else:
-            return (Suppress(self._op), 2, opAssoc.LEFT, self._parse_action)
+    @property
+    def precedence(self):
+        matches = [self.id in level for level in order_of_operations]
+        assert matches.count(True) == 1, (self.id, matches)
+        return matches.index(True)
 
     def _parse_action(self, string, location, result):
         assert len(result) == 1, result
@@ -245,10 +243,54 @@ def create_parser(config):
         [NUMBER]
     )
 
-    operations = [o for o in config if isinstance(o, Operator)]
-    # Sort the order of operations as appropriate
-    # TODO should this be in the backend configuration?
-    operations = [o.get_parser_description() for o in sorted(operations)]
-    EXPRESSION << pyparsing.infixNotation(COMPONENT, operations)
+    # TODO Generating operators_config should be rewritten
+    operators = defaultdict(list)
+    for operator in config:
+        if not isinstance(operator, Operator):
+            continue
+        operators[operator.precedence].append(operator)
+
+    operators_config = []
+    for precedence, ops in sorted(operators.items()):
+        assert all(ops[0].rhs_only == o.rhs_only for o in ops), ops
+
+        # TODO This is a hack, is there a nicer way?
+        from .identifiers import IDs
+        if ops[0].id in (IDs.MINUS, IDs.PLUS):
+            assert ops[0]._rhs_only
+            parser = pyparsing.Or([Literal(o.op) + ~pyparsing.FollowedBy(NUMBER) for o in ops])
+        else:
+            parser = pyparsing.Or([Literal(o.op) for o in ops])
+
+        if ops[0].rhs_only:
+            def parse_action(string, location, result, op_map={o.op: o for o in ops}):
+                assert len(result) == 1, result
+                result = result[0]
+                assert len(result) == 2, result
+                return op_map[result[0]](result[1])
+            operators_config.append((parser, 1, opAssoc.RIGHT, parse_action))
+        else:
+            def parse_action(string, location, result, op_map={o.op: o for o in ops}):
+                assert len(result) == 1, result
+                result = result[0]
+
+                expression = result[0]
+                expression_args = [result[2]]
+                last_op_name = result[1]
+                for op_name, value in zip(result[3::2], result[4::2]):
+                    if op_name == last_op_name:
+                        expression_args.append(value)
+                    else:
+                        expression = Expression(op_map[last_op_name].id, expression, *expression_args)
+                        expression_args = [value]
+                    last_op_name = op_name
+                expression = Expression(op_map[last_op_name].id, expression, *expression_args)
+                # for operator, value in zip(result[1::2], result[2::2]):
+                #     operator = op_map[operator]
+                #     expression = Expression(operator.id, expression, value)
+                return expression
+            operators_config.append((parser, 2, opAssoc.LEFT, parse_action))
+
+    EXPRESSION << pyparsing.infixNotation(COMPONENT, operators_config)
 
     return EXPRESSION
