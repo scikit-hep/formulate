@@ -16,7 +16,9 @@ def make_check_result(from_func, to_func):
         string = to_func(result)
 
         assert_equal_expressions(result, expected_expression)
-        assert string.replace(' ', '') == expected_string.replace(' ', ''), (string, expected_string)
+        # TODO Stop stripping parentheses
+        assert (string.replace(' ', '').replace('(', '').replace(')', '') ==
+                expected_string.replace(' ', '').replace('(', '').replace(')', '')), (string, expected_string)
     return check_result
 
 

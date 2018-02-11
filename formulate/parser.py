@@ -208,7 +208,7 @@ class Operator(object):
             return self.op + args[0]
         else:
             assert len(args) >= 2, args
-            return (' '+self.op+' ').join(args)
+            return '('+(' '+self.op+' ').join(args)+')'
 
 
 class Parser(object):
@@ -237,7 +237,10 @@ class Parser(object):
             return result
 
     def to_string(self, expression):
-        return expression.to_string({x.id: x for x in self._config})
+        result = expression.to_string({x.id: x for x in self._config})
+        if result.startswith('(') and result.endswith(')'):
+            result = result[1:-1]
+        return result
 
 
 class ParsingException(Exception):
