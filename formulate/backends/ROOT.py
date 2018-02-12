@@ -3,8 +3,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from ..identifiers import IDs
-from ..parser import Operator, Function, Parser
+from ..identifiers import IDs, ConstantIDs
+from ..parser import Operator, Function, Parser, Constant
 
 
 __all__ = [
@@ -62,5 +62,20 @@ config = [
     Function(IDs.ATAN2, 'TMath::ATan2', 2),
 ]
 
+constants = [
+    Constant(ConstantIDs.SQRT2, 'sqrt2'),
+    Constant(ConstantIDs.SQRT2, 'TMath::Sqrt2()'),
+    Constant(ConstantIDs.E, 'e'),
+    Constant(ConstantIDs.E, 'TMath::E()'),
+    Constant(ConstantIDs.PI, 'pi'),
+    Constant(ConstantIDs.PI, 'TMath::Pi()'),
+    Constant(ConstantIDs.INVPI, 'TMath::InvPi()'),
+    Constant(ConstantIDs.PIOVER2, 'TMath::PiOver2()'),
+    Constant(ConstantIDs.PIOVER4, 'TMath::PiOver4()'),
+    Constant(ConstantIDs.TAU, 'TMath::TwoPi()'),
+    Constant(ConstantIDs.LN10, 'ln10'),
+    Constant(ConstantIDs.LN10, 'TMath::Ln10()'),
+    Constant(ConstantIDs.LOG10E, 'TMath::LogE()'),
+]
 
 root_parser = Parser('ROOT', config)

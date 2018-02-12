@@ -60,4 +60,17 @@ config = [
 ]
 
 
+constants = [
+    Constant(ConstantIDs.SQRT2, math.sqrt(2)),
+    Constant(ConstantIDs.E, math.e),
+    Constant(ConstantIDs.PI, math.pi),
+    Constant(ConstantIDs.INVPI, 1/math.pi),
+    Constant(ConstantIDs.PIOVER2, math.pi/2),
+    Constant(ConstantIDs.PIOVER4, math.pi/4),
+    Constant(ConstantIDs.TAU, 2*math.pi),
+    Constant(ConstantIDs.LN10, math.log(10)),
+    Constant(ConstantIDs.LOG10E, math.log10(math.e)),
+]
+
+
 numexpr_parser = Parser('numexpr', config)
