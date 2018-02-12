@@ -18,8 +18,8 @@ class Expression(object):
 
     def __repr__(self):
         return '{class_name}<{id_name}>({args})'.format(
-            class_name=self.__class__.__name__, id_name=self._id.name,
-            args=", ".join(map(repr, self._args)))
+            class_name=self.__class__.__name__, id_name=self.id.name,
+            args=", ".join(map(repr, self.args)))
 
     def __str__(self):
         return repr(self)
@@ -39,8 +39,12 @@ class Expression(object):
     def args(self):
         return self._args
 
-    def to_string(self, config):
-        return config[self.id].to_string(self, config)
+    def to_string(self, config, constants):
+        if self.id == IDs.CONST:
+            assert len(self.args) == 1, self.args
+            return constants[self.args[0]].to_string()
+        else:
+            return config[self.id].to_string(self, config, constants)
 
     # Binary arithmetic operators
     def __add__(self, value):

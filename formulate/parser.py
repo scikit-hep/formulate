@@ -50,13 +50,82 @@ def add_logging(func):
 
 
 class Constant(object):
-    def __init__(self, value):
-        raise NotImplemented
+    def __init__(self, id, value):
+        """Represents a constant
+
+        Parameters
+        ----------
+        id : :ConstantIDs:
+            Element of the ConstantIDs enum representing this constant
+        value : int, float, str
+            The representing this function as a string or number
+
+        Examples
+        --------
+        >>> str(Constant('sqrt2', 'TMath::Sqrt2()')())
+        'TMath::Sqrt2()'
+        >>> str(Constant(ConstantIDS.SQRT2, 1.4142135624)())
+        '1.4142135624'
+        """
+        self._id = id
+        self._value = value
+
+    def __call__(self):
+        from .identifiers import IDs
+        return Expression(IDs.CONST, self.id)
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def value(self):
+        return self._value
+
+    def get_parser(self, EXPRESSION):
+        if isinstance(self.value, str):
+            result = Suppress(self.value)
+            result.setName('Constant({value})'.format(value=self.value))
+            result.setParseAction(self)
+            return result
+        else:
+            # TODO Detect constants?
+            return None
+
+    def to_string(self):
+        return str(self.value)
+
+
+class Variable(Expression):
+    def __init__(self, name):
+        self._name = name
+
+    def __repr__(self):
+        return '{class_name}({name})'.format(
+            class_name=self.__class__.__name__, name=self.name)
+
+    def __str__(self):
+        return repr(self)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def id(self):
+        raise RuntimeError('This method should never be called')
+
+    @property
+    def args(self):
+        raise RuntimeError('This method should never be called')
+
+    def to_string(self, config, constants):
+        return self.name
 
 
 class Function(object):
     def __init__(self, id, name, n_args=1):
-        """Represents an function call with augments
+        """Represents a function call with augments
 
         Parameters
         ----------
@@ -115,11 +184,11 @@ class Function(object):
         # TODO Replace with logging decorator
         return self(*result)
 
-    def to_string(self, expression, config):
+    def to_string(self, expression, config, constants):
         args = []
         for arg in expression.args:
             if isinstance(arg, Expression):
-                arg = arg.to_string(config)
+                arg = arg.to_string(config, constants)
             else:
                 arg = str(arg)
             args.append(arg)
@@ -194,11 +263,11 @@ class Operator(object):
         assert len(result) >= 2 or self._rhs_only, result
         return self(*result)
 
-    def to_string(self, expression, config):
+    def to_string(self, expression, config, constants):
         args = []
         for arg in expression.args:
             if isinstance(arg, Expression):
-                arg = arg.to_string(config)
+                arg = arg.to_string(config, constants)
             else:
                 arg = str(arg)
             args.append(arg)
@@ -212,10 +281,11 @@ class Operator(object):
 
 
 class Parser(object):
-    def __init__(self, name, config):
+    def __init__(self, name, config, constants):
         self._name = name
         self._config = config
-        self._parser = create_parser(config)
+        self._constants = constants
+        self._parser = create_parser(config, constants)
 
     def to_expression(self, string):
         try:
@@ -237,7 +307,10 @@ class Parser(object):
             return result
 
     def to_string(self, expression):
-        result = expression.to_string({x.id: x for x in self._config})
+        result = expression.to_string(
+            {x.id: x for x in self._config},
+            {c.id: c for c in self._constants},
+        )
         if result.startswith('(') and result.endswith(')'):
             result = result[1:-1]
         return result
@@ -247,12 +320,12 @@ class ParsingException(Exception):
     pass
 
 
-def create_parser(config):
+def create_parser(config, constants):
     EXPRESSION = pyparsing.Forward()
 
     VARIABLE = Word(pyparsing.alphas+'_', pyparsing.alphanums+'_-')
     VARIABLE.setName('Variable')
-    VARIABLE.setParseAction(lambda x: str(x[0]))
+    VARIABLE.setParseAction(lambda x: Variable(x[0]))
 
     NUMBER = pyparsing.Or([
         pyparsing_common.number,
@@ -261,6 +334,7 @@ def create_parser(config):
 
     COMPONENT = pyparsing.Or(
         [f.get_parser(EXPRESSION) for f in config if isinstance(f, Function)] +
+        [p for p in map(lambda c: c.get_parser(EXPRESSION), constants) if p is not None] +
         [NUMBER, VARIABLE]
     )
 

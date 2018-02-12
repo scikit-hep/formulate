@@ -3,8 +3,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from ..identifiers import IDs
-from ..parser import Operator, Function, Parser
+import math
+
+from ..identifiers import IDs, ConstantIDs
+from ..parser import Operator, Function, Parser, Constant
 
 
 __all__ = [
@@ -73,4 +75,4 @@ constants = [
 ]
 
 
-numexpr_parser = Parser('numexpr', config)
+numexpr_parser = Parser('numexpr', config, constants)

@@ -78,4 +78,4 @@ constants = [
     Constant(ConstantIDs.LOG10E, 'TMath::LogE()'),
 ]
 
-root_parser = Parser('ROOT', config)
+root_parser = Parser('ROOT', config, constants)
