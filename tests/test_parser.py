@@ -59,6 +59,7 @@ def test_3_deep_chain():
     check_result(string, expected)
 
 
+@pytest.mark.xfail(sys.version_info < (3, 0), raises=RecursionError)
 def test_5_deep_chain():
     string = '2'
     expected = 2
