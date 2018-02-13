@@ -7,13 +7,15 @@ from pyparsing import ParserElement
 
 from .backends import from_numexpr, to_numexpr
 from .backends import from_root, to_root
-from .expression import Expression
+from .expression import Component, Expression, Variable
 from .parser import ParsingException
 from .version import __version__
 
 
 __all__ = [
+    'Component',
     'Expression',
+    'Variable',
     'ParsingException',
     # numexpr
     'from_numexpr',

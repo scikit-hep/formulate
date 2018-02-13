@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from formulate import Expression
+from formulate import Component, Expression, Variable
 
 
 def make_check_result(from_func, to_func):
@@ -23,21 +23,26 @@ def make_check_result(from_func, to_func):
 
 
 def assert_equal_expressions(lhs, rhs):
-    assert isinstance(lhs, Expression)
-    assert isinstance(rhs, Expression)
-    assert lhs._id == rhs._id
-    assert len(lhs._args) == len(rhs._args)
-    for a, b in zip(lhs._args, rhs._args):
-        print(repr(a), repr(b))
-        assert isinstance(b, a.__class__)
-        if isinstance(a, Expression):
-            assert_equal_expressions(a, b)
-        else:
-            # Could floating point precision become a problem here?
-            assert a == b
-    # TODO Check the equivalent method always gets it right
-    # assert lhs.equivilent(rhs)
-    # assert rhs.equivilent(lhs)
+    assert isinstance(lhs, Component)
+    assert isinstance(rhs, Component)
+    if isinstance(lhs, Variable):
+        assert isinstance(rhs, Variable)
+        assert lhs.name == rhs.name
+    else:
+        assert lhs.id == rhs.id
+        assert len(lhs.args) == len(rhs.args)
+        for a, b in zip(lhs.args, rhs.args):
+            assert isinstance(b, a.__class__)
+            if isinstance(a, Expression):
+                assert_equal_expressions(a, b)
+            elif isinstance(a, Variable):
+                assert a.name == b.name
+            else:
+                # Could floating point precision become a problem here?
+                assert a == b
+        # TODO Check the equivalent method always gets it right
+        # assert lhs.equivilent(rhs)
+        # assert rhs.equivilent(lhs)
 
 
 # def test_empty():

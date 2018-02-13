@@ -63,6 +63,9 @@ config = [
 ]
 
 constants = [
+    Constant(ConstantIDs.TRUE, 'True'),
+    Constant(ConstantIDs.FALSE, 'False'),
+
     Constant(ConstantIDs.SQRT2, 'sqrt2'),
     Constant(ConstantIDs.SQRT2, 'TMath::Sqrt2()'),
     Constant(ConstantIDs.E, 'e'),

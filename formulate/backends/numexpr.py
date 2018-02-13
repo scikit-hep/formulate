@@ -32,6 +32,7 @@ config = [
 
     Operator(IDs.AND, '&'),
     Operator(IDs.OR, '|'),
+    Operator(IDs.XOR, '^'),
     Operator(IDs.NOT, '~', rhs_only=True),
 
     Function(IDs.SQRT, 'sqrt'),
@@ -63,6 +64,9 @@ config = [
 
 
 constants = [
+    Constant(ConstantIDs.TRUE, 'true'),
+    Constant(ConstantIDs.FALSE, 'false'),
+
     Constant(ConstantIDs.SQRT2, math.sqrt(2)),
     Constant(ConstantIDs.E, math.e),
     Constant(ConstantIDs.PI, math.pi),

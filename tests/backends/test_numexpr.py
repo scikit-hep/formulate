@@ -5,7 +5,7 @@ from __future__ import print_function
 
 import numbers
 
-from formulate import Expression
+from formulate import Expression, Variable
 from formulate import from_numexpr, to_numexpr
 from formulate.identifiers import IDs
 
@@ -105,4 +105,4 @@ TestPosScientific = _create_test_type('TestPosScientific', 1e-2, 3.4e5, 6.7e8, 9
 TestNegScientific = _create_test_type('TestNegScientific', -1e-2, -3.4e5, -6.7e8, -9e10)
 TestMixScientific = _create_test_type('TestMixScientific', 1e-2, -3.4e5, 6.7e8, -9e10)
 
-TestVariables = _create_test_type('TestVariables', 'A', 'Bee', 'C_is_4', '_Dxyz')
+TestVariables = _create_test_type('TestVariables', Variable('A'), Variable('Bee'), Variable('C_is_4'), Variable('_Dxyz'))

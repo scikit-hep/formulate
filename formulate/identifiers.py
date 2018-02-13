@@ -28,6 +28,7 @@ class IDs(Enum):
 
     AND = auto()
     OR = auto()
+    XOR = auto()
     NOT = auto()
 
     EQ = auto()
@@ -39,6 +40,7 @@ class IDs(Enum):
 
     SQRT = auto()
     ABS = auto()
+    POW = auto()
     WHERE = auto()
 
     LOG = auto()
@@ -81,14 +83,19 @@ order_of_operations = [
     [IDs.GT, IDs.GTEQ],
     # 10
     [IDs.EQ, IDs.NEQ],
-    # 14
+    # 11
     [IDs.AND],
-    # 15
+    # 12
+    [IDs.XOR],
+    # 13
     [IDs.OR],
 ]
 
 
 class ConstantIDs(Enum):
+    TRUE = auto()
+    FALSE = auto()
+
     SQRT2 = auto()
     E = auto()
     PI = auto()

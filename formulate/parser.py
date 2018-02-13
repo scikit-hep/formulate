@@ -11,7 +11,7 @@ import logging
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
 
-from .expression import Expression
+from .expression import Expression, Variable
 from .identifiers import order_of_operations
 
 
@@ -94,33 +94,6 @@ class Constant(object):
 
     def to_string(self):
         return str(self.value)
-
-
-class Variable(Expression):
-    def __init__(self, name):
-        self._name = name
-
-    def __repr__(self):
-        return '{class_name}({name})'.format(
-            class_name=self.__class__.__name__, name=self.name)
-
-    def __str__(self):
-        return repr(self)
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def id(self):
-        raise RuntimeError('This method should never be called')
-
-    @property
-    def args(self):
-        raise RuntimeError('This method should never be called')
-
-    def to_string(self, config, constants):
-        return self.name
 
 
 class Function(object):
