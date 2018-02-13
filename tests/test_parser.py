@@ -60,8 +60,8 @@ def test_3_deep_chain():
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(sys.version_info < (3, 0),
-                   reason='Python 2 handles recursion worse than Python 3',
+@pytest.mark.xfail(sys.version_info <= (3, 4),
+                   reason='Other Python versions handle recursion less well',
                    raises=RecursionError)
 def test_5_deep_chain():
     string = '2'
