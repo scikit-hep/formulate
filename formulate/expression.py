@@ -7,13 +7,15 @@ from .identifiers import IDs
 
 
 __all__ = [
-    'Component',
+    'ExpressionComponent',
+    'SingleComponent',
+    'Constant',
     'Expression',
     'Variable',
 ]
 
 
-class Component(object):
+class ExpressionComponent(object):
     def n_variables(self):
         raise NotImplementedError()
 
@@ -202,12 +204,17 @@ class Component(object):
         raise NotImplementedError()
 
 
-class Expression(Component):
+class SingleComponent(ExpressionComponent):
+    pass
+
+
+class Expression(ExpressionComponent):
     def __init__(self, id, *args):
         self._id = id
         self._args = args
 
     def __repr__(self):
+        # TODO Make a utility to get fully qualified names
         return '{class_name}<{id_name}>({args})'.format(
             class_name=self.__class__.__name__, id_name=self.id.name,
             args=", ".join(map(repr, self.args)))
@@ -231,14 +238,15 @@ class Expression(Component):
         return self._args
 
     def to_string(self, config, constants):
-        if self.id == IDs.CONST:
+        if isinstance(self.args[0], SingleComponent):
             assert len(self.args) == 1, self.args
-            return constants[self.args[0]].to_string()
+            # return str(constants[self.args[0]])
+            return self.args[0].to_string(config, constants)
         else:
             return config[self.id].to_string(self, config, constants)
 
 
-class Variable(Component):
+class Variable(SingleComponent):
     def __init__(self, name):
         self._name = name
 
@@ -255,3 +263,22 @@ class Variable(Component):
 
     def to_string(self, config, constants):
         return self.name
+
+
+class Constant(SingleComponent):
+    def __init__(self, id):
+        self._id = id
+
+    def __repr__(self):
+        return '{class_name}({name})'.format(
+            class_name=self.__class__.__name__, id=self.id)
+
+    def __str__(self):
+        return self.id.name
+
+    @property
+    def id(self):
+        return self._id
+
+    def to_string(self, config, constants):
+        return str(constants[self.id].value)

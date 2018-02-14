@@ -16,7 +16,7 @@ __all__ = [
 
 
 class IDs(Enum):
-    CONST = auto()
+    FIXED = auto()  # Something which can't change such as: constants, numbers and variables
 
     MINUS = auto()
     PLUS = auto()

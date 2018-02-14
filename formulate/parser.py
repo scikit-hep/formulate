@@ -10,15 +10,15 @@ from functools import wraps
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
 
-from .expression import Expression, Variable
+from .expression import Expression, Variable, Constant, ExpressionComponent
 from .identifiers import order_of_operations
 from .logging import logger
 
 
 __all__ = [
-    'Constant',
-    'Function',
-    'Operator',
+    'PConstant',
+    'PFunction',
+    'POperator',
     'Parser',
     'ParsingException',
 ]
@@ -39,7 +39,7 @@ def add_logging(func):
     return new_func
 
 
-class Constant(object):
+class PConstant(object):
     def __init__(self, id, value):
         """Represents a constant
 
@@ -61,8 +61,7 @@ class Constant(object):
         self._value = value
 
     def __call__(self):
-        from .identifiers import IDs
-        return Expression(IDs.CONST, self.id)
+        return Constant(self.id)
 
     @property
     def id(self):
@@ -86,7 +85,7 @@ class Constant(object):
         return str(self.value)
 
 
-class Function(object):
+class PFunction(object):
     def __init__(self, id, name, n_args=1):
         """Represents a function call with augments
 
@@ -158,7 +157,7 @@ class Function(object):
         return self.name+'('+", ".join(args)+')'
 
 
-class Operator(object):
+class POperator(object):
     def __init__(self, id, op, rhs_only=False):
         """Represents an operator of the form "A x B"
 
@@ -251,6 +250,9 @@ class Parser(object):
         self._parser = create_parser(config, constants)
 
     def to_expression(self, string):
+        if not isinstance(string, str):
+            raise ValueError('Can only convert string objects to strings but '+str(type(string))+' was passed')
+
         try:
             result = self._parser.parseString(string, parseAll=True)
             assert len(result) == 1, result
@@ -270,6 +272,9 @@ class Parser(object):
             return result
 
     def to_string(self, expression):
+        if not isinstance(expression, ExpressionComponent):
+            raise ValueError('Can only convert ExpressionComponent objects to strings but '+str(type(expression))+' was passed')
+
         result = expression.to_string(
             {x.id: x for x in self._config},
             {c.id: c for c in self._constants},
@@ -296,7 +301,7 @@ def create_parser(config, constants):
     ])
 
     COMPONENT = pyparsing.Or(
-        [f.get_parser(EXPRESSION) for f in config if isinstance(f, Function)] +
+        [f.get_parser(EXPRESSION) for f in config if isinstance(f, PFunction)] +
         [p for p in map(lambda c: c.get_parser(EXPRESSION), constants) if p is not None] +
         [NUMBER, VARIABLE]
     )
@@ -304,7 +309,7 @@ def create_parser(config, constants):
     # TODO Generating operators_config should be rewritten
     operators = defaultdict(list)
     for operator in config:
-        if not isinstance(operator, Operator):
+        if not isinstance(operator, POperator):
             continue
         operators[operator.precedence].append(operator)
 
