@@ -6,13 +6,13 @@ from __future__ import print_function
 
 from collections import defaultdict
 from functools import wraps
-import logging
 
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
 
 from .expression import Expression, Variable
 from .identifiers import order_of_operations
+from .logging import logger
 
 
 __all__ = [
@@ -22,16 +22,6 @@ __all__ = [
     'Parser',
     'ParsingException',
 ]
-
-import colorlog
-
-handler = colorlog.StreamHandler()
-handler.setFormatter(colorlog.ColoredFormatter(
-    '%(log_color)s%(levelname)s:%(name)s:%(message)s'))
-
-logger = colorlog.getLogger('formulate.parser')
-logger.addHandler(handler)
-logger.setLevel(logging.WARN)
 
 
 def add_logging(func):
