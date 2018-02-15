@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 from .identifiers import IDs
+from .logging import add_logging
 
 
 __all__ = [
@@ -237,6 +238,7 @@ class Expression(ExpressionComponent):
     def args(self):
         return self._args
 
+    @add_logging(ignore_args=[1, 2])
     def to_string(self, config, constants):
         if isinstance(self.args[0], SingleComponent):
             assert len(self.args) == 1, self.args
@@ -261,6 +263,7 @@ class Variable(SingleComponent):
     def name(self):
         return self._name
 
+    @add_logging(ignore_args=[1, 2])
     def to_string(self, config, constants):
         return self.name
 
@@ -280,5 +283,6 @@ class Constant(SingleComponent):
     def id(self):
         return self._id
 
+    @add_logging(ignore_args=[1, 2])
     def to_string(self, config, constants):
         return str(constants[self.id].value)

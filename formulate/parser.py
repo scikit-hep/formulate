@@ -5,14 +5,13 @@ from __future__ import division
 from __future__ import print_function
 
 from collections import defaultdict
-from functools import wraps
 
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
 
 from .expression import Expression, Variable, Constant, ExpressionComponent
 from .identifiers import order_of_operations
-from .logging import logger
+from .logging import logger, add_logging
 
 
 __all__ = [
@@ -22,21 +21,6 @@ __all__ = [
     'Parser',
     'ParsingException',
 ]
-
-
-def add_logging(func):
-    @wraps(func)
-    def new_func(*args, **kwargs):
-        try:
-            func_name = func.__qualname__
-        except AttributeError:
-            # Python 2 doesn't have __qualname__
-            func_name = func.__name__
-        logger.debug('Calling '+func_name+' with '+repr(args)+' and '+repr(kwargs))
-        result = func(*args, **kwargs)
-        logger.debug(' - Got result '+repr(result))
-        return result
-    return new_func
 
 
 class PConstant(object):
@@ -81,6 +65,7 @@ class PConstant(object):
             # TODO Detect constants?
             return None
 
+    @add_logging
     def to_string(self):
         return str(self.value)
 
@@ -146,6 +131,7 @@ class PFunction(object):
         # TODO Replace with logging decorator
         return self(*result)
 
+    @add_logging(ignore_args=[2, 3])
     def to_string(self, expression, config, constants):
         args = []
         for arg in expression.args:
@@ -225,6 +211,7 @@ class POperator(object):
         assert len(result) >= 2 or self._rhs_only, result
         return self(*result)
 
+    @add_logging(ignore_args=[2, 3])
     def to_string(self, expression, config, constants):
         args = []
         for arg in expression.args:
