@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from formulate import Component, Expression, Variable
+from formulate import ExpressionComponent, Expression, Variable, Constant
 
 
 def make_check_result(from_func, to_func):
@@ -23,9 +23,12 @@ def make_check_result(from_func, to_func):
 
 
 def assert_equal_expressions(lhs, rhs):
-    assert isinstance(lhs, Component)
-    assert isinstance(rhs, Component)
-    if isinstance(lhs, Variable):
+    assert isinstance(lhs, ExpressionComponent)
+    assert isinstance(rhs, ExpressionComponent)
+    if isinstance(lhs, Constant):
+        assert isinstance(rhs, Constant)
+        assert lhs.id == rhs.id
+    elif isinstance(lhs, Variable):
         assert isinstance(rhs, Variable)
         assert lhs.name == rhs.name
     else:

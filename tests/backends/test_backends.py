@@ -19,8 +19,8 @@ def do_checks(numexpr_input, root_input):
     return test
 
 
-test_001 = do_checks('true', 'True')
-test_002 = do_checks('false', 'False')
+test_001 = do_checks('True', 'true')
+test_002 = do_checks('False', 'false')
 test_003 = do_checks('sqrt(2)', 'sqrt(2)')
 test_004 = do_checks('sqrt(2)', 'TMath::Sqrt(2)')
 test_005 = do_checks('sqrt(abs(-4))', 'TMath::Sqrt(TMath::Abs(-4))')

@@ -5,7 +5,7 @@ from __future__ import print_function
 
 import pytest
 
-from formulate import to_numexpr
+from formulate import from_numexpr, to_numexpr
 from formulate import from_root, to_root
 
 numexpr = pytest.importorskip("numexpr")
@@ -34,16 +34,27 @@ def numexpr_eval(string, **kwargs):
     return numexpr.evaluate(string, local_dict=kwargs)
 
 
-def create_constant_test(root_string):
+def create_constant_test(input_string, input_backend='root'):
+    assert input_backend in ('root', 'numexpr'), 'Unrecognised backend specified'
+    input_from_method = {
+        'root': from_root,
+        'numexpr': from_numexpr,
+    }[input_backend]
+
     def test_constant():
-        expression = from_root(root_string)
+        expression = input_from_method(input_string)
         root_result = to_root(expression)
         numexpr_result = to_numexpr(expression)
-        assert pytest.approx(root_eval(root_string), root_eval(root_result))
+        assert pytest.approx(root_eval(input_string), root_eval(root_result))
         assert pytest.approx(root_eval(root_result), numexpr_eval(numexpr_result))
     return test_constant
 
 
+# Test basic numexpr constants
+test_numexpr_true = create_constant_test('True', input_backend='numexpr')
+test_numexpr_false = create_constant_test('False', input_backend='numexpr')
+
+# Test basic ROOT constants
 test_true = create_constant_test('true')
 test_false = create_constant_test('false')
 test_sqrt2_1 = create_constant_test('sqrt2')

@@ -16,6 +16,7 @@ __all__ = [
 
 
 def get_identifier():
+    """Generate an identifier for keeping track of return values when logging"""
     return''.join(random.choice(string.ascii_uppercase + string.digits)
                   for i in range(5))
 

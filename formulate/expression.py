@@ -240,12 +240,7 @@ class Expression(ExpressionComponent):
 
     @add_logging(ignore_args=[1, 2])
     def to_string(self, config, constants):
-        if isinstance(self.args[0], SingleComponent):
-            assert len(self.args) == 1, self.args
-            # return str(constants[self.args[0]])
-            return self.args[0].to_string(config, constants)
-        else:
-            return config[self.id].to_string(self, config, constants)
+        return config[self.id].to_string(self, config, constants)
 
 
 class Variable(SingleComponent):
@@ -273,7 +268,7 @@ class Constant(SingleComponent):
         self._id = id
 
     def __repr__(self):
-        return '{class_name}({name})'.format(
+        return '{class_name}({id})'.format(
             class_name=self.__class__.__name__, id=self.id)
 
     def __str__(self):

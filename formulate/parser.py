@@ -44,7 +44,8 @@ class PConstant(object):
         self._id = id
         self._value = value
 
-    def __call__(self):
+    @add_logging
+    def __call__(self, string, location, result):
         return Constant(self.id)
 
     @property
@@ -280,7 +281,7 @@ def create_parser(config, constants):
 
     VARIABLE = Word(pyparsing.alphas+'_', pyparsing.alphanums+'_-')
     VARIABLE.setName('Variable')
-    VARIABLE.setParseAction(lambda x: Variable(x[0]))
+    VARIABLE.setParseAction(add_logging(lambda string, location, result: Variable(result[0])))
 
     NUMBER = pyparsing.Or([
         pyparsing_common.number,
