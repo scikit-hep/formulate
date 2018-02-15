@@ -5,58 +5,75 @@ from __future__ import division
 from __future__ import print_function
 
 from collections import defaultdict
-from functools import wraps
-import logging
 
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
 
-from .expression import Expression
+from .expression import Expression, Variable, Constant, ExpressionComponent
 from .identifiers import order_of_operations
+from .logging import logger, add_logging
 
 
 __all__ = [
-    'Constant',
-    'Function',
-    'Operator',
+    'PConstant',
+    'PFunction',
+    'POperator',
     'Parser',
     'ParsingException',
 ]
 
-import colorlog
 
-handler = colorlog.StreamHandler()
-handler.setFormatter(colorlog.ColoredFormatter(
-    '%(log_color)s%(levelname)s:%(name)s:%(message)s'))
+class PConstant(object):
+    def __init__(self, id, value):
+        """Represents a constant
 
-logger = colorlog.getLogger('formulate.parser')
-logger.addHandler(handler)
-logger.setLevel(logging.WARN)
+        Parameters
+        ----------
+        id : :ConstantIDs:
+            Element of the ConstantIDs enum representing this constant
+        value : int, float, str
+            The representing this function as a string or number
+
+        Examples
+        --------
+        >>> str(Constant('sqrt2', 'TMath::Sqrt2()')())
+        'TMath::Sqrt2()'
+        >>> str(Constant(ConstantIDS.SQRT2, 1.4142135624)())
+        '1.4142135624'
+        """
+        self._id = id
+        self._value = value
+
+    @add_logging
+    def __call__(self, string, location, result):
+        return Constant(self.id)
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def value(self):
+        return self._value
+
+    def get_parser(self, EXPRESSION):
+        if isinstance(self.value, str):
+            result = Suppress(self.value)
+            result.setName('Constant({value})'.format(value=self.value))
+            result.setParseAction(self)
+            return result
+        else:
+            # TODO Detect constants?
+            return None
+
+    @add_logging
+    def to_string(self):
+        return str(self.value)
 
 
-def add_logging(func):
-    @wraps(func)
-    def new_func(*args, **kwargs):
-        try:
-            func_name = func.__qualname__
-        except AttributeError:
-            # Python 2 doesn't have __qualname__
-            func_name = func.__name__
-        logger.debug('Calling '+func_name+' with '+repr(args)+' and '+repr(kwargs))
-        result = func(*args, **kwargs)
-        logger.debug(' - Got result '+repr(result))
-        return result
-    return new_func
-
-
-class Constant(object):
-    def __init__(self, value):
-        raise NotImplemented
-
-
-class Function(object):
+class PFunction(object):
     def __init__(self, id, name, n_args=1):
-        """Represents an function call with augments
+        """Represents a function call with augments
 
         Parameters
         ----------
@@ -115,18 +132,19 @@ class Function(object):
         # TODO Replace with logging decorator
         return self(*result)
 
-    def to_string(self, expression, config):
+    @add_logging(ignore_args=[2, 3])
+    def to_string(self, expression, config, constants):
         args = []
         for arg in expression.args:
             if isinstance(arg, Expression):
-                arg = arg.to_string(config)
+                arg = arg.to_string(config, constants)
             else:
                 arg = str(arg)
             args.append(arg)
         return self.name+'('+", ".join(args)+')'
 
 
-class Operator(object):
+class POperator(object):
     def __init__(self, id, op, rhs_only=False):
         """Represents an operator of the form "A x B"
 
@@ -194,11 +212,12 @@ class Operator(object):
         assert len(result) >= 2 or self._rhs_only, result
         return self(*result)
 
-    def to_string(self, expression, config):
+    @add_logging(ignore_args=[2, 3])
+    def to_string(self, expression, config, constants):
         args = []
         for arg in expression.args:
             if isinstance(arg, Expression):
-                arg = arg.to_string(config)
+                arg = arg.to_string(config, constants)
             else:
                 arg = str(arg)
             args.append(arg)
@@ -212,12 +231,16 @@ class Operator(object):
 
 
 class Parser(object):
-    def __init__(self, name, config):
+    def __init__(self, name, config, constants):
         self._name = name
         self._config = config
-        self._parser = create_parser(config)
+        self._constants = constants
+        self._parser = create_parser(config, constants)
 
     def to_expression(self, string):
+        if not isinstance(string, str):
+            raise ValueError('Can only convert string objects to strings but '+str(type(string))+' was passed')
+
         try:
             result = self._parser.parseString(string, parseAll=True)
             assert len(result) == 1, result
@@ -237,7 +260,13 @@ class Parser(object):
             return result
 
     def to_string(self, expression):
-        result = expression.to_string({x.id: x for x in self._config})
+        if not isinstance(expression, ExpressionComponent):
+            raise ValueError('Can only convert ExpressionComponent objects to strings but '+str(type(expression))+' was passed')
+
+        result = expression.to_string(
+            {x.id: x for x in self._config},
+            {c.id: c for c in self._constants},
+        )
         if result.startswith('(') and result.endswith(')'):
             result = result[1:-1]
         return result
@@ -247,12 +276,12 @@ class ParsingException(Exception):
     pass
 
 
-def create_parser(config):
+def create_parser(config, constants):
     EXPRESSION = pyparsing.Forward()
 
     VARIABLE = Word(pyparsing.alphas+'_', pyparsing.alphanums+'_-')
     VARIABLE.setName('Variable')
-    VARIABLE.setParseAction(lambda x: str(x[0]))
+    VARIABLE.setParseAction(add_logging(lambda string, location, result: Variable(result[0])))
 
     NUMBER = pyparsing.Or([
         pyparsing_common.number,
@@ -260,14 +289,15 @@ def create_parser(config):
     ])
 
     COMPONENT = pyparsing.Or(
-        [f.get_parser(EXPRESSION) for f in config if isinstance(f, Function)] +
+        [f.get_parser(EXPRESSION) for f in config if isinstance(f, PFunction)] +
+        [p for p in map(lambda c: c.get_parser(EXPRESSION), constants) if p is not None] +
         [NUMBER, VARIABLE]
     )
 
     # TODO Generating operators_config should be rewritten
     operators = defaultdict(list)
     for operator in config:
-        if not isinstance(operator, Operator):
+        if not isinstance(operator, POperator):
             continue
         operators[operator.precedence].append(operator)
 

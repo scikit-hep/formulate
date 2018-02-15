@@ -59,6 +59,10 @@ def test_3_deep_chain():
     check_result(string, expected)
 
 
+@pytest.mark.slow
+@pytest.mark.xfail(sys.version_info < (3, 5),
+                   reason='Other Python versions handle recursion less well',
+                   raises=RecursionError)
 def test_5_deep_chain():
     string = '2'
     expected = 2
