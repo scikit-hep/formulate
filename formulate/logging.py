@@ -21,7 +21,7 @@ def get_identifier():
                   for i in range(5))
 
 
-def add_logging(func=None, *, ignore_args=None, ignore_kwargs=None):
+def add_logging(*args, **kwargs):
     """Decorator to add logging to a method
 
     Parameters
@@ -33,6 +33,12 @@ def add_logging(func=None, *, ignore_args=None, ignore_kwargs=None):
     ignore_kwargs : list
         Names of the keyword arguments to ignore
     """
+    # Workaround for Python 2
+    func = args[0] if args else kwargs.pop('func', None)
+    ignore_args = kwargs.pop('ignore_args', None)
+    ignore_kwargs = kwargs.pop('ignore_kwargs', None)
+    assert len(args) in [0, 1] and not kwargs, (args, kwargs)
+
     def real_decorator(func):
         @wraps(func)
         def new_func(*args, **kwargs):
