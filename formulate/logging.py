@@ -4,9 +4,10 @@ from __future__ import division
 from __future__ import print_function
 
 from functools import wraps
-import string
 import logging
+import os
 import random
+import string
 
 
 __all__ = [
@@ -78,4 +79,15 @@ except ImportError:
     logger = logging.getLogger(LOGGER_NAME)
 
 
-logger.setLevel(logging.WARN)
+try:
+    logger.setLevel({
+        'CRITICAL': logging.CRITICAL,
+        'FATAL': logging.CRITICAL,
+        'ERROR': logging.ERROR,
+        'WARNING': logging.WARNING,
+        'WARN': logging.WARNING,
+        'INFO': logging.INFO,
+        'DEBUG': logging.DEBUG,
+    }[os.environ['FOMULATE_LOG_LEVEL'].upper()])
+except KeyError:
+    logger.setLevel(logging.WARNING)
