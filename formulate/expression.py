@@ -215,9 +215,19 @@ class Expression(ExpressionComponent):
         self._args = args
 
     def __repr__(self):
-        # TODO Make a utility to get fully qualified names
+        try:
+            class_name = self.__class__.__qualname__
+        except AttributeError:
+            # Python < 3.3 doesn't have __qualname__
+            try:
+                from qualname import qualname
+            except ImportError:
+                class_name = qualname(self.__class__)
+            else:
+                class_name = self.__class__.__name__
+
         return '{class_name}<{id_name}>({args})'.format(
-            class_name=self.__class__.__name__, id_name=self.id.name,
+            class_name=class_name, id_name=self.id.name,
             args=", ".join(map(repr, self.args)))
 
     def __str__(self):
