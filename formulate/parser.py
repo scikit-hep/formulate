@@ -105,11 +105,11 @@ class PFunction(object):
             name=self._name, n_args=self._n_args)
 
     @add_logging
-    def __call__(self, *args):
-        if len(args) != self._n_args:
+    def __call__(self, string, location, result):
+        if len(result) != self._n_args:
             raise TypeError('Function({name}) requires {n} arguments, {x} given'
-                            .format(name=self._name, n=self._n_args, x=len(args)))
-        return Expression(self._id, *args)
+                            .format(name=self._name, n=self._n_args, x=len(result)))
+        return Expression(self._id, *result)
 
     @property
     def id(self):
@@ -125,12 +125,8 @@ class PFunction(object):
             result += Suppress(',') + EXPRESSION
         result += Suppress(')')
         result.setName('Function({name})'.format(name=self._name))
-        result.setParseAction(self._parse_action)
+        result.setParseAction(self)
         return result
-
-    def _parse_action(self, string, location, result):
-        # TODO Replace with logging decorator
-        return self(*result)
 
     @add_logging(ignore_args=[2, 3])
     def to_string(self, expression, config, constants):
@@ -176,16 +172,9 @@ class POperator(object):
             class_name=self.__class__.__name__, id_name=self._id.name,
             op_name=self._op, rhs_only=self._rhs_only)
 
-    # Used to set order of operations
-    def __gt__(self, other):
-        return self.precedence > other.precedence
-
-    def __lt__(self, other):
-        return self.precedence < other.precedence
-
     @add_logging
-    def __call__(self, *args):
-        return Expression(self._id, *args)
+    def __call__(self, string, location, result):
+        return Expression(self._id, *result)
 
     @property
     def id(self):
@@ -204,13 +193,6 @@ class POperator(object):
         matches = [self.id in level for level in order_of_operations]
         assert matches.count(True) == 1, (self.id, matches)
         return matches.index(True)
-
-    def _parse_action(self, string, location, result):
-        assert len(result) == 1, result
-        result = result[0]
-        # TODO Replace with logging decorator
-        assert len(result) >= 2 or self._rhs_only, result
-        return self(*result)
 
     @add_logging(ignore_args=[2, 3])
     def to_string(self, expression, config, constants):

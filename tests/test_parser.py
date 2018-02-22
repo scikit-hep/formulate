@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from formulate import Expression
+from formulate import Expression, ParsingException
 from formulate import from_numexpr, to_numexpr
 from formulate.identifiers import IDs
 
@@ -83,3 +83,23 @@ def test_10_deep_chain():
         expected = Expression(IDs.SQRT, expected)
     print(string)
     check_result(string, expected)
+
+
+def test_parse_invalid_expression():
+    with pytest.raises(ParsingException):
+        from_numexpr('saadasd()&+|()')
+
+
+def test_invalid_arg_parse():
+    with pytest.raises(ValueError):
+        from_numexpr(Expression(IDs.SQRT, '2'))
+
+
+def test_too_many_function_arguments():
+    with pytest.raises(TypeError):
+        from_numexpr('sqrt(2, 3)')
+
+
+def test_invalid_arg_to_string():
+    with pytest.raises(ValueError):
+        to_numexpr('1')
