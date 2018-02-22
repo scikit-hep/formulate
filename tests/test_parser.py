@@ -96,7 +96,7 @@ def test_invalid_arg_parse():
 
 
 def test_too_many_function_arguments():
-    with pytest.raises(TypeError):
+    with pytest.raises(ParsingException):
         from_numexpr('sqrt(2, 3)')
 
 
