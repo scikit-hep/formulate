@@ -173,7 +173,7 @@ class POperator(object):
             op_name=self._op, rhs_only=self._rhs_only)
 
     @add_logging
-    def __call__(self, string, location, result):
+    def __call__(self, *result):
         return Expression(self._id, *result)
 
     @property
