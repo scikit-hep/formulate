@@ -69,12 +69,80 @@ class IDs(Enum):
     TANH = auto()
     ATANH = auto()
 
+    # One argument functions in ROOT
+    BESSELI0 = auto()
+    BESSELI1 = auto()
+    BESSELJ0 = auto()
+    BESSELJ1 = auto()
+    BESSELK0 = auto()
+    BESSELK1 = auto()
+    BESSELY0 = auto()
+    BESSELY1 = auto()
+    CEIL = auto()
+    CEILNINT = auto()
+    DILOG = auto()
+    ERF = auto()
+    ERFC = auto()
+    ERFCINVERSE = auto()
+    ERFINVERSE = auto()
+    EVEN = auto()
+    FACTORIAL = auto()
+    FLOOR = auto()
+    FLOORNINT = auto()
+    FREQ = auto()
+    KOLMOGOROVPROB = auto()
+    LANDAUI = auto()
+    LNGAMMA = auto()
+    NEXTPRIME = auto()
+    NORMQUANTILE = auto()
+    ODD = auto()
+    SQUARE = auto()
+    STRUVEH0 = auto()
+    STRUVEH1 = auto()
+    STRUVEL0 = auto()
+    STRUVEL1 = auto()
+
+    # Two argument functions in ROOT
+    BESSELI = auto()
+    BESSELK = auto()
+    BETA = auto()
+    BINOMIAL = auto()
+    CHISQUAREQUANTILE = auto()
+    LDEXP = auto()
+    PERMUTE = auto()
+    POISSON = auto()
+    POISSONI = auto()
+    PROB = auto()
+    STUDENT = auto()
+    STUDENTI = auto()
+
+    # Three argument functions in ROOT
+    AREEQUALABS = auto()
+    AREEQUALREL = auto()
+    BETACF = auto()
+    BETADIST = auto()
+    BETADISTI = auto()
+    BETAINCOMPLETE = auto()
+    BINOMIALI = auto()
+    BUBBLEHIGH = auto()
+    BUBBLELOW = auto()
+    FDIST = auto()
+    FDISTI = auto()
+    VAVILOV = auto()
+    VAVILOVI = auto()
+
+    # 4+ argument functions in ROOT
+    ROOTSCUBIC = auto()
+    QUANTILES = auto()
+
 
 # Based on http://en.cppreference.com/w/cpp/language/operator_precedence
 order_of_operations = [
     # 3
     [IDs.MINUS, IDs.PLUS],
     [IDs.NOT],
+    # Extra
+    [IDs.SQUARE],
     # 5
     [IDs.MUL, IDs.DIV, IDs.MOD],
     # 6

@@ -141,7 +141,7 @@ class PFunction(object):
 
 
 class POperator(object):
-    def __init__(self, id, op, rhs_only=False):
+    def __init__(self, id, op, rhs_only=False, lhs_only=False):
         """Represents an operator of the form "A x B"
 
         Parameters
@@ -160,17 +160,19 @@ class POperator(object):
         >>> str(Operator(IDs.SUB, '-', allow_lhs_zero=True)(2))
         '-2'
         """
+        assert lhs_only + rhs_only <= 1
         self._id = id
         self._op = op
         self._rhs_only = rhs_only
+        self._lhs_only = lhs_only
 
     def __str__(self):
         return self._name+'<'+str(self._n_args)+'>'
 
     def __repr__(self):
-        return '{class_name}<{id_name},{op_name},rhs_only={rhs_only}>'.format(
+        return '{class_name}<{id_name},{op_name},rhs_only={rhs_only},lhs_only={lhs_only}>'.format(
             class_name=self.__class__.__name__, id_name=self._id.name,
-            op_name=self._op, rhs_only=self._rhs_only)
+            op_name=self._op, rhs_only=self._rhs_only, lhs_only=self._lhs_only)
 
     @add_logging
     def __call__(self, *result):
@@ -187,6 +189,10 @@ class POperator(object):
     @property
     def rhs_only(self):
         return self._rhs_only
+
+    @property
+    def lhs_only(self):
+        return self._lhs_only
 
     @property
     def precedence(self):
@@ -207,6 +213,9 @@ class POperator(object):
         if self._rhs_only:
             assert len(args) == 1, args
             return self.op + args[0]
+        elif self._lhs_only:
+            assert len(args) == 1, args
+            return args[0] + self.op
         else:
             assert len(args) >= 2, args
             return '('+(' '+self.op+' ').join(args)+')'
@@ -292,6 +301,9 @@ def create_parser(config, constants):
         if ops[0].id in (IDs.MINUS, IDs.PLUS):
             assert ops[0]._rhs_only
             parser = pyparsing.Or([Literal(o.op) + ~pyparsing.FollowedBy(NUMBER) for o in ops])
+        elif ops[0].id in (IDs.SQUARE,):
+            assert ops[0]._lhs_only
+            parser = pyparsing.Or([Literal(o.op) + ~pyparsing.FollowedBy(NUMBER) for o in ops])
         else:
             parser = pyparsing.Or([Literal(o.op) for o in ops])
 
@@ -302,6 +314,13 @@ def create_parser(config, constants):
                 assert len(result) == 2, result
                 return op_map[result[0]](result[1])
             operators_config.append((parser, 1, opAssoc.RIGHT, parse_action))
+        elif ops[0].lhs_only:
+            def parse_action(string, location, result, op_map={o.op: o for o in ops}):
+                assert len(result) == 1, result
+                result = result[0]
+                assert len(result) == 2, result
+                return op_map[result[0]](result[1])
+            operators_config.append((parser, 1, opAssoc.LEFT, parse_action))
         else:
             def parse_action(string, location, result, op_map={o.op: o for o in ops}):
                 assert len(result) == 1, result

@@ -61,6 +61,8 @@ config = [
     PFunction(IDs.ACOSH, 'arccosh'),
     PFunction(IDs.TANH, 'tanh'),
     PFunction(IDs.ATANH, 'arctanh'),
+
+    POperator(IDs.SQUARE, '**2', lhs_only=True),
 ]
 
 

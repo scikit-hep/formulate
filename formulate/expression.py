@@ -250,7 +250,10 @@ class Expression(ExpressionComponent):
 
     @add_logging(ignore_args=[1, 2])
     def to_string(self, config, constants):
-        return config[self.id].to_string(self, config, constants)
+        try:
+            return config[self.id].to_string(self, config, constants)
+        except KeyError:
+            raise NotImplementedError('No known conversion for: '+str(self))
 
 
 class Variable(SingleComponent):
@@ -293,4 +296,4 @@ class Constant(SingleComponent):
         try:
             return str(constants[self.id].value)
         except KeyError:
-            raise NotImplementedError('No known conversion for: '+str(self))
+            raise NotImplementedError('No known conversion for constant: '+str(self))

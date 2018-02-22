@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import print_function
 
 import pytest
-import numpy as np
 
 from formulate import from_numexpr, to_numexpr
 from formulate import from_root, to_root
