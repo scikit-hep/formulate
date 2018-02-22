@@ -33,7 +33,7 @@ setup(name='formulate',
       license='BSD 3-clause',
       test_suite='tests',
       install_requires=['numpy', 'pyparsing', 'colorlog', 'aenum', 'scipy'] +
-                       ['qualname'] if sys.version_info < (3, 3) else [],
+                       (['qualname'] if sys.version_info < (3, 3) else []),
       setup_requires=['pytest-runner'],
       tests_require=['pytest'],
       classifiers=[
