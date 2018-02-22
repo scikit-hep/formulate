@@ -96,8 +96,15 @@ order_of_operations = [
 
 
 class ConstantIDs(Enum):
+    """Identifiers for constants
+
+     - CGS => Use cm, g & s for units
+     - ERR => Uncertainty on quantity
+    """
     TRUE = auto()
     FALSE = auto()
+    INFINITY = auto()
+    NAN = auto()
 
     SQRT2 = auto()
     E = auto()
@@ -108,56 +115,38 @@ class ConstantIDs(Enum):
     TAU = auto()
     LN10 = auto()
     LOG10E = auto()
-
-    C = auto()
-    H = auto()
-    HBAR = auto()
-    K = auto()
-    R = auto()
-    G = auto()
-
     DEG2RAD = auto()
     RAD2DEG = auto()
 
-
-# C('sqrt2'): C(math.sqrt(2)),
-# C('e'): C(math.e),
-# C('pi'): C(math.pi),
-# C('ln10'): C(math.log(10)),
-# F('TMath::C()'): C(sc.speed_of_light),
-# F('TMath::Ccgs()'): C(100 * sc.speed_of_light),
-# F('TMath::DegToRad()'): C(math.pi/180),
-# F('TMath::E()'): C(math.e),
-# F('TMath::G()'): C(sc.gravitational_constant),
-# F('TMath::H()'): C(sc.Planck),
-# F('TMath::HC()'): C(sc.Planck * sc.speed_of_light),
-# F('TMath::HCcgs()'): C(100*sc.Planck * 100*sc.speed_of_light),
-# F('TMath::Hbar()'): C(sc.Planck/(2*math.pi)),
-# F('TMath::Hbarcgs()'): C(100 * sc.Planck/(2*math.pi)),
-# F('TMath::Hcgs()'): C(1.0e7 * sc.Planck),
-# F('TMath::InvPi()'): C(1/math.pi),
-# F('TMath::K()'): C(sc.Boltzmann),
-# F('TMath::Kcgs()'): C(1.0e7 * sc.Boltzmann),
-# F('TMath::Ln10()'): C(math.log(10)),
-# F('TMath::LogE()'): C(math.log10(math.e)),
-# F('TMath::Na()'): C(sc.Avogadro),
-# F('TMath::Pi()'): C(math.pi),
-# F('TMath::PiOver2()'): C(math.pi/2),
-# F('TMath::PiOver4()'): C(math.pi/4),
-# F('TMath::Qe()'): C(sc.elementary_charge),
-# F('TMath::R()'): C(sc.gas_constant),
-# F('TMath::RadToDeg()'): C(180/math.pi),
-# F('TMath::Sqrt2()'): C(math.sqrt(2)),
-# F('TMath::TwoPi()'): C(2*math.pi),
-# # Uncertainties
-# F('TMath::CUncertainty()'): C(0),
-# F('TMath::GUncertainty()'): None,
-# F('TMath::GhbarCUncertainty()'): None,
-# F('TMath::GnUncertainty()'): C(0),
-# F('TMath::HUncertainty()'): None,
-# F('TMath::HbarUncertainty()'): None,
-# F('TMath::KUncertainty()'): None,
-# F('TMath::NaUncertainty()'): None,
-# F('TMath::QeUncertainty()'): None,
-# F('TMath::RUncertainty()'): None,
-# F('TMath::SigmaUncertainty()'): None,
+    AVOGADRO = auto()
+    AVOGADRO_ERR = auto()
+    BOLTZMANN = auto()
+    BOLTZMANN_CGS = auto()
+    BOLTZMANN_ERR = auto()
+    C = auto()
+    C_CGS = auto()
+    C_ERR = auto()
+    DRY_AIR_GAS = auto()
+    ELEMENTARY_CHARGE = auto()
+    ELEMENTARY_CHARGE_ERR = auto()
+    EULER_MASCHERONI = auto()
+    G = auto()
+    G_CGS = auto()
+    G_ERR = auto()
+    G_OVER_HBARC = auto()
+    G_OVER_HBARC_ERR = auto()
+    GRAV_ACCEL = auto()
+    GRAV_ACCEL_ERR = auto()
+    H = auto()
+    H_CGS = auto()
+    H_ERR = auto()
+    HBAR = auto()
+    HBAR_CGS = auto()
+    HBAR_ERR = auto()
+    HxC = auto()
+    HxC_CGS = auto()
+    MOL_WEIGHT_DRY_AIR = auto()
+    STEFAN_BOLTZMANN = auto()
+    STEFAN_BOLTZMANN_ERR = auto()
+    UNIVERSAL_GAS = auto()
+    UNIVERSAL_GAS_ERR = auto()

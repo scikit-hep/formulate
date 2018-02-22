@@ -280,4 +280,7 @@ class Constant(SingleComponent):
 
     @add_logging(ignore_args=[1, 2])
     def to_string(self, config, constants):
-        return str(constants[self.id].value)
+        try:
+            return str(constants[self.id].value)
+        except KeyError:
+            raise NotImplementedError('No known conversion for: '+str(self))
