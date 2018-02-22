@@ -4,12 +4,13 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import sys
 
 from formulate import from_root, from_numexpr
 from formulate import to_root, to_numexpr
 
 
-def parse_args():
+def parse_args(args):
     parser = argparse.ArgumentParser(description='Convert between different types of formulae')
 
     from_group = parser.add_mutually_exclusive_group(required=True)
@@ -20,7 +21,7 @@ def parse_args():
     to_group.add_argument('--to-root', action='store_true')
     to_group.add_argument('--to-numexpr', action='store_true')
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     if args.from_root is not None:
         expression = from_root(args.from_root)
     elif args.from_numexpr is not None:
@@ -31,8 +32,8 @@ def parse_args():
     elif args.to_numexpr:
         result = to_numexpr(expression)
 
-    print(result)
+    return result
 
 
 if __name__ == '__main__':
-    parse_args()
+    print(parse_args(sys.argv[1:]))
