@@ -11,6 +11,6 @@ __all__ = [
 ]
 
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 version = __version__
 version_info = __version__.split('.')

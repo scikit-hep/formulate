@@ -5,7 +5,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os.path
-import sys
 
 from setuptools import find_packages
 from setuptools import setup
@@ -32,7 +31,7 @@ setup(name='formulate',
       download_url='https://github.com/scikit-hep/formulate/releases',
       license='BSD 3-clause',
       test_suite='tests',
-      install_requires=['numpy', 'pyparsing', 'colorlog', 'aenum', 'scipy'],
+      install_requires=['numpy', 'pyparsing>=2.1.9', 'colorlog', 'aenum', 'scipy'],
       setup_requires=['pytest-runner'],
       tests_require=['pytest'],
       classifiers=[
