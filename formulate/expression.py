@@ -10,7 +10,8 @@ from .logging import add_logging
 __all__ = [
     'ExpressionComponent',
     'SingleComponent',
-    'Constant',
+    'NamedConstant',
+    'UnamedConstant',
     'Expression',
     'Variable',
 ]
@@ -211,6 +212,7 @@ class SingleComponent(ExpressionComponent):
 
 class Expression(ExpressionComponent):
     def __init__(self, id, *args):
+        assert all(isinstance(arg, ExpressionComponent) for arg in args)
         self._id = id
         self._args = args
 
@@ -271,7 +273,7 @@ class Variable(SingleComponent):
         return self.name
 
 
-class Constant(SingleComponent):
+class NamedConstant(SingleComponent):
     def __init__(self, id):
         self._id = id
 
@@ -292,3 +294,24 @@ class Constant(SingleComponent):
             return str(constants[self.id].value)
         except KeyError:
             raise NotImplementedError('No known conversion for constant: '+str(self))
+
+
+class UnamedConstant(SingleComponent):
+    def __init__(self, value):
+        assert isinstance(value, str)
+        self._value = value
+
+    def __repr__(self):
+        return '{class_name}({value})'.format(
+            class_name=self.__class__.__name__, value=self.value)
+
+    def __str__(self):
+        return self.value
+
+    @property
+    def value(self):
+        return self._value
+
+    @add_logging(ignore_args=[1, 2])
+    def to_string(self, config, constants):
+        return str(self)

@@ -9,7 +9,7 @@ from collections import defaultdict
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
 
-from .expression import Expression, Variable, Constant, ExpressionComponent
+from .expression import Expression, Variable, NamedConstant, UnamedConstant, ExpressionComponent
 from .identifiers import order_of_operations
 from .logging import logger, add_logging
 
@@ -25,7 +25,7 @@ __all__ = [
 
 class PConstant(object):
     def __init__(self, id, value):
-        """Represents a constant
+        """Represents a named constant
 
         Parameters
         ----------
@@ -36,9 +36,9 @@ class PConstant(object):
 
         Examples
         --------
-        >>> str(Constant('sqrt2', 'TMath::Sqrt2()')())
+        >>> str(PConstant('sqrt2', 'TMath::Sqrt2()')())
         'TMath::Sqrt2()'
-        >>> str(Constant(ConstantIDS.SQRT2, 1.4142135624)())
+        >>> str(PConstant(ConstantIDS.SQRT2, 1.4142135624)())
         '1.4142135624'
         """
         self._id = id
@@ -46,7 +46,7 @@ class PConstant(object):
 
     @add_logging
     def __call__(self, string, location, result):
-        return Constant(self.id)
+        return NamedConstant(self.id)
 
     @property
     def id(self):
@@ -59,7 +59,7 @@ class PConstant(object):
     def get_parser(self, EXPRESSION):
         if isinstance(self.value, str):
             result = Suppress(self.value)
-            result.setName('Constant({value})'.format(value=self.value))
+            result.setName('NamedConstant({value})'.format(value=self.value))
             result.setParseAction(self)
             return result
         else:
@@ -252,7 +252,8 @@ class Parser(object):
 
     def to_string(self, expression):
         if not isinstance(expression, ExpressionComponent):
-            raise ValueError('Can only convert ExpressionComponent objects to strings but '+str(type(expression))+' was passed')
+            raise ValueError('Can only convert ExpressionComponent objects to strings but ' +
+                             str(type(expression)) + ' was passed')
 
         result = expression.to_string(
             {x.id: x for x in self._config},
@@ -274,10 +275,13 @@ def create_parser(config, constants):
     VARIABLE.setName('Variable')
     VARIABLE.setParseAction(add_logging(lambda string, location, result: Variable(result[0])))
 
-    NUMBER = pyparsing.Or([
-        pyparsing_common.number,
-        pyparsing_common.sci_real
-    ])
+    REAL = pyparsing_common.real
+    REAL.setParseAction(add_logging(lambda string, location, result: UnamedConstant(result[0])))
+    SCI_REAL = pyparsing_common.sci_real
+    SCI_REAL.setParseAction(add_logging(lambda string, location, result: UnamedConstant(result[0])))
+    SIGNED_INTEGER = pyparsing_common.signed_integer
+    SIGNED_INTEGER.setParseAction(add_logging(lambda string, location, result: UnamedConstant(result[0])))
+    NUMBER = pyparsing.Or([REAL, SCI_REAL, SIGNED_INTEGER])
 
     COMPONENT = pyparsing.Or(
         [f.get_parser(EXPRESSION) for f in config if isinstance(f, PFunction)] +
