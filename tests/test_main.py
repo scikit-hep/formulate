@@ -44,7 +44,7 @@ def test_get_unnamed_constants():
     assert result == ''
 
     result = parse_args(['--from-numexpr', '(A & B) | sqrt(A) + 5.4**3.141592', '--unnamed-constants'])
-    assert result == '5.4\n3.141592'
+    assert result == '3.141592\n5.4'
     result = parse_args(['--from-root', '(A && B) || TMath::Sqrt(A) + 5.4**pi', '--unnamed-constants'])
     assert result == '5.4'
 

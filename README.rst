@@ -55,8 +55,8 @@ Command line usage
     PI
 
     $ python -m formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e**1.2 + 5*pi' --unnamed-constants
-    1.23
     1.2
+    1.23
     5
 
 API

@@ -37,11 +37,11 @@ def parse_args(args):
     elif args.to_numexpr:
         result = to_numexpr(expression)
     elif args.variables:
-        result = '\n'.join(expression.variables)
+        result = '\n'.join(sorted(expression.variables))
     elif args.named_constants:
-        result = '\n'.join(expression.named_constants)
+        result = '\n'.join(sorted(expression.named_constants))
     elif args.unnamed_constants:
-        result = '\n'.join(expression.unnamed_constants)
+        result = '\n'.join(sorted(expression.unnamed_constants))
     else:
         raise NotImplementedError()
 
