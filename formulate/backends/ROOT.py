@@ -20,6 +20,9 @@ config = [
     POperator(IDs.MUL, '*'),
     POperator(IDs.DIV, '/'),
     POperator(IDs.MOD, '%'),
+    POperator(IDs.POW, '**'),
+    POperator(IDs.LSHIFT, '<<'),
+    POperator(IDs.RSHIFT, '>>'),
 
     POperator(IDs.EQ, '=='),
     POperator(IDs.NEQ, '!='),
@@ -30,6 +33,7 @@ config = [
 
     POperator(IDs.AND, '&&'),
     POperator(IDs.OR, '||'),
+    POperator(IDs.XOR, '^'),
     POperator(IDs.NOT, '!', rhs_only=True),
 
     PFunction(IDs.SQRT, 'sqrt'),

@@ -142,7 +142,7 @@ order_of_operations = [
     [IDs.MINUS, IDs.PLUS],
     [IDs.NOT],
     # Extra
-    [IDs.SQUARE],
+    [IDs.POW, IDs.SQUARE],
     # 5
     [IDs.MUL, IDs.DIV, IDs.MOD],
     # 6
