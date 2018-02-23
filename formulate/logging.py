@@ -47,7 +47,7 @@ def add_logging(*args, **kwargs):
             try:
                 func_name = func.__qualname__
             except AttributeError:
-                # Python 2 doesn't have __qualname__
+                # Python < 3.3 doesn't have __qualname__
                 func_name = func.__name__
             # Don't log arguments which should be ignored
             _args = [a for i, a in enumerate(args) if ignore_args and i not in ignore_args]

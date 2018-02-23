@@ -43,6 +43,22 @@ Command line usage
     $ python -m formulate --from-root '(A && B) || TMath::Sqrt(A)' --to-numexpr
     (A & B) | sqrt(A)
 
+    $ python -m formulate --from-numexpr '(A & B) | sqrt(A)' --to-root
+    (A && B) || TMath::Sqrt(A)
+
+    $ python -m formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e**1.2 + 5*pi' --variables
+    A
+    B
+
+    $ python -m formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e**1.2 + 5*pi' --named-constants
+    E
+    PI
+
+    $ python -m formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e**1.2 + 5*pi' --unnamed-constants
+    1.2
+    1.23
+    5
+
 API
 """
 

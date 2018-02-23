@@ -1,11 +1,11 @@
-# Licensed under a 3-clause BSD style license, see LICENSE.n# This file is automatically created by "make root_test"
+# Licensed under a 3-clause BSD style license, see LICENSE.
+# This file is automatically created by "make root_test"
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numbers
-
 from formulate import Expression, Variable
+from formulate import UnnamedConstant as UC
 from formulate import from_root, to_root
 from formulate.identifiers import IDs
 
@@ -20,7 +20,7 @@ def _create_test_type(name, A, B, C, D):
 
     class NewTestClass(object):
         def test_basic_math(self):
-            if isinstance(A, numbers.Number):
+            if isinstance(A, UC):
                 # TODO
                 pass
             else:
@@ -66,7 +66,7 @@ def _create_test_type(name, A, B, C, D):
             check_result(' + TMath::ATan2({A}, {B})', Expression(IDs.PLUS, Expression(IDs.ATAN2, A, B)), **kwargs)
 
         def test_math_with_functions(self):
-            if isinstance(A, numbers.Number):
+            if isinstance(A, UC):
                 # TODO
                 pass
             else:
@@ -93,16 +93,16 @@ def _create_test_type(name, A, B, C, D):
     return NewTestClass
 
 
-TestPosInts = _create_test_type('TestPosInts', 1, 2, 3, 4)
-TestNegInts = _create_test_type('TestNegInts', -1, -2, -3, -4)
-TestMixInts = _create_test_type('TestMixInts', 1, -2, 3, -4)
+TestPosInts = _create_test_type('TestPosInts', UC('1'), UC('2'), UC('3'), UC('4'))
+TestNegInts = _create_test_type('TestNegInts', UC('-1'), UC('-2'), UC('-3'), UC('-4'))
+TestMixInts = _create_test_type('TestMixInts', UC('1'), UC('-2'), UC('3'), UC('-4'))
 
-TestPosFloats = _create_test_type('TestPosFloats', 1.2, 3.4, 4.5, 6.7)
-TestNegFloats = _create_test_type('TestNegFloats', -1.2, -3.4, -4.5, -6.7)
-TestMixFloats = _create_test_type('TestMixFloats', 1.2, -3.4, 4.5, -6.7)
+TestPosFloats = _create_test_type('TestPosFloats', UC('1.2'), UC('3.4'), UC('4.5'), UC('6.7'))
+TestNegFloats = _create_test_type('TestNegFloats', UC('-1.2'), UC('-3.4'), UC('-4.5'), UC('-6.7'))
+TestMixFloats = _create_test_type('TestMixFloats', UC('1.2'), UC('-3.4'), UC('4.5'), UC('-6.7'))
 
-TestPosScientific = _create_test_type('TestPosScientific', 1e-2, 3.4e5, 6.7e8, 9e10)
-TestNegScientific = _create_test_type('TestNegScientific', -1e-2, -3.4e5, -6.7e8, -9e10)
-TestMixScientific = _create_test_type('TestMixScientific', 1e-2, -3.4e5, 6.7e8, -9e10)
+TestPosScientific = _create_test_type('TestPosScientific', UC('1e-2'), UC('3.4e5'), UC('6.7e8'), UC('9e10'))
+TestNegScientific = _create_test_type('TestNegScientific', UC('-1e-2'), UC('-3.4e5'), UC('-6.7e8'), UC('-9e10'))
+TestMixScientific = _create_test_type('TestMixScientific', UC('1e-2'), UC('-3.4e5'), UC('6.7e8'), UC('-9e10'))
 
 TestVariables = _create_test_type('TestVariables', Variable('A'), Variable('Bee'), Variable('C_is_4'), Variable('_Dxyz'))

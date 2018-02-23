@@ -3,7 +3,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from formulate import ExpressionComponent, Expression, Variable, Constant
+import pytest
+
+from formulate import ExpressionComponent, Expression, Variable, NamedConstant, UnnamedConstant
 
 
 def make_check_result(from_func, to_func):
@@ -25,9 +27,12 @@ def make_check_result(from_func, to_func):
 def assert_equal_expressions(lhs, rhs):
     assert isinstance(lhs, ExpressionComponent)
     assert isinstance(rhs, ExpressionComponent)
-    if isinstance(lhs, Constant):
-        assert isinstance(rhs, Constant)
+    if isinstance(lhs, NamedConstant):
+        assert isinstance(rhs, NamedConstant)
         assert lhs.id == rhs.id
+    elif isinstance(lhs, UnnamedConstant):
+        assert isinstance(rhs, UnnamedConstant)
+        assert pytest.approx(float(lhs.value), float(rhs.value))
     elif isinstance(lhs, Variable):
         assert isinstance(rhs, Variable)
         assert lhs.name == rhs.name
