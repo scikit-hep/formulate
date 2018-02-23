@@ -51,9 +51,9 @@ def add_logging(*args, **kwargs):
                 try:
                     from qualname import qualname
                 except ImportError:
-                    func_name = qualname(func)
-                else:
                     func_name = func.__name__
+                else:
+                    func_name = qualname(func)
             # Don't log arguments which should be ignored
             _args = [a for i, a in enumerate(args) if ignore_args and i not in ignore_args]
             _kwargs = {k: v for k, v in kwargs.items() if ignore_kwargs and k not in ignore_kwargs}

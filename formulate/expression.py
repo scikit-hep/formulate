@@ -222,9 +222,9 @@ class Expression(ExpressionComponent):
             try:
                 from qualname import qualname
             except ImportError:
-                class_name = qualname(self.__class__)
-            else:
                 class_name = self.__class__.__name__
+            else:
+                class_name = qualname(self.__class__)
 
         return '{class_name}<{id_name}>({args})'.format(
             class_name=class_name, id_name=self.id.name,
