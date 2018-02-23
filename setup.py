@@ -32,8 +32,7 @@ setup(name='formulate',
       download_url='https://github.com/scikit-hep/formulate/releases',
       license='BSD 3-clause',
       test_suite='tests',
-      install_requires=['numpy', 'pyparsing', 'colorlog', 'aenum', 'scipy'] +
-                       (['qualname'] if sys.version_info < (3, 3) else []),
+      install_requires=['numpy', 'pyparsing', 'colorlog', 'aenum', 'scipy'],
       setup_requires=['pytest-runner'],
       tests_require=['pytest'],
       classifiers=[
