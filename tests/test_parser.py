@@ -8,7 +8,7 @@ import sys
 import pytest
 
 from formulate import Expression, ParsingException
-from formulate import UnamedConstant as UC
+from formulate import UnnamedConstant as UC
 from formulate import from_numexpr, to_numexpr
 from formulate.identifiers import IDs
 

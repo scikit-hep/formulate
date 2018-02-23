@@ -4,7 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 from formulate import Expression, Variable
-from formulate import UnamedConstant as UC
+from formulate import UnnamedConstant as UC
 from formulate import from_numexpr, to_numexpr
 from formulate.identifiers import IDs
 

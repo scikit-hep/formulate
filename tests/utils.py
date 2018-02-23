@@ -5,7 +5,7 @@ from __future__ import print_function
 
 import pytest
 
-from formulate import ExpressionComponent, Expression, Variable, NamedConstant, UnamedConstant
+from formulate import ExpressionComponent, Expression, Variable, NamedConstant, UnnamedConstant
 
 
 def make_check_result(from_func, to_func):
@@ -30,8 +30,8 @@ def assert_equal_expressions(lhs, rhs):
     if isinstance(lhs, NamedConstant):
         assert isinstance(rhs, NamedConstant)
         assert lhs.id == rhs.id
-    elif isinstance(lhs, UnamedConstant):
-        assert isinstance(rhs, UnamedConstant)
+    elif isinstance(lhs, UnnamedConstant):
+        assert isinstance(rhs, UnnamedConstant)
         assert pytest.approx(float(lhs.value), float(rhs.value))
     elif isinstance(lhs, Variable):
         assert isinstance(rhs, Variable)

@@ -11,16 +11,13 @@ __all__ = [
     'ExpressionComponent',
     'SingleComponent',
     'NamedConstant',
-    'UnamedConstant',
+    'UnnamedConstant',
     'Expression',
     'Variable',
 ]
 
 
 class ExpressionComponent(object):
-    def n_variables(self):
-        raise NotImplementedError()
-
     # Binary arithmetic operators
     def __add__(self, value):
         return Expression(IDs.ADD, self, value)
@@ -230,6 +227,38 @@ class Expression(ExpressionComponent):
     def __str__(self):
         return repr(self)
 
+    def _search_for(self, class_to_find):
+        result = set()
+        components_to_check = [self]
+        while components_to_check:
+            current_component = components_to_check.pop()
+            if isinstance(current_component, Variable):
+                if class_to_find is Variable:
+                    result.add(str(current_component))
+            elif isinstance(current_component, NamedConstant):
+                if class_to_find is NamedConstant:
+                    result.add(str(current_component))
+            elif isinstance(current_component, UnnamedConstant):
+                if class_to_find is UnnamedConstant:
+                    result.add(str(current_component))
+            elif isinstance(current_component, Expression):
+                components_to_check.extend(current_component.args)
+            else:
+                raise ValueError('Unrecognised component "'+repr(current_component)+'" in expression')
+        return result
+
+    @property
+    def variables(self):
+        return self._search_for(Variable)
+
+    @property
+    def named_constants(self):
+        return self._search_for(NamedConstant)
+
+    @property
+    def unnamed_constants(self):
+        return self._search_for(UnnamedConstant)
+
     def equivilent(self, other):
         """Check if two expression objects are the same"""
         raise NotImplementedError()
@@ -265,6 +294,18 @@ class Variable(SingleComponent):
         return self.name
 
     @property
+    def variables(self):
+        return set([str(self)])
+
+    @property
+    def named_constants(self):
+        return set()
+
+    @property
+    def unnamed_constants(self):
+        return set()
+
+    @property
     def name(self):
         return self._name
 
@@ -285,6 +326,18 @@ class NamedConstant(SingleComponent):
         return self.id.name
 
     @property
+    def variables(self):
+        return set()
+
+    @property
+    def named_constants(self):
+        return set([str(self)])
+
+    @property
+    def unnamed_constants(self):
+        return set()
+
+    @property
     def id(self):
         return self._id
 
@@ -296,7 +349,7 @@ class NamedConstant(SingleComponent):
             raise NotImplementedError('No known conversion for constant: '+str(self))
 
 
-class UnamedConstant(SingleComponent):
+class UnnamedConstant(SingleComponent):
     def __init__(self, value):
         assert isinstance(value, str)
         self._value = value
@@ -307,6 +360,18 @@ class UnamedConstant(SingleComponent):
 
     def __str__(self):
         return self.value
+
+    @property
+    def variables(self):
+        return set()
+
+    @property
+    def named_constants(self):
+        return set()
+
+    @property
+    def unnamed_constants(self):
+        return set([str(self)])
 
     @property
     def value(self):

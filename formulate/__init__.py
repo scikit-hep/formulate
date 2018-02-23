@@ -7,7 +7,7 @@ from pyparsing import ParserElement
 
 from .backends import from_numexpr, to_numexpr
 from .backends import from_root, to_root
-from .expression import ExpressionComponent, SingleComponent, Expression, Variable, NamedConstant, UnamedConstant
+from .expression import ExpressionComponent, SingleComponent, Expression, Variable, NamedConstant, UnnamedConstant
 from .parser import ParsingException
 from .version import __version__
 
@@ -18,7 +18,7 @@ __all__ = [
     'Expression',
     'Variable',
     'NamedConstant',
-    'UnamedConstant',
+    'UnnamedConstant',
     'ParsingException',
     # numexpr
     'from_numexpr',

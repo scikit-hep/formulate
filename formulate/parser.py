@@ -9,7 +9,7 @@ from collections import defaultdict
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
 
-from .expression import Expression, Variable, NamedConstant, UnamedConstant, ExpressionComponent
+from .expression import Expression, Variable, NamedConstant, UnnamedConstant, ExpressionComponent
 from .identifiers import order_of_operations
 from .logging import logger, add_logging
 
@@ -276,11 +276,11 @@ def create_parser(config, constants):
     VARIABLE.setParseAction(add_logging(lambda string, location, result: Variable(result[0])))
 
     REAL = pyparsing_common.real
-    REAL.setParseAction(add_logging(lambda string, location, result: UnamedConstant(result[0])))
+    REAL.setParseAction(add_logging(lambda string, location, result: UnnamedConstant(result[0])))
     SCI_REAL = pyparsing_common.sci_real
-    SCI_REAL.setParseAction(add_logging(lambda string, location, result: UnamedConstant(result[0])))
+    SCI_REAL.setParseAction(add_logging(lambda string, location, result: UnnamedConstant(result[0])))
     SIGNED_INTEGER = pyparsing_common.signed_integer
-    SIGNED_INTEGER.setParseAction(add_logging(lambda string, location, result: UnamedConstant(result[0])))
+    SIGNED_INTEGER.setParseAction(add_logging(lambda string, location, result: UnnamedConstant(result[0])))
     NUMBER = pyparsing.Or([REAL, SCI_REAL, SIGNED_INTEGER])
 
     COMPONENT = pyparsing.Or(

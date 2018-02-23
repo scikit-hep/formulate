@@ -5,11 +5,69 @@ from __future__ import print_function
 
 import numpy as np
 
-from formulate import Expression
-from formulate import UnamedConstant as UC
-from formulate.identifiers import IDs
+from formulate import from_numexpr, from_root, Expression, Variable
+from formulate import NamedConstant as NC
+from formulate import UnnamedConstant as UC
+from formulate.identifiers import IDs, ConstantIDs
 
 from .utils import assert_equal_expressions as aee
+
+
+def test_get_variables():
+    assert from_root('pi').variables == set()
+    assert from_numexpr('2').variables == set()
+    assert from_numexpr('2e-3').variables == set()
+    assert from_numexpr('A').variables == set(['A'])
+    assert from_numexpr('A + A').variables == set(['A'])
+    assert from_numexpr('A + B').variables == set(['A', 'B'])
+    assert from_numexpr('A + A*A - 3e7').variables == set(['A'])
+    assert from_numexpr('arctan2(A, A)').variables == set(['A'])
+    assert from_numexpr('arctan2(A, B)').variables == set(['A', 'B'])
+    assert from_root('arctan2(A, pi)').variables == set(['A'])
+    assert from_numexpr('arctan2(arctan2(A, B), C)').variables == set(['A', 'B', 'C'])
+    for base, expect in [(UC('2'), set()), (Variable('A'), set(['A'])), (NC(ConstantIDs.PI), set())]:
+        expr = base
+        for i in list(range(100)):
+            expr = Expression(IDs.SQRT, expr)
+        assert expr.variables == expect
+
+
+def test_named_constants():
+    assert from_root('pi').named_constants == set(['PI'])
+    assert from_numexpr('2').named_constants == set()
+    assert from_numexpr('2e-3').named_constants == set()
+    assert from_numexpr('A').named_constants == set()
+    assert from_numexpr('A + A').named_constants == set()
+    assert from_numexpr('A + B').named_constants == set()
+    assert from_numexpr('A + A*A - 3e7').named_constants == set()
+    assert from_numexpr('arctan2(A, A)').named_constants == set()
+    assert from_numexpr('arctan2(A, B)').named_constants == set()
+    assert from_root('arctan2(A, pi)').named_constants == set(['PI'])
+    assert from_numexpr('arctan2(arctan2(A, B), C)').named_constants == set()
+    for base, expect in [(UC('2'), set()), (Variable('A'), set()), (NC(ConstantIDs.PI), set(['PI']))]:
+        expr = base
+        for i in list(range(100)):
+            expr = Expression(IDs.SQRT, expr)
+        assert expr.named_constants == expect
+
+
+def test_unnamed_constants():
+    assert from_root('pi').unnamed_constants == set()
+    assert from_numexpr('2').unnamed_constants == set(['2'])
+    assert from_numexpr('2e-3').unnamed_constants == set(['2e-3'])
+    assert from_numexpr('A').unnamed_constants == set()
+    assert from_numexpr('A + A').unnamed_constants == set()
+    assert from_numexpr('A + B').unnamed_constants == set()
+    assert from_numexpr('A + A*A - 3e7').unnamed_constants == set(['3e7'])
+    assert from_numexpr('arctan2(A, A)').unnamed_constants == set()
+    assert from_numexpr('arctan2(A, B)').unnamed_constants == set()
+    assert from_root('arctan2(A, pi)').unnamed_constants == set()
+    assert from_numexpr('arctan2(arctan2(A, B), C)').unnamed_constants == set()
+    for base, expect in [(UC('2'), set(['2'])), (Variable('A'), set()), (NC(ConstantIDs.PI), set())]:
+        expr = base
+        for i in list(range(100)):
+            expr = Expression(IDs.SQRT, expr)
+        assert expr.unnamed_constants == expect
 
 
 def test_addition():
