@@ -50,7 +50,7 @@ def test_long_alternating_chain():
             1: (' - ', IDs.SUB)
         }[i % 2]
         string += op_name + str(i)
-        expected = Expression(op_id, expected, i)
+        expected = Expression(op_id, expected, UC(str(i)))
     check_result(string, expected)
 
 
