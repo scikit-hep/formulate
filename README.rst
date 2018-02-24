@@ -14,7 +14,7 @@ style expressions.
 
 .. |Build Status| image:: https://travis-ci.org/chrisburr/formulate.svg?branch=master
    :target: https://travis-ci.org/chrisburr/formulate
-.. |Coverage Status| image:: https://coveralls.io/repos/github/chrisburr/formulate/badge.svg?branch=master
+.. |Coverage Status| image:: https://coveralls.io/repos/github/chrisburr/formulate/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/chrisburr/formulate?branch=master
 .. |PyPI| image:: https://badge.fury.io/py/formulate.svg
    :target: https://pypi.python.org/pypi/formulate/
