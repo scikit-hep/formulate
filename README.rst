@@ -66,8 +66,7 @@ The most basic usage involves calling ``from_$BACKEND`` and then ``to_$BACKEND``
     >>> import formulate
     >>> momentum = formulate.from_root('TMath::Sqrt(X_PX**2 + X_PY**2 + X_PZ**2)')
     >>> momentum
-    Expression<SQRT>(Expression<ADD>(Expression<POW>(Variable(X_PX), UnnamedConstant(2)), Expression<POW>(Variable(X_PY),
-    UnnamedConstant(2)), Expression<POW>(Variable(X_PZ), UnnamedConstant(2))))
+    Expression<SQRT>(Expression<ADD>(Expression<POW>(Variable(X_PX), UnnamedConstant(2)), Expression<POW>(Variable(X_PY), UnnamedConstant(2)), Expression<POW>(Variable(X_PZ), UnnamedConstant(2))))
     >>> momentum.to_numexpr()
     'sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2)))'
     >>> momentum.to_root()
