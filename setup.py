@@ -33,7 +33,7 @@ setup(name='formulate',
       test_suite='tests',
       install_requires=['numpy', 'pyparsing>=2.1.9', 'colorlog', 'aenum', 'scipy'],
       setup_requires=['pytest-runner'],
-      tests_require=['pytest'],
+      tests_require=['pytest', 'numexpr'],
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',
           'Intended Audience :: Developers',
