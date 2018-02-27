@@ -9,10 +9,10 @@ currently supports converting between
 `numexpr <https://numexpr.readthedocs.io/en/latest/user_guide.html>`__
 style expressions.
 
-.. |Build Status| image:: https://travis-ci.org/chrisburr/formulate.svg?branch=master
-   :target: https://travis-ci.org/chrisburr/formulate
-.. |Coverage Status| image:: https://coveralls.io/repos/github/chrisburr/formulate/badge.svg?branch=master&service=github
-   :target: https://coveralls.io/github/chrisburr/formulate?branch=master
+.. |Build Status| image:: https://travis-ci.org/scikit-hep/formulate.svg?branch=master
+   :target: https://travis-ci.org/scikit-hep/formulate
+.. |Coverage Status| image:: https://coveralls.io/repos/github/scikit-hep/formulate/badge.svg?branch=master&service=github
+   :target: https://coveralls.io/github/scikit-hep/formulate?branch=master
 .. |PyPI| image:: https://badge.fury.io/py/formulate.svg
    :target: https://pypi.python.org/pypi/formulate/
 
