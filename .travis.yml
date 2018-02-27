@@ -21,6 +21,7 @@ install:
   - pip install coveralls
   - pip install pytest
   - pip install pytest-cov
+  - pip install numexpr
   - pip install -e .
 
 script:

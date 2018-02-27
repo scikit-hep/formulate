@@ -35,7 +35,7 @@ setup(name='formulate',
       setup_requires=['pytest-runner'],
       tests_require=['pytest', 'numexpr'],
       classifiers=[
-          'Development Status :: 2 - Pre-Alpha',
+          'Development Status :: 3 - Alpha',
           'Intended Audience :: Developers',
           'Intended Audience :: Information Technology',
           'Intended Audience :: Science/Research',
