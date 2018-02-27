@@ -26,7 +26,7 @@ Install formulate like any other Python package:
 
     pip install --user formulate
 
-or similar (use ``sudo``, ``virtualenv``, or ``conda`` if you wish).
+or similar (use ```sudo``, ```virtualenv``, or ```conda``` if you wish).
 
 
 Usage
@@ -59,7 +59,7 @@ Command line usage
 API
 """
 
-The most basic usage involves calling `from_$BACKEND` and then `to_$BACKEND`, for example when starting with a ROOT style expression:
+The most basic usage involves calling ``from_$BACKEND`` and then ``to_$BACKEND``, for example when starting with a ROOT style expression:
 
 .. code-block:: python
 
@@ -73,7 +73,7 @@ The most basic usage involves calling `from_$BACKEND` and then `to_$BACKEND`, fo
     >>> momentum.to_root()
     'TMath::Sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2)))'
 
-Similarly, when starting with a `numexpr` style expression:
+Similarly, when starting with a ``numexpr`` style expression:
 
 .. code-block:: python
 
@@ -83,7 +83,7 @@ Similarly, when starting with a `numexpr` style expression:
     >>> my_selection.to_numexpr()
     '(X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10))'
 
-If the the type of expression isn't known in advance `formulate` can also auto detect it:
+If the the type of expression isn't known in advance ``formulate`` can also auto detect it:
 
 .. code-block:: python
 
@@ -94,10 +94,10 @@ If the the type of expression isn't known in advance `formulate` can also auto d
     'True + False'
 
 
-The `Expression` Object
-"""""""""""""""""""""""
+The ``Expression`` Object
+"""""""""""""""""""""""""
 
-When calling `from_*` the returned object is derived from `formulate.ExpressionComponent`. From this object you can inspect the expression to find it's dependencies:
+When calling ``from_*`` the returned object is derived from ``formulate.ExpressionComponent``. From this object you can inspect the expression to find it's dependencies:
 
 .. code-block:: python
 
@@ -109,14 +109,14 @@ When calling `from_*` the returned object is derived from `formulate.ExpressionC
     >>> my_check.unnamed_constants
     {'4', '9.2'}
 
-Additionally `ExpressionComponent` s can be combined using both operators and numpy functions:
+Additionally ``ExpressionComponent`` s can be combined using both operators and ``numpy`` functions:
 
 .. code-block:: python
 
-    >>> new_selection = (momentum > 100) and (my_check or (np.sqrt(my_sum) < 1))
+    >>> new_selection = (momentum > 100) and (my_check or (numpy.sqrt(my_sum) < 1))
     >>> new_selection.to_numexpr()
     'True & ((X_THETA * 0.017453292519943295) > (3.141592653589793 / 4)) & (D_PE > 9.2)'
 
-As the `==` operator returns a new expression, it can't be used to check for equality. Instead the `.equivalent` method should be used:
+As the ``==`` operator returns a new expression, it can't be used to check for equality. Instead the ``.equivalent`` method should be used:
 
-TODO: Implement this using `expression.equivalent`!
+**TODO: Implement this using** ``expression.equivalent`` **!**
