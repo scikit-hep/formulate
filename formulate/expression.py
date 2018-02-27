@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numbers
+
 from .identifiers import IDs
 from .logging import add_logging
 
@@ -18,6 +20,14 @@ __all__ = [
 
 
 class ExpressionComponent(object):
+    def to_numexpr(self, *args, **kwargs):
+        from .backends.numexpr import numexpr_parser
+        return numexpr_parser.to_string(self, *args, **kwargs)
+
+    def to_root(self, *args, **kwargs):
+        from .backends.ROOT import root_parser
+        return root_parser.to_string(self, *args, **kwargs)
+
     # Binary arithmetic operators
     def __add__(self, value):
         return Expression(IDs.ADD, self, value)
@@ -209,9 +219,18 @@ class SingleComponent(ExpressionComponent):
 
 class Expression(ExpressionComponent):
     def __init__(self, id, *args):
-        assert all(isinstance(arg, ExpressionComponent) for arg in args)
+        checked_args = []
+        for arg in args:
+            if isinstance(arg, numbers.Number):
+                checked_args.append(UnnamedConstant(str(arg)))
+            elif isinstance(arg, str):
+                checked_args.append(Variable(str(arg)))
+            elif isinstance(arg, ExpressionComponent):
+                checked_args.append(arg)
+            else:
+                raise ValueError(repr(arg)+' is not a valid type')
         self._id = id
-        self._args = args
+        self._args = checked_args
 
     def __repr__(self):
         try:
