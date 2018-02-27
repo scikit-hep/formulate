@@ -101,11 +101,11 @@ When calling ``from_*`` the returned object is derived from ``formulate.Expressi
 
 .. code-block:: python
 
-    >>> my_check = formulate.from_auto('true && (X_THETA*TMath::DegToRad() > pi/4) && D_PE > 9.2')
+    >>> my_check = formulate.from_auto('(X_THETA*TMath::DegToRad() > pi/4) && D_PE > 9.2')
     >>> my_check.variables
     {'D_PE', 'X_THETA'}
     >>> my_check.named_constants
-    {'DEG2RAD', 'PI', 'TRUE'}
+    {'DEG2RAD', 'PI'}
     >>> my_check.unnamed_constants
     {'4', '9.2'}
 
@@ -115,7 +115,7 @@ Additionally ``ExpressionComponent`` s can be combined using both operators and 
 
     >>> new_selection = (momentum > 100) and (my_check or (numpy.sqrt(my_sum) < 1))
     >>> new_selection.to_numexpr()
-    'True & ((X_THETA * 0.017453292519943295) > (3.141592653589793 / 4)) & (D_PE > 9.2)'
+    '((X_THETA * 0.017453292519943295) > (3.141592653589793 / 4)) & (D_PE > 9.2)'
 
 As the ``==`` operator returns a new expression, it can't be used to check for equality. Instead the ``.equivalent`` method should be used:
 
