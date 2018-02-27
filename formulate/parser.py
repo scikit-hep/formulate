@@ -204,10 +204,7 @@ class POperator(object):
     def to_string(self, expression, config, constants):
         args = []
         for arg in expression.args:
-            if isinstance(arg, Expression):
-                arg = arg.to_string(config, constants)
-            else:
-                arg = str(arg)
+            arg = arg.to_string(config, constants)
             args.append(arg)
 
         if self._rhs_only:
