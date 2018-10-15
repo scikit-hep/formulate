@@ -7,7 +7,7 @@ from __future__ import print_function
 from collections import defaultdict
 
 import pyparsing
-from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word
+from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word, delimitedList
 
 from .expression import Expression, Variable, NamedConstant, UnnamedConstant, ExpressionComponent
 from .identifiers import order_of_operations
@@ -268,7 +268,7 @@ class ParsingException(Exception):
 def create_parser(config, constants):
     EXPRESSION = pyparsing.Forward()
 
-    VARIABLE = Word(pyparsing.alphas+'_', pyparsing.alphanums+'_-')
+    VARIABLE = delimitedList(Word(pyparsing.alphas+'_', pyparsing.alphanums+'_-'), delim='.', combine=True)
     VARIABLE.setName('Variable')
     VARIABLE.setParseAction(add_logging(lambda string, location, result: Variable(result[0])))
 
