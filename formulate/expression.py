@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import numbers
+import sys
 
 from .identifiers import IDs
 from .logging import add_logging
@@ -49,11 +50,16 @@ class ExpressionComponent(object):
 
     def __truediv__(self, value):
         # TODO Is this correct for both Python 2 and 3?
-        raise NotImplementedError()
+        if sys.version_info.major<3:
+            raise NotImplementedError()
+        return Expression(IDs.DIV, self, value)
+
 
     def __rtruediv__(self, value):
         # TODO Is this correct for both Python 2 and 3?
-        raise NotImplementedError()
+        if sys.version_info.major < 3:
+            raise NotImplementedError()
+        return Expression(IDs.DIV, value, self)
 
     def __floordiv__(self, value):
         # TODO Is this correct for both Python 2 and 3?
