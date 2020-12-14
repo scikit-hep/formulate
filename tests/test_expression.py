@@ -1,15 +1,13 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+
+import sys
 
 import numpy as np
+import pytest
 
-from formulate import from_numexpr, from_root, Expression, Variable
-from formulate import NamedConstant as NC
-from formulate import UnnamedConstant as UC
+from formulate import from_numexpr, from_root, Expression, Variable, NamedConstant as NC, UnnamedConstant as UC
 from formulate.identifiers import IDs, ConstantIDs
-
 from .utils import assert_equal_expressions as aee
 
 
@@ -116,11 +114,19 @@ def test_multiplication():
         Expression(IDs.MUL, Expression(IDs.SQRT, UC('2')), Expression(IDs.SQRT, UC('3'))))
 
 
-# TODO Handle division
+@pytest.mark.skipif(sys.version_info.major < 3, reason="Python < 3 not supported for division.")
+def test_division():
+    aee(Expression(IDs.SQRT, UC('2')) / Expression(IDs.SQRT, UC('3')),
+        Expression(IDs.DIV, Expression(IDs.SQRT, UC('2')), Expression(IDs.SQRT, UC('3'))))
+    expression = Expression(IDs.SQRT, UC('2'))
+    expression /= Expression(IDs.SQRT, UC('3'))
+    aee(expression, Expression(IDs.DIV, Expression(IDs.SQRT, UC('2')), Expression(IDs.SQRT, UC('3'))))
+    aee(np.divide(Expression(IDs.SQRT, UC('2')), Expression(IDs.SQRT, UC('3'))),
+        Expression(IDs.DIV, Expression(IDs.SQRT, UC('2')), Expression(IDs.SQRT, UC('3'))))
 
 
 def test_power():
-    aee(Expression(IDs.SQRT, UC('2'))**Expression(IDs.SQRT, UC('3')),
+    aee(Expression(IDs.SQRT, UC('2')) ** Expression(IDs.SQRT, UC('3')),
         Expression(IDs.POW, Expression(IDs.SQRT, UC('2')), Expression(IDs.SQRT, UC('3'))))
     expression = Expression(IDs.SQRT, UC('2'))
     expression **= Expression(IDs.SQRT, UC('3'))
