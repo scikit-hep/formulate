@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # Licensed under a 3-clause BSD style license, see LICENSE.
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import os.path
 
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 def get_version():
@@ -31,6 +28,7 @@ setup(name='formulate',
       download_url='https://github.com/scikit-hep/formulate/releases',
       license='BSD 3-clause',
       test_suite='tests',
+      python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3, !=3.4, !=3.5, <4',
       install_requires=['numpy', 'pyparsing>=2.1.9', 'colorlog', 'aenum', 'scipy'],
       setup_requires=['pytest-runner'],
       tests_require=['pytest', 'numexpr'],
@@ -46,16 +44,16 @@ setup(name='formulate',
           'Operating System :: Unix',
           'Programming Language :: Python',
           'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3.4',
-          'Programming Language :: Python :: 3.5',
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
           'Topic :: Scientific/Engineering',
           'Topic :: Scientific/Engineering :: Information Analysis',
           'Topic :: Scientific/Engineering :: Mathematics',
           'Topic :: Scientific/Engineering :: Physics',
           'Topic :: Software Development',
           'Topic :: Utilities',
-          ],
+      ],
       platforms='Any',
       )
