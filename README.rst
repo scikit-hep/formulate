@@ -1,7 +1,7 @@
 Formulate
 =========
 
-|Build Status| |Coverage Status| |PyPI|
+|Build Status| |Coverage Status| |PyPI| |Scikit-HEP Project|
 
 Easy conversions between different styles of expressions. Formulate
 currently supports converting between
@@ -9,13 +9,14 @@ currently supports converting between
 `numexpr <https://numexpr.readthedocs.io/en/latest/user_guide.html>`__
 style expressions.
 
-.. |Build Status| image:: https://travis-ci.org/scikit-hep/formulate.svg?branch=master
-   :target: https://travis-ci.org/scikit-hep/formulate
+.. |Build Status| image:: https://github.com/scikit-hep/formulate/workflows/Python%20package/badge.svg
+   :target: https://github.com/scikit-hep/formulate/actions
 .. |Coverage Status| image:: https://coveralls.io/repos/github/scikit-hep/formulate/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/scikit-hep/formulate?branch=master
 .. |PyPI| image:: https://badge.fury.io/py/formulate.svg
    :target: https://pypi.python.org/pypi/formulate/
-
+.. |Scikit-HEP Project| image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
+   :target: https://scikit-hep.org
 
 Installation
 ------------
