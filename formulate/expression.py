@@ -1,13 +1,11 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import numbers
+import sys
 
 from .identifiers import IDs
 from .logging import add_logging
-
 
 __all__ = [
     'ExpressionComponent',
@@ -48,12 +46,14 @@ class ExpressionComponent(object):
         return Expression(IDs.MUL, value, self)
 
     def __truediv__(self, value):
-        # TODO Is this correct for both Python 2 and 3?
-        raise NotImplementedError()
+        if sys.version_info.major < 3:
+            raise NotImplementedError()
+        return Expression(IDs.DIV, self, value)
 
     def __rtruediv__(self, value):
-        # TODO Is this correct for both Python 2 and 3?
-        raise NotImplementedError()
+        if sys.version_info.major < 3:
+            raise NotImplementedError()
+        return Expression(IDs.DIV, value, self)
 
     def __floordiv__(self, value):
         # TODO Is this correct for both Python 2 and 3?
@@ -228,7 +228,7 @@ class Expression(ExpressionComponent):
             elif isinstance(arg, ExpressionComponent):
                 checked_args.append(arg)
             else:
-                raise ValueError(repr(arg)+' is not a valid type')
+                raise ValueError(repr(arg) + ' is not a valid type')
         self._id = id
         self._args = checked_args
 
@@ -263,7 +263,7 @@ class Expression(ExpressionComponent):
             elif isinstance(current_component, Expression):
                 components_to_check.extend(current_component.args)
             else:
-                raise ValueError('Unrecognised component "'+repr(current_component)+'" in expression')
+                raise ValueError('Unrecognised component "' + repr(current_component) + '" in expression')
         return result
 
     @property
@@ -298,7 +298,7 @@ class Expression(ExpressionComponent):
         try:
             return config[self.id].to_string(self, config, constants)
         except KeyError:
-            raise NotImplementedError('No known conversion for: '+str(self))
+            raise NotImplementedError('No known conversion for: ' + str(self))
 
 
 class Variable(SingleComponent):
@@ -365,7 +365,7 @@ class NamedConstant(SingleComponent):
         try:
             return str(constants[self.id].value)
         except KeyError:
-            raise NotImplementedError('No known conversion for constant: '+str(self))
+            raise NotImplementedError('No known conversion for constant: ' + str(self))
 
 
 class UnnamedConstant(SingleComponent):
