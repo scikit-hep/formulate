@@ -1,0 +1,62 @@
+name: Python package
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+        - 3.6
+        - 3.7
+        - 3.8
+        - 3.9
+    name: Tests for Python ${{ matrix.python-version }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+        activate-environment: formulate-env
+
+    - name: Install ROOT
+      run: |
+        conda config --add channels conda-forge
+        conda config --set channel_priority strict
+        conda install root -y
+
+    - name: Install test dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install coveralls
+        pip install pytest-cov
+        pip install -e .[dev,test]
+    - name: Test with pytest
+      run: |
+        pytest --cov=formulate --verbose --run-slow
+
+  dist:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install wheel and sdist requirements
+      run: python -m pip install "build"
+
+    - name: Build sdist and wheel
+      run: python -m build
+
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist
+
+    - uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
