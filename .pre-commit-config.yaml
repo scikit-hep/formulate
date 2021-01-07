@@ -2,17 +2,17 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.4.0
     hooks:
-    - id: check-added-large-files
-    - id: check-case-conflict
-    - id: check-merge-conflict
-    - id: check-symlinks
-    - id: check-yaml
-    - id: debug-statements
-    - id: end-of-file-fixer
-    - id: mixed-line-ending
-    - id: requirements-txt-fixer
-    - id: trailing-whitespace
-    - id: fix-encoding-pragma
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+      - id: fix-encoding-pragma
 
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.46"
