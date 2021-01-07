@@ -23,18 +23,22 @@ jobs:
 
     - name: Install ROOT
       run: |
+        conda activate formulate-env
         conda config --add channels conda-forge
         conda config --set channel_priority strict
         conda install root -y
 
     - name: Install test dependencies
       run: |
+        conda activate formulate-env
         python -m pip install --upgrade pip
         pip install coveralls
         pip install pytest-cov
         pip install -e .[dev,test]
+
     - name: Test with pytest
       run: |
+        conda activate formulate-env
         pytest --cov=formulate --verbose --run-slow
 
   dist:
