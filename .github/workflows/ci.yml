@@ -1,6 +1,13 @@
-name: Python package
+name: unittests
 
-on: [ push, pull_request ]
+on:
+  push:
+    tags:
+      - "*"
+    branches:
+      - master
+      - "ci/*"
+  pull_request:
 
 jobs:
   unittests:
@@ -22,13 +29,14 @@ jobs:
         with:
           miniforge-variant: Mambaforge
           use-mamba: true
+          mamba-version: "*"
+          channels: conda-forge,defaults
+          channel-priority: true
           python-version: ${{ matrix.python-version }}
           activate-environment: formulate-env
 
       - name: Install ROOT
         run: |
-          conda config --add channels conda-forge
-          conda config --set channel_priority strict
           conda install root -y
 
       - name: Install test dependencies
