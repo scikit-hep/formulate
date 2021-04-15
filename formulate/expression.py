@@ -314,7 +314,7 @@ class Variable(SingleComponent):
 
     @property
     def variables(self):
-        return set([str(self)])
+        return {str(self)}
 
     @property
     def named_constants(self):
@@ -350,7 +350,7 @@ class NamedConstant(SingleComponent):
 
     @property
     def named_constants(self):
-        return set([str(self)])
+        return {str(self)}
 
     @property
     def unnamed_constants(self):
@@ -390,7 +390,7 @@ class UnnamedConstant(SingleComponent):
 
     @property
     def unnamed_constants(self):
-        return set([str(self)])
+        return {str(self)}
 
     @property
     def value(self):
