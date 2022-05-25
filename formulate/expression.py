@@ -1,6 +1,4 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
-from __future__ import absolute_import, division, print_function
-
 import numbers
 import sys
 
@@ -8,22 +6,24 @@ from .identifiers import IDs
 from .logging import add_logging
 
 __all__ = [
-    'ExpressionComponent',
-    'SingleComponent',
-    'NamedConstant',
-    'UnnamedConstant',
-    'Expression',
-    'Variable',
+    "ExpressionComponent",
+    "SingleComponent",
+    "NamedConstant",
+    "UnnamedConstant",
+    "Expression",
+    "Variable",
 ]
 
 
-class ExpressionComponent(object):
+class ExpressionComponent:
     def to_numexpr(self, *args, **kwargs):
         from .backends.numexpr import numexpr_parser
+
         return numexpr_parser.to_string(self, *args, **kwargs)
 
     def to_root(self, *args, **kwargs):
         from .backends.ROOT import root_parser
+
         return root_parser.to_string(self, *args, **kwargs)
 
     # Binary arithmetic operators
@@ -228,7 +228,7 @@ class Expression(ExpressionComponent):
             elif isinstance(arg, ExpressionComponent):
                 checked_args.append(arg)
             else:
-                raise ValueError(repr(arg) + ' is not a valid type')
+                raise ValueError(f"{repr(arg)} is not a valid type")
         self._id = id
         self._args = checked_args
 
@@ -239,9 +239,7 @@ class Expression(ExpressionComponent):
             # Python < 3.3 doesn't have __qualname__
             class_name = self.__class__.__name__
 
-        return '{class_name}<{id_name}>({args})'.format(
-            class_name=class_name, id_name=self.id.name,
-            args=", ".join(map(repr, self.args)))
+        return f'{class_name}<{self.id.name}>({", ".join(map(repr, self.args))})'
 
     def __str__(self):
         return repr(self)
@@ -263,7 +261,11 @@ class Expression(ExpressionComponent):
             elif isinstance(current_component, Expression):
                 components_to_check.extend(current_component.args)
             else:
-                raise ValueError('Unrecognised component "' + repr(current_component) + '" in expression')
+                raise ValueError(
+                    'Unrecognised component "'
+                    + repr(current_component)
+                    + '" in expression'
+                )
         return result
 
     @property
@@ -278,8 +280,9 @@ class Expression(ExpressionComponent):
     def unnamed_constants(self):
         return self._search_for(UnnamedConstant)
 
+    # TODO: fix this name and method!
     def equivilent(self, other):
-        """Check if two expression objects are the same"""
+        """Check if two expression objects are the same."""
         raise NotImplementedError()
         if isinstance(other, self.__class__):
             return self.id == other.id and self._args == other._args
@@ -298,7 +301,7 @@ class Expression(ExpressionComponent):
         try:
             return config[self.id].to_string(self, config, constants)
         except KeyError:
-            raise NotImplementedError('No known conversion for: ' + str(self))
+            raise NotImplementedError(f"No known conversion for: {self}")
 
 
 class Variable(SingleComponent):
@@ -306,8 +309,7 @@ class Variable(SingleComponent):
         self._name = name
 
     def __repr__(self):
-        return '{class_name}({name})'.format(
-            class_name=self.__class__.__name__, name=self.name)
+        return f"{self.__class__.__name__}({self.name})"
 
     def __str__(self):
         return self.name
@@ -338,8 +340,9 @@ class NamedConstant(SingleComponent):
         self._id = id
 
     def __repr__(self):
-        return '{class_name}({id})'.format(
-            class_name=self.__class__.__name__, id=self.id)
+        return "{class_name}({id})".format(
+            class_name=self.__class__.__name__, id=self.id
+        )
 
     def __str__(self):
         return self.id.name
@@ -365,7 +368,7 @@ class NamedConstant(SingleComponent):
         try:
             return str(constants[self.id].value)
         except KeyError:
-            raise NotImplementedError('No known conversion for constant: ' + str(self))
+            raise NotImplementedError(f"No known conversion for constant: {self}")
 
 
 class UnnamedConstant(SingleComponent):
@@ -374,8 +377,7 @@ class UnnamedConstant(SingleComponent):
         self._value = value
 
     def __repr__(self):
-        return '{class_name}({value})'.format(
-            class_name=self.__class__.__name__, value=self.value)
+        return f"{self.__class__.__name__}({self.value})"
 
     def __str__(self):
         return self.value

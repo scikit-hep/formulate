@@ -1,31 +1,32 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license, see LICENSE.
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 from collections import defaultdict
 
 import pyparsing
 from pyparsing import Literal, Suppress, pyparsing_common, opAssoc, Word, delimitedList
 
-from .expression import Expression, Variable, NamedConstant, UnnamedConstant, ExpressionComponent
+from .expression import (
+    Expression,
+    Variable,
+    NamedConstant,
+    UnnamedConstant,
+    ExpressionComponent,
+)
 from .identifiers import order_of_operations
 from .logging import logger, add_logging
 
 
 __all__ = [
-    'PConstant',
-    'PFunction',
-    'POperator',
-    'Parser',
-    'ParsingException',
+    "PConstant",
+    "PFunction",
+    "POperator",
+    "Parser",
+    "ParsingException",
 ]
 
 
-class PConstant(object):
+class PConstant:
     def __init__(self, id, value):
-        """Represents a named constant
+        """Represents a named constant.
 
         Parameters
         ----------
@@ -59,7 +60,7 @@ class PConstant(object):
     def get_parser(self, EXPRESSION):
         if isinstance(self.value, str):
             result = Suppress(self.value)
-            result.setName('NamedConstant({value})'.format(value=self.value))
+            result.setName(f"NamedConstant({self.value})")
             result.setParseAction(self)
             return result
         else:
@@ -71,9 +72,9 @@ class PConstant(object):
         return str(self.value)
 
 
-class PFunction(object):
+class PFunction:
     def __init__(self, id, name, n_args=1):
-        """Represents a function call with augments
+        """Represents a function call with augments.
 
         Parameters
         ----------
@@ -97,18 +98,17 @@ class PFunction(object):
         self._n_args = n_args
 
     def __str__(self):
-        return '{name}<{n_args}>'.format(name=self._name, n_args=self._n_args)
+        return f"{self._name}<{self._n_args}>"
 
     def __repr__(self):
-        return '{class_name}<{id_name},{name},n_args={n_args}>'.format(
-            class_name=self.__class__.__name__, id_name=self._id.name,
-            name=self._name, n_args=self._n_args)
+        return f"{self.__class__.__name__}<{self._id.name},{self._name},n_args={self._n_args}>"
 
     @add_logging
     def __call__(self, string, location, result):
         if len(result) != self._n_args:
-            raise TypeError('Function({name}) requires {n} arguments, {x} given'
-                            .format(name=self._name, n=self._n_args, x=len(result)))
+            raise TypeError(
+                f"Function({self._name}) requires {self._n_args} arguments, {len(result)} given"
+            )
         return Expression(self._id, *result)
 
     @property
@@ -120,11 +120,11 @@ class PFunction(object):
         return self._name
 
     def get_parser(self, EXPRESSION):
-        result = Suppress(self._name) + Suppress('(') + EXPRESSION
-        for i in range(1, self._n_args):
-            result += Suppress(',') + EXPRESSION
-        result += Suppress(')')
-        result.setName('Function({name})'.format(name=self._name))
+        result = Suppress(self._name) + Suppress("(") + EXPRESSION
+        for _ in range(1, self._n_args):
+            result += Suppress(",") + EXPRESSION
+        result += Suppress(")")
+        result.setName(f"Function({self._name})")
         result.setParseAction(self)
         return result
 
@@ -137,12 +137,12 @@ class PFunction(object):
             else:
                 arg = str(arg)
             args.append(arg)
-        return self.name+'('+", ".join(args)+')'
+        return f"{self.name}(" + ", ".join(args) + ")"
 
 
-class POperator(object):
+class POperator:
     def __init__(self, id, op, rhs_only=False, lhs_only=False):
-        """Represents an operator of the form "A x B"
+        """Represents an operator of the form "A x B".
 
         Parameters
         ----------
@@ -167,12 +167,14 @@ class POperator(object):
         self._lhs_only = lhs_only
 
     def __str__(self):
-        return self._name+'<'+str(self._n_args)+'>'
+        return self._name + "<" + str(self._n_args) + ">"
 
     def __repr__(self):
-        return '{class_name}<{id_name},{op_name},rhs_only={rhs_only},lhs_only={lhs_only}>'.format(
-            class_name=self.__class__.__name__, id_name=self._id.name,
-            op_name=self._op, rhs_only=self._rhs_only, lhs_only=self._lhs_only)
+        return (
+            f"{self.__class__.__name__}<{self._id.name},"
+            f"{self._op},rhs_only={self._rhs_only},"
+            f"lhs_only={self._lhs_only}>"
+        )
 
     @add_logging
     def __call__(self, *result):
@@ -215,10 +217,10 @@ class POperator(object):
             return args[0] + self.op
         else:
             assert len(args) >= 2, args
-            return '('+(' '+self.op+' ').join(args)+')'
+            return "(" + (" " + self.op + " ").join(args) + ")"
 
 
-class Parser(object):
+class Parser:
     def __init__(self, name, config, constants):
         self._name = name
         self._config = config
@@ -227,36 +229,39 @@ class Parser(object):
 
     def to_expression(self, string):
         if not isinstance(string, str):
-            raise ValueError('Can only convert string objects to strings but '+str(type(string))+' was passed')
+            raise ValueError(
+                f"Can only convert string objects to strings but {str(type(string))} was passed"
+            )
 
         try:
             result = self._parser.parseString(string, parseAll=True)
             assert len(result) == 1, result
             result = result[0]
         except pyparsing.ParseException as e:
-            logger.error('TODO TRACEBACK: '+repr(e.args))
-            logger.error('Error parsing: '+e.line)
-            logger.error('               '+' '*e.loc + '▲')
-            logger.error('               '+' '*e.loc + '┃')
-            logger.error('               '+' '*e.loc + '┗━━━━━━ Error here or shortly after')
-            # Remove the context from the exception
-            # Can't use "raise X from None" with Python 2
-            exception = ParsingException()
-            exception.__context__ = None
-            raise exception
+            logger.error(f"TODO TRACEBACK: {repr(e.args)}")
+            logger.error(f"Error parsing: {e.line}")
+            logger.error("               " + " " * e.loc + "▲")
+            logger.error("               " + " " * e.loc + "┃")
+            logger.error(
+                "               " + " " * e.loc + "┗━━━━━━ Error here or shortly after"
+            )
+            raise ParsingException from None
         else:
             return result
 
     def to_string(self, expression):
         if not isinstance(expression, ExpressionComponent):
-            raise ValueError('Can only convert ExpressionComponent objects to strings but ' +
-                             str(type(expression)) + ' was passed')
+            raise ValueError(
+                "Can only convert ExpressionComponent objects to strings but "
+                + str(type(expression))
+                + " was passed"
+            )
 
         result = expression.to_string(
             {x.id: x for x in self._config},
             {c.id: c for c in self._constants},
         )
-        if result.startswith('(') and result.endswith(')'):
+        if result.startswith("(") and result.endswith(")"):
             result = result[1:-1]
         return result
 
@@ -268,22 +273,38 @@ class ParsingException(Exception):
 def create_parser(config, constants):
     EXPRESSION = pyparsing.Forward()
 
-    VARIABLE = delimitedList(Word(pyparsing.alphas+'_', pyparsing.alphanums+'_-'), delim='.', combine=True)
-    VARIABLE.setName('Variable')
-    VARIABLE.setParseAction(add_logging(lambda string, location, result: Variable(result[0])))
+    VARIABLE = delimitedList(
+        Word(pyparsing.alphas + "_", pyparsing.alphanums + "_-"),
+        delim=".",
+        combine=True,
+    )
+    VARIABLE.setName("Variable")
+    VARIABLE.setParseAction(
+        add_logging(lambda string, location, result: Variable(result[0]))
+    )
 
     REAL = pyparsing_common.real
-    REAL.setParseAction(add_logging(lambda string, location, result: UnnamedConstant(result[0])))
+    REAL.setParseAction(
+        add_logging(lambda string, location, result: UnnamedConstant(result[0]))
+    )
     SCI_REAL = pyparsing_common.sci_real
-    SCI_REAL.setParseAction(add_logging(lambda string, location, result: UnnamedConstant(result[0])))
+    SCI_REAL.setParseAction(
+        add_logging(lambda string, location, result: UnnamedConstant(result[0]))
+    )
     SIGNED_INTEGER = pyparsing_common.signed_integer
-    SIGNED_INTEGER.setParseAction(add_logging(lambda string, location, result: UnnamedConstant(result[0])))
+    SIGNED_INTEGER.setParseAction(
+        add_logging(lambda string, location, result: UnnamedConstant(result[0]))
+    )
     NUMBER = pyparsing.Or([REAL, SCI_REAL, SIGNED_INTEGER])
 
     COMPONENT = pyparsing.Or(
-        [f.get_parser(EXPRESSION) for f in config if isinstance(f, PFunction)] +
-        [p for p in map(lambda c: c.get_parser(EXPRESSION), constants) if p is not None] +
-        [NUMBER, VARIABLE]
+        [f.get_parser(EXPRESSION) for f in config if isinstance(f, PFunction)]
+        + [
+            p
+            for p in map(lambda c: c.get_parser(EXPRESSION), constants)
+            if p is not None
+        ]
+        + [NUMBER, VARIABLE]
     )
 
     # TODO Generating operators_config should be rewritten
@@ -299,30 +320,40 @@ def create_parser(config, constants):
 
         # TODO This is a hack, is there a nicer way?
         from .identifiers import IDs
+
         if ops[0].id in (IDs.MINUS, IDs.PLUS):
             assert ops[0]._rhs_only
-            parser = pyparsing.Or([Literal(o.op) + ~pyparsing.FollowedBy(NUMBER) for o in ops])
+            parser = pyparsing.Or(
+                [Literal(o.op) + ~pyparsing.FollowedBy(NUMBER) for o in ops]
+            )
         elif ops[0].id in (IDs.SQUARE,):
             assert ops[0]._lhs_only
-            parser = pyparsing.Or([Literal(o.op) + ~pyparsing.FollowedBy(NUMBER) for o in ops])
+            parser = pyparsing.Or(
+                [Literal(o.op) + ~pyparsing.FollowedBy(NUMBER) for o in ops]
+            )
         else:
             parser = pyparsing.Or([Literal(o.op) for o in ops])
 
         if ops[0].rhs_only:
+
             def parse_action(string, location, result, op_map={o.op: o for o in ops}):
                 assert len(result) == 1, result
                 result = result[0]
                 assert len(result) == 2, result
                 return op_map[result[0]](result[1])
+
             operators_config.append((parser, 1, opAssoc.RIGHT, parse_action))
         elif ops[0].lhs_only:
+
             def parse_action(string, location, result, op_map={o.op: o for o in ops}):
                 assert len(result) == 1, result
                 result = result[0]
                 assert len(result) == 2, result
                 return op_map[result[0]](result[1])
+
             operators_config.append((parser, 1, opAssoc.LEFT, parse_action))
         else:
+
             def parse_action(string, location, result, op_map={o.op: o for o in ops}):
                 assert len(result) == 1, result
                 result = result[0]
@@ -334,14 +365,19 @@ def create_parser(config, constants):
                     if op_name == last_op_name:
                         expression_args.append(value)
                     else:
-                        expression = Expression(op_map[last_op_name].id, expression, *expression_args)
+                        expression = Expression(
+                            op_map[last_op_name].id, expression, *expression_args
+                        )
                         expression_args = [value]
                     last_op_name = op_name
-                expression = Expression(op_map[last_op_name].id, expression, *expression_args)
+                expression = Expression(
+                    op_map[last_op_name].id, expression, *expression_args
+                )
                 # for operator, value in zip(result[1::2], result[2::2]):
                 #     operator = op_map[operator]
                 #     expression = Expression(operator.id, expression, value)
                 return expression
+
             operators_config.append((parser, 2, opAssoc.LEFT, parse_action))
 
     EXPRESSION << pyparsing.infixNotation(COMPONENT, operators_config)
