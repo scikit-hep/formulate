@@ -1,11 +1,14 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import pytest
 
-from formulate import ExpressionComponent, Expression, Variable, NamedConstant, UnnamedConstant
+from formulate import (
+    ExpressionComponent,
+    Expression,
+    Variable,
+    NamedConstant,
+    UnnamedConstant,
+)
 
 
 def make_check_result(from_func, to_func):
@@ -19,8 +22,13 @@ def make_check_result(from_func, to_func):
 
         assert_equal_expressions(result, expected_expression)
         # TODO Stop stripping parentheses
-        assert (string.replace(' ', '').replace('(', '').replace(')', '') ==
-                expected_string.replace(' ', '').replace('(', '').replace(')', '')), (string, expected_string)
+        assert string.replace(" ", "").replace("(", "").replace(
+            ")", ""
+        ) == expected_string.replace(" ", "").replace("(", "").replace(")", ""), (
+            string,
+            expected_string,
+        )
+
     return check_result
 
 
