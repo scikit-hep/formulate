@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.2.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -15,7 +15,7 @@ repos:
       - id: fix-encoding-pragma
 
   - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.46"
+    rev: "0.48"
     hooks:
       - id: check-manifest
         stages: [ manual ]
@@ -40,7 +40,7 @@ repos:
       - id: rst-directive-colons
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.32.0
+    rev: v2.32.1
     hooks:
       - id: pyupgrade
         args: [ --py36-plus ]
