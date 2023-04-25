@@ -94,9 +94,27 @@ def test_simple_lor():
     tree = formulate._utils._ptree_to_string(a,aa)
     out = "".join(tree)
     assert "(a||2)" == out
-def test_simple_matrix(): #this test sometimes fails and sometimes it passes
+def test_simple_matrix():
     a = formulate.ttreeformula.exp_to_ptree("a[45][1]")
     aa=[]
     tree = formulate._utils._ptree_to_string(a,aa)
     out = "".join(tree)
     assert "a[45][1]" == out
+def test_simple_function():
+    a = formulate.ttreeformula.exp_to_ptree("Math::sqrt(4)")
+    aa=[]
+    tree = formulate._utils._ptree_to_string(a,aa)
+    out = "".join(tree)
+    assert "Math::sqrt(4)" == out
+def test_simple_function():
+    a = formulate.ttreeformula.exp_to_ptree("Math::sqrt::three(4)")
+    aa=[]
+    tree = formulate._utils._ptree_to_string(a,aa)
+    out = "".join(tree)
+    assert "Math::sqrt::three(4)" == out
+def test_simple_function():
+    a = formulate.ttreeformula.exp_to_ptree("Math::sqrt::three::four(4)")
+    aa=[]
+    tree = formulate._utils._ptree_to_string(a,aa)
+    out = "".join(tree)
+    assert "Math::sqrt::three::four(4)" == out
