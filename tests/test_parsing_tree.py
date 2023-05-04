@@ -122,6 +122,7 @@ def test_simple_lor():
     out = "".join(tree)
     assert out == "(a||2)"
 
+
 def test_simple_pow():
     a = formulate.ttreeformula.exp_to_ptree("a**2")
     aa = []
@@ -177,12 +178,14 @@ def test_simple_unary_neg():
     out = "".join(tree)
     assert out == "(-5)"
 
+
 def test_simple_unary_binv():
     a = formulate.ttreeformula.exp_to_ptree("~bool")
     aa = []
     tree = formulate._utils._ptree_to_string(a, aa)
     out = "".join(tree)
     assert out == "(~bool)"
+
 
 def test_simple_unary_linv():
     a = formulate.ttreeformula.exp_to_ptree("!bool")
@@ -191,12 +194,14 @@ def test_simple_unary_linv():
     out = "".join(tree)
     assert out == "(!bool)"
 
+
 def test_simple_matrix_unary_pos():
     a = formulate.ttreeformula.exp_to_ptree("Math::sqrt::three::four(-4)")
     aa = []
     tree = formulate._utils._ptree_to_string(a, aa)
     out = "".join(tree)
     assert out == "Math::sqrt::three::four((-4))"
+
 
 def test_unary_binary_pos():
     a = formulate.ttreeformula.exp_to_ptree("2 - -6")
@@ -205,6 +210,7 @@ def test_unary_binary_pos():
     out = "".join(tree)
     assert out == "(2-(-6))"
 
+
 def test_complex_matrix():
     a = formulate.ttreeformula.exp_to_ptree("mat1[a**23][mat2[45 - -34]]")
     aa = []
@@ -212,10 +218,10 @@ def test_complex_matrix():
     out = "".join(tree)
     assert out == "mat1[(a**23)][mat2[(45-(-34))]]"
 
+
 def test_complex_exp():
     a = formulate.ttreeformula.exp_to_ptree("~a**b*23/(var||45)")
     aa = []
     tree = formulate._utils._ptree_to_string(a, aa)
     out = "".join(tree)
     assert out == "(~((a**b)*(23/(var||45))))"
-
