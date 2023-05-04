@@ -25,6 +25,8 @@ val_to_sign = {
     "linv": "!",
     "land": "&&",
     "lor": "||",
+    "neg": "-",
+    "pos": "+",
 }
 
 
@@ -60,7 +62,15 @@ def _ptree_to_string(exp_tree: lark.tree.Tree, out_exp: list):
                 out_exp.append(")")
     else:
         children = exp_tree.children
+        print(exp_tree.data)
         # print(exp_tree, "adwe")
+        if exp_tree.data == "neg" or exp_tree.data == "pos":
+            child = exp_tree.children[0]
+            out_exp.append("(")
+            out_exp.append(val_to_sign[exp_tree.data])
+            out_exp.extend(_ptree_to_string(child, []))
+            out_exp.append(")")
+            return out_exp
         if len(children) == 1 and (
             children[0].type == "CNAME" or children[0].type == "NUMBER"
         ):

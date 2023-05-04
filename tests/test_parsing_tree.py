@@ -153,3 +153,19 @@ def test_simple_function3():
     tree = formulate._utils._ptree_to_string(a, aa)
     out = "".join(tree)
     assert out == "Math::sqrt::three::four(4)"
+
+
+def test_simple_unary_pos():
+    a = formulate.ttreeformula.exp_to_ptree("+5")
+    aa = []
+    tree = formulate._utils._ptree_to_string(a, aa)
+    out = "".join(tree)
+    assert out == "(+5)"
+
+
+def test_simple_unary_neg():
+    a = formulate.ttreeformula.exp_to_ptree("-5")
+    aa = []
+    tree = formulate._utils._ptree_to_string(a, aa)
+    out = "".join(tree)
+    assert out == "(-5)"
