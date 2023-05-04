@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import lark
 
+UNARY_OP = {"pos", "neg", "binv", "linv"}
 with_sign = {}
 val_to_sign = {
     "add": "+",
@@ -27,6 +28,9 @@ val_to_sign = {
     "lor": "||",
     "neg": "-",
     "pos": "+",
+    "binv": "~",
+    "linv": "!",
+    "pow": "**",
 }
 
 
@@ -64,7 +68,7 @@ def _ptree_to_string(exp_tree: lark.tree.Tree, out_exp: list):
         children = exp_tree.children
         print(exp_tree.data)
         # print(exp_tree, "adwe")
-        if exp_tree.data == "neg" or exp_tree.data == "pos":
+        if exp_tree.data in UNARY_OP:
             child = exp_tree.children[0]
             out_exp.append("(")
             out_exp.append(val_to_sign[exp_tree.data])
