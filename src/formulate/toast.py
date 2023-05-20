@@ -88,21 +88,24 @@ val_to_sign = {
 
 def toast(ptnode):
     data = ptnode.data
-
     match data:
         case "add":
-            if len(ptnode.children) == 2:
-                arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
-                return AST.BinaryOperator(
-                    AST.Symbol("+", line=arguments[0].line), arguments[0], arguments[1]
-                )
+            arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
+            return AST.BinaryOperator(
+                AST.Symbol("+", line=arguments[0].line), arguments[0], arguments[1]
+            )
 
         case "sub":
-            if len(ptnode.children) == 2:
-                arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
-                return AST.BinaryOperator(
-                    AST.Symbol("-", line=arguments[0].line), arguments[0], arguments[1]
-                )
+            arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
+            return AST.BinaryOperator(
+                AST.Symbol("-", line=arguments[0].line), arguments[0], arguments[1]
+            )
+
+        case "pow" if len(ptnode.children) == 2:
+            arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
+            return AST.BinaryOperator(
+                AST.Symbol("**", line=arguments[0].line), arguments[0], arguments[1]
+            )
 
         case "matr":
             children = ptnode.children
