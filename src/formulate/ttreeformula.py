@@ -4,6 +4,7 @@ Copyright (c) 2023 Aryan Roy. All rights reserved.
 formulate:  Easy conversions between different styles of expressions
 """
 from __future__ import annotations
+from . import matching_tree
 
 import lark
 
@@ -38,6 +39,8 @@ arglist: expression ("," expression)* [","]
 
 
 def exp_to_ptree(exp: str):
-    parser = lark.Lark(expression_grammar, parser="lalr")
+    parser = lark.Lark(
+        expression_grammar, parser="lalr", tree_class=matching_tree.ptnode
+    )
     print(parser.parse(exp).pretty())
     return parser.parse(exp)
