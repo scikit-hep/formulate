@@ -16,7 +16,10 @@ class AST:  # only three types (and a superclass to set them up)
         for n, x in zip(self._fields, args):
             setattr(self, n, x)
             if self.line is None:
-                self.line = x.line
+                if isinstance(x, list):
+                    self.line = x[0].line
+                else:
+                    self.line = x.line
 
 
 class Literal(AST):  # Literal: value that appears in the program text
@@ -62,7 +65,7 @@ class Slice(AST):  # Slice: The slice for matrix
         return "{0}".format(self.slices)
 
 
-class Empty_Slice(AST):  # Slice: The slice for matrix
+class Empty(AST):  # Slice: The slice for matrix
     _fields = ()
 
     def __str__(self):
@@ -74,5 +77,6 @@ class Call(AST):  # Call: evaluate a function on arguments
 
     def __str__(self):
         return "{0}({1})".format(
-            str(self.function), ", ".join(str(x) for x in self.arguments)
+            "::".join(str(x) for x in self.function),
+            ", ".join(str(x) for x in self.arguments),
         )

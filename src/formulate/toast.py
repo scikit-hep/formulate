@@ -130,6 +130,14 @@ val_to_sign = {
 #             return toast(ptnode.children[0])
 
 
+def _get_func_names(func_names):
+    children = []
+    if len(func_names.children) > 1:
+        children.extend(_get_func_names(func_names.children[1]))
+    children.append(func_names.children[0])
+    return children
+
+
 def toast(ptnode):
     match ptnode:
         # case matching_tree.ptnode("add", children):
@@ -168,9 +176,23 @@ def toast(ptnode):
 
         case matching_tree.ptnode("matpos", child):
             if child[0] is None:
-                return AST.Empty_Slice()
+                return AST.Empty()
             slice = toast(child[0])
             return AST.Slice(slice, line=slice.line)
+
+        case matching_tree.ptnode("func", (func_name, trailer)):
+            funcs = []
+            func_names = _get_func_names(func_name)
+            for elem in func_names:
+                funcs.append(AST.Symbol(str(elem), line=elem.line))
+            func_arguments = []
+            for elem in trailer.children[0].children:
+                if elem is None:
+                    func_arguments.append(AST.Empty())
+                else:
+                    func_arguments.append(toast(elem))
+
+            return AST.Call(func_names, func_arguments, line=func_arguments[0].line)
 
         case matching_tree.ptnode("symbol", children):
             return AST.Symbol(str(children[0]), line=children[0].line)
@@ -182,5 +204,4 @@ def toast(ptnode):
             return toast(child)
 
         case _:
-            print(ptnode.data)
             raise TypeError(f"Unknown Node Type: {ptnode!r}.")
