@@ -67,7 +67,9 @@ val_to_sign = {
 #     if ptnode.data in BINARY_OP and len(ptnode.children) == 2:
 #         arguments = [toast(x) for x in ptnode.children]
 #         return AST.BinaryOperator(
-#             AST.Symbol(val_to_sign[str(ptnode.data)], line=arguments[0].line), arguments[0], arguments[1]
+#             AST.Symbol(val_to_sign[str(ptnode.data)], line=arguments[0].line),
+#             arguments[0],
+#             arguments[1],
 #         )
 #     elif ptnode.data == "pow" and len(ptnode.children) == 2:
 #         print("aefef")
@@ -130,39 +132,55 @@ val_to_sign = {
 
 def toast(ptnode):
     match ptnode:
-        case matching_tree.ptnode("add", children):
-            print("efef")
-            arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
+        # case matching_tree.ptnode("add", children):
+        #     print("efef")
+        #     arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
+        #     return AST.BinaryOperator(
+        #         AST.Symbol("+", line=arguments[0].line), arguments[0], arguments[1]
+        #     )
+
+        # case matching_tree.ptnode("sub", children):
+        #     arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
+        #     return AST.BinaryOperator(
+        #         AST.Symbol("-", line=arguments[0].line), arguments[0], arguments[1]
+        #     )
+
+        case matching_tree.ptnode(operator, (left, right)) if operator in BINARY_OP:
+            arguments = [toast(left), toast(right)]
             return AST.BinaryOperator(
-                AST.Symbol("+", line=arguments[0].line), arguments[0], arguments[1]
+                AST.Symbol(val_to_sign[operator], line=arguments[0].line),
+                arguments[0],
+                arguments[1],
             )
 
-        case matching_tree.ptnode("sub", children):
-            arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
-            return AST.BinaryOperator(
-                AST.Symbol("-", line=arguments[0].line), arguments[0], arguments[1]
+        case matching_tree.ptnode(operator, operand) if operator in UNARY_OP:
+            argument = toast(operand[0])
+            return AST.UnaryOperator(
+                AST.Symbol(val_to_sign[operator], line=argument.line), argument
             )
 
-        case matching_tree.ptnode("pow", children) if len(children) == 2:
-            arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
-            return AST.BinaryOperator(
-                AST.Symbol("**", line=arguments[0].line), arguments[0], arguments[1]
-            )
-
-        case matching_tree.ptnode("matr", children):
-            children = ptnode.children
-            var = toast(children[0])
+        case matching_tree.ptnode("matr", (array, *slice)):
+            var = toast(array)
             paren = []
-            children = children[1:]
-            for elem in children:
+            for elem in slice:
                 paren.append(toast(elem))
-            return AST.Matrix(var, paren)
+            return AST.Matrix(var, paren, line=var.line)
+
+        case matching_tree.ptnode("matpos", child):
+            if child[0] is None:
+                return AST.Empty_Slice()
+            slice = toast(child[0])
+            return AST.Slice(slice, line=slice.line)
 
         case matching_tree.ptnode("symbol", children):
-            return AST.Symbol(str(ptnode.children[0]), line=ptnode.children[0].line)
+            return AST.Symbol(str(children[0]), line=children[0].line)
 
         case matching_tree.ptnode("literal", children):
-            return AST.Literal(float(ptnode.children[0]), line=ptnode.children[0].line)
+            return AST.Literal(float(children[0]), line=children[0].line)
+
+        case matching_tree.ptnode(_, (child,)):
+            return toast(child)
 
         case _:
-            return toast(ptnode.children[0])
+            print(ptnode.data)
+            raise TypeError(f"Unknown Node Type: {ptnode!r}.")

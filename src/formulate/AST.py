@@ -37,9 +37,7 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
     _fields = ("sign", "operand")
 
     def __str__(self):
-        return "{0}({1})".format(
-            str(self.function), ", ".join(str(x) for x in self.arguments)
-        )
+        return "{0}({1})".format(str(self.sign), self.operand)
 
 
 class BinaryOperator(AST):  # Binary Operator: Operation with two operands
@@ -53,7 +51,22 @@ class Matrix(AST):  # Matrix: A matrix call
     _fields = ("var", "paren")
 
     def __str__(self):
-        return "{0}[{1}]".format(str(self.var), ", ".join(str(x) for x in self.paren))
+        return "{0}[{1}]".format(str(self.var), "][".join(str(x) for x in self.paren))
+
+
+class Slice(AST):  # Slice: The slice for matrix
+    _fields = ("slices",)
+
+    def __str__(self):
+        print(self.slices)
+        return "{0}".format(self.slices)
+
+
+class Empty_Slice(AST):  # Slice: The slice for matrix
+    _fields = ()
+
+    def __str__(self):
+        return ""
 
 
 class Call(AST):  # Call: evaluate a function on arguments
