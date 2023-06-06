@@ -181,24 +181,24 @@ def toast(ptnode):
             return AST.Slice(slice, line=slice.line)
 
         case matching_tree.ptnode("func", (func_name, trailer)):
-            funcs = []
             func_names = _get_func_names(func_name)
-            for elem in func_names:
-                funcs.append(AST.Symbol(str(elem), line=elem.line))
-            func_arguments = []
-            for elem in trailer.children[0].children:
-                if elem is None:
-                    func_arguments.append(AST.Empty())
-                else:
-                    func_arguments.append(toast(elem))
 
-            return AST.Call(func_names, func_arguments, line=func_arguments[0].line)
+            funcs = [AST.Symbol(str(elem), line=elem.line) for elem in func_names][::-1]
+
+            func_arguments = []
+
+            if trailer.children[0] is None:
+                return AST.Call(funcs, func_arguments, line=funcs[0].line)
+
+            func_arguments = [toast(elem) for elem in trailer.children[0].children]
+
+            return AST.Call(funcs, func_arguments, line=funcs[0].line)
 
         case matching_tree.ptnode("symbol", children):
-            return AST.Symbol(str(children[0]), line=children[0].line)
+            return AST.Symbol(str(children[0]), line=children[0].column)
 
         case matching_tree.ptnode("literal", children):
-            return AST.Literal(float(children[0]), line=children[0].line)
+            return AST.Literal(float(children[0]), line=children[0].column)
 
         case matching_tree.ptnode(_, (child,)):
             return toast(child)

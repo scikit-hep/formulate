@@ -54,14 +54,13 @@ class Matrix(AST):  # Matrix: A matrix call
     _fields = ("var", "paren")
 
     def __str__(self):
-        return "{0}[{1}]".format(str(self.var), "][".join(str(x) for x in self.paren))
+        return "{0}[{1}]".format(str(self.var), ",".join(str(x) for x in self.paren))
 
 
 class Slice(AST):  # Slice: The slice for matrix
     _fields = ("slices",)
 
     def __str__(self):
-        print(self.slices)
         return "{0}".format(self.slices)
 
 
@@ -80,3 +79,10 @@ class Call(AST):  # Call: evaluate a function on arguments
             "::".join(str(x) for x in self.function),
             ", ".join(str(x) for x in self.arguments),
         )
+
+
+# Add data classes
+# fix error handling
+# get rid of non-functional elements
+# come-up with a shared notation for functions
+# make a  to_python function
