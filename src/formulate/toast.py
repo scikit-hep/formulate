@@ -138,67 +138,54 @@ def _get_func_names(func_names):
     return children
 
 
-def toast(ptnode):
+def toast(ptnode: matching_tree.ptnode):
     match ptnode:
-        # case matching_tree.ptnode("add", children):
-        #     print("efef")
-        #     arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
-        #     return AST.BinaryOperator(
-        #         AST.Symbol("+", line=arguments[0].line), arguments[0], arguments[1]
-        #     )
-
-        # case matching_tree.ptnode("sub", children):
-        #     arguments = [toast(ptnode.children[0]), toast(ptnode.children[1])]
-        #     return AST.BinaryOperator(
-        #         AST.Symbol("-", line=arguments[0].line), arguments[0], arguments[1]
-        #     )
-
         case matching_tree.ptnode(operator, (left, right)) if operator in BINARY_OP:
             arguments = [toast(left), toast(right)]
             return AST.BinaryOperator(
-                AST.Symbol(val_to_sign[operator], line=arguments[0].line),
+                AST.Symbol(val_to_sign[operator], index=arguments[1].index),
                 arguments[0],
                 arguments[1],
+                index=arguments[0].index,
             )
 
         case matching_tree.ptnode(operator, operand) if operator in UNARY_OP:
             argument = toast(operand[0])
             return AST.UnaryOperator(
-                AST.Symbol(val_to_sign[operator], line=argument.line), argument
+                AST.Symbol(val_to_sign[operator], index=argument.index), argument
             )
 
         case matching_tree.ptnode("matr", (array, *slice)):
             var = toast(array)
-            paren = []
-            for elem in slice:
-                paren.append(toast(elem))
-            return AST.Matrix(var, paren, line=var.line)
+            paren = [toast(elem) for elem in slice]
+            return AST.Matrix(var, paren, index=var.index)
 
         case matching_tree.ptnode("matpos", child):
             if child[0] is None:
                 return AST.Empty()
             slice = toast(child[0])
-            return AST.Slice(slice, line=slice.line)
+            return AST.Slice(slice, index=slice.index)
 
         case matching_tree.ptnode("func", (func_name, trailer)):
             func_names = _get_func_names(func_name)
 
-            funcs = [AST.Symbol(str(elem), line=elem.line) for elem in func_names][::-1]
-
+            funcs = [
+                AST.Symbol(str(elem), index=elem.start_pos) for elem in func_names
+            ][::-1]
             func_arguments = []
 
             if trailer.children[0] is None:
-                return AST.Call(funcs, func_arguments, line=funcs[0].line)
+                return AST.Call(funcs, func_arguments, index=funcs[0].index)
 
             func_arguments = [toast(elem) for elem in trailer.children[0].children]
 
-            return AST.Call(funcs, func_arguments, line=funcs[0].line)
+            return AST.Call(funcs, func_arguments, index=funcs[0].index)
 
         case matching_tree.ptnode("symbol", children):
-            return AST.Symbol(str(children[0]), line=children[0].column)
+            return AST.Symbol(str(children[0]), index=children[0].start_pos)
 
         case matching_tree.ptnode("literal", children):
-            return AST.Literal(float(children[0]), line=children[0].column)
+            return AST.Literal(float(children[0]), index=children[0].start_pos)
 
         case matching_tree.ptnode(_, (child,)):
             return toast(child)
