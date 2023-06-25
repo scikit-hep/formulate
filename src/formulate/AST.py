@@ -88,7 +88,7 @@ class Call(AST):  # Call: evaluate a function on arguments
 
     def __str__(self):
         return "{0}({1})".format(
-            "::".join(str(x) for x in self.function),
+            self.function,
             ", ".join(str(x) for x in self.arguments),
         )
 

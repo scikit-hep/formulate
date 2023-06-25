@@ -37,6 +37,7 @@ BINARY_OP = {
     "land",
     "lor",
     "pow",
+    "mod",
 }
 val_to_sign = {
     "add": "+",
@@ -60,6 +61,19 @@ val_to_sign = {
     "binv": "~",
     "linv": "!",
     "pow": "**",
+    "mod": "%",
+}
+
+FUNC_MAPPING = {
+    "MATH::PI": "pi",
+    "LENGTH$": "no_of_entries",
+    "ITERATION$": "current_iteration",
+    "SUM$": "sum",
+    "MIN$": "min",
+    "MAX$": "max",
+    "MINIF$": "min_if",
+    "MAXIF$": "max_if",
+    "ALT$": "alternate",
 }
 
 
@@ -167,19 +181,26 @@ def toast(ptnode: matching_tree.ptnode):
             return AST.Slice(slice, index=slice.index)
 
         case matching_tree.ptnode("func", (func_name, trailer)):
-            func_names = _get_func_names(func_name)
-
-            funcs = [
-                AST.Symbol(str(elem), index=elem.start_pos) for elem in func_names
-            ][::-1]
+            func_names = _get_func_names(func_name)[::-1]
             func_arguments = []
 
+            try:
+                fname = FUNC_MAPPING["::".join(func_names).upper()]
+            except KeyError as e:
+                fname = "::".join(func_names)
+
             if trailer.children[0] is None:
-                return AST.Call(funcs, func_arguments, index=funcs[0].index)
+                return AST.Call(
+                    fname,
+                    func_arguments,
+                    index=func_names[0].start_pos,
+                )
 
             func_arguments = [toast(elem) for elem in trailer.children[0].children]
 
-            return AST.Call(funcs, func_arguments, index=funcs[0].index)
+            funcs = root_to_common(func_names, func_names[0].start_pos)
+
+            return AST.Call(funcs, func_arguments, index=func_names[0].start_pos)
 
         case matching_tree.ptnode("symbol", children):
             return AST.Symbol(str(children[0]), index=children[0].start_pos)
@@ -192,3 +213,14 @@ def toast(ptnode: matching_tree.ptnode):
 
         case _:
             raise TypeError(f"Unknown Node Type: {ptnode!r}.")
+
+
+def root_to_common(funcs: list, index: int):
+    str_funcs = [str(elem) for elem in funcs]
+
+    try:
+        string_rep = FUNC_MAPPING["::".join(str_funcs).upper()]
+    except KeyError as e:
+        string_rep = "::".join(str_funcs)
+
+    return AST.Symbol(string_rep, index=index)
