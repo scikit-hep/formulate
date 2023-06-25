@@ -4,10 +4,9 @@ Copyright (c) 2023 Aryan Roy. All rights reserved.
 formulate:  Easy conversions between different styles of expressions
 """
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Union
-
-import lark
 
 
 class AST:  # only three types (and a superclass to set them up)
