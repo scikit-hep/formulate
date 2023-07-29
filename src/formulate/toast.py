@@ -53,6 +53,7 @@ val_to_sign = {
     "linv": "!",
     "pow": "**",
     "mod": "%",
+    "multi_out": ":",
 }
 
 FUNC_MAPPING = {
@@ -97,7 +98,7 @@ def toast(ptnode: matching_tree.ptnode):
             var1 = toast(out1)
             var2 = toast(out2)
             args = [var1, var2]
-            return AST.Call("multi_out", args, index=var1.index)
+            return AST.Call(val_to_sign["multi_out"], args, index=var1.index)
 
         case matching_tree.ptnode("matr", (array, *slice)):
             var = toast(array)
@@ -139,7 +140,6 @@ def toast(ptnode: matching_tree.ptnode):
             return AST.Literal(float(children[0]), index=children[0].start_pos)
 
         case matching_tree.ptnode(_, (child,)):
-            print(child)
             return toast(child)
 
         case _:
