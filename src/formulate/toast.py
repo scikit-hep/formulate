@@ -93,6 +93,12 @@ def toast(ptnode: matching_tree.ptnode):
                 AST.Symbol(val_to_sign[operator], index=argument.index), argument
             )
 
+        case matching_tree.ptnode("multi_out", (out1, out2)):
+            var1 = toast(out1)
+            var2 = toast(out2)
+            args = [var1, var2]
+            return AST.Call("multi_out", args, index=var1.index)
+
         case matching_tree.ptnode("matr", (array, *slice)):
             var = toast(array)
             paren = [toast(elem) for elem in slice]
@@ -133,6 +139,7 @@ def toast(ptnode: matching_tree.ptnode):
             return AST.Literal(float(children[0]), index=children[0].start_pos)
 
         case matching_tree.ptnode(_, (child,)):
+            print(child)
             return toast(child)
 
         case _:

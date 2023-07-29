@@ -11,7 +11,7 @@ from . import matching_tree
 
 expression_grammar = """
 start: expression
-expression: disjunction
+expression: disjunction | disjunction ":" expression -> multi_out
 disjunction: conjunction | conjunction "||" conjunction -> lor
 conjunction: inversion | inversion "&&" inversion -> land
 inversion: comparison | "!" inversion -> linv
