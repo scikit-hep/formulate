@@ -94,11 +94,11 @@ def toast(ptnode: matching_tree.ptnode):
                 AST.Symbol(val_to_sign[operator], index=argument.index), argument
             )
 
-        case matching_tree.ptnode("multi_out", (out1, out2)):
-            var1 = toast(out1)
-            var2 = toast(out2)
-            args = [var1, var2]
-            return AST.Call(val_to_sign["multi_out"], args, index=var1.index)
+        case matching_tree.ptnode("multi_out", (exp1, exp2)):
+            exp_node1 = toast(exp1)
+            exp_node2 = toast(exp2)
+            args = [exp_node1, exp_node2]
+            return AST.Call(val_to_sign["multi_out"], args, index=exp_node1.index)
 
         case matching_tree.ptnode("matr", (array, *slice)):
             var = toast(array)
