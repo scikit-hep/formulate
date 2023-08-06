@@ -21,6 +21,9 @@ class Literal(AST):  # Literal: value that appears in the program text
     def __str__(self):
         return str(self.value)
 
+    def to_python(self):
+        return str(self.value)
+
 
 @dataclass
 class Symbol(AST):  # Symbol: value referenced by name
@@ -28,6 +31,9 @@ class Symbol(AST):  # Symbol: value referenced by name
     index: int = None
 
     def __str__(self):
+        return self.symbol
+
+    def to_python(self):
         return self.symbol
 
 
@@ -44,12 +50,22 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
 @dataclass
 class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     sign: Symbol
-    left: Literal
-    right: Literal
+    left: AST
+    right: AST
     index: int = None
 
     def __str__(self):
         return "{0}({1},{2})".format(str(self.sign), self.left, self.right)
+
+    def pysignconvert(self, sign):
+        sign_mapping = {"+": "ak.add"}
+        return sign_mapping[sign]
+
+    def to_python(self):
+        pysign = self.pysignconvert(self.sign.to_python())
+        pyleft = self.left.to_python()
+        pyright = self.right.to_python()
+        return pysign + "(" + pyleft + "," + pyright + ")"
 
 
 @dataclass

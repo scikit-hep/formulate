@@ -97,8 +97,12 @@ def toast(ptnode: matching_tree.ptnode):
         case matching_tree.ptnode("multi_out", (exp1, exp2)):
             exp_node1 = toast(exp1)
             exp_node2 = toast(exp2)
-            args = [exp_node1, exp_node2]
-            return AST.Call(val_to_sign["multi_out"], args, index=exp_node1.index)
+            exps = [exp_node1, exp_node2]
+            if isinstance(exp_node2, AST.Call) and exp_node2.function == ":":
+                del exps[-1]
+                for elem in exp_node2.arguments:
+                    exps.append(elem)
+            return AST.Call(val_to_sign["multi_out"], exps, index=exp_node1.index)
 
         case matching_tree.ptnode("matr", (array, *slice)):
             var = toast(array)
