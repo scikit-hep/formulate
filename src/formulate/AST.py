@@ -119,6 +119,9 @@ class Empty(AST):  # Slice: The slice for matrix
     def __str__(self):
         return ""
 
+    def to_python(self):
+        return ""
+
 
 @dataclass
 class Call(AST):  # Call: evaluate a function on arguments
