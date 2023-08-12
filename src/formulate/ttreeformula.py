@@ -42,8 +42,8 @@ atom:    "(" expression ")" | CNAME -> symbol
 func_name: CNAME | CNAME "::" func_name
 trailer: "(" [arglist] ")"
 arglist: expression ("," expression)* [","]
+CNAME: /[A-Za-z_]([A-Za-z0-9_]|\s*\.\s*)*/
 
-%import common.CNAME
 %import common.NUMBER
 %import common.WS
 %ignore WS

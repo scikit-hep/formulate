@@ -138,7 +138,11 @@ def toast(ptnode: matching_tree.ptnode):
             return AST.Call(funcs, func_arguments, index=func_names[0].start_pos)
 
         case matching_tree.ptnode("symbol", children):
-            return AST.Symbol(str(children[0]), index=children[0].start_pos)
+            temp_symbol = AST.Symbol(str(children[0]), index=children[0].start_pos)
+            # if temp_symbol.check_CNAME() is not None:
+            return temp_symbol
+            # else:
+            #     raise SyntaxError("The symbol " + str(children[0]) + " is not a valid symbol.")
 
         case matching_tree.ptnode("literal", children):
             return AST.Literal(float(children[0]), index=children[0].start_pos)
