@@ -53,8 +53,22 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
     def __str__(self):
         return "{0}({1})".format(str(self.sign), self.operand)
 
+    def unary_to_ufunc(self, sign):
+        signmap = {"~": "um.invert", "!": "not"}
+        return signmap[str(sign)]
+
     def to_python(self):
-        pycode = "(" + str(self.sign.to_python()) + str(self.operand.to_python()) + ")"
+        if str(self.sign) in {"~", "!"}:
+            pycode = (
+                self.unary_to_ufunc(self.sign)
+                + "("
+                + str(self.operand.to_python())
+                + ")"
+            )
+        else:
+            pycode = (
+                "(" + str(self.sign.to_python()) + str(self.operand.to_python()) + ")"
+            )
         return pycode
 
 
@@ -68,18 +82,49 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     def __str__(self):
         return "{0}({1},{2})".format(str(self.sign), self.left, self.right)
 
-    def pysignconvert(self, sign):
-        sign_mapping = {"+": "ak.add"}
-        return sign_mapping[sign]
+    def binary_to_ufunc(self, sign):
+        sign_mapping = {
+            "&": "um.bitwise_or",
+            "|": "um.bitwise_or",
+            "&&": "and",
+            "||": "or",
+        }
+        return sign_mapping[str(sign)]
 
     def to_python(self):
-        pycode = (
-            "("
-            + str(self.left.to_python())
-            + str(self.sign.to_python())
-            + str(self.right.to_python())
-            + ")"
-        )
+        if str(self.sign) in {
+            "&",
+            "|",
+        }:
+            pycode = (
+                self.binary_to_ufunc(self.sign)
+                + "("
+                + self.left.to_python()
+                + ","
+                + self.right.to_python()
+                + ")"
+            )
+        elif str(self.sign) in {
+            "&&",
+            "||",
+        }:
+            pycode = (
+                "("
+                + self.left.to_python()
+                + " "
+                + self.binary_to_ufunc(self.sign)
+                + " "
+                + self.right.to_python()
+                + ")"
+            )
+        else:
+            pycode = (
+                "("
+                + str(self.left.to_python())
+                + str(self.sign.to_python())
+                + str(self.right.to_python())
+                + ")"
+            )
         return pycode
 
 
