@@ -57,8 +57,9 @@ val_to_sign = {
 }
 
 FUNC_MAPPING = {
-    "MATH::PI": "pi",
-    "LENGTH$": "no_of_entries",
+    "MATH::PI": "pi", #np.pi
+    "MATH::E": "e",
+    "LENGTH$": "no_of_entries", #
     "ITERATION$": "current_iteration",
     "SUM$": "sum",
     "MIN$": "min",

@@ -54,7 +54,7 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return "{0}({1})".format(str(self.sign), self.operand)
 
     def unary_to_ufunc(self, sign):
-        signmap = {"~": "um.invert", "!": "not"}
+        signmap = {"~": "np.invert", "!": "np.logical_not"}
         return signmap[str(sign)]
 
     def to_python(self):
@@ -84,8 +84,8 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
 
     def binary_to_ufunc(self, sign):
         sign_mapping = {
-            "&": "um.bitwise_or",
-            "|": "um.bitwise_or",
+            "&": "np.bitwise_and",
+            "|": "np.bitwise_or",
             "&&": "and",
             "||": "or",
         }
@@ -138,11 +138,8 @@ class Matrix(AST):  # Matrix: A matrix call
         return "{0}[{1}]".format(str(self.var), ",".join(str(x) for x in self.paren))
 
     def to_python(self):
-        slices = ""
-        for elem in self.paren:
-            slices += "[" + elem.to_python() + "]"
-        pycode = "(" + str(self.var.to_python()) + slices + ")"
-        return pycode
+        temp_str = [ "," + elem.to_python() for elem in self.paren]
+        return "(" + str(self.var.to_python()) + "[:" + "".join(temp_str)+"]" + ")"
 
 
 @dataclass
@@ -179,7 +176,16 @@ class Call(AST):  # Call: evaluate a function on arguments
             self.function,
             ", ".join(str(x) for x in self.arguments),
         )
-
+    
+    def to_python(self):
+        print(str(self.function))
+        match str(self.function):
+            case "pi":
+                return "np.pi"
+            case "e":
+                return "np.exp(1)"
+            case _ :
+                raise ValueError("Not a valid function!")
 
 # come-up with a shared notation for functions
 # make a  to_python function
