@@ -184,8 +184,9 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return "np.pi"
             case "e":
                 return "np.exp(1)"
+            case "e":
+                return "np.exp(1)"
             case _ :
                 raise ValueError("Not a valid function!")
 
-# come-up with a shared notation for functions
-# make a  to_python function
+

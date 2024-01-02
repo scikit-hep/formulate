@@ -9,7 +9,7 @@ from . import AST, matching_tree
 
 
 UNARY_OP = {"pos", "neg", "binv", "linv"}
-with_sign = {}
+
 BINARY_OP = {
     "add",
     "sub",
@@ -59,7 +59,7 @@ val_to_sign = {
 FUNC_MAPPING = {
     "MATH::PI": "pi", #np.pi
     "MATH::E": "e",
-    "LENGTH$": "no_of_entries", #
+    "LENGTH$": "no_of_entries", #ak.num, axis = 1
     "ITERATION$": "current_iteration",
     "SUM$": "sum",
     "MIN$": "min",
