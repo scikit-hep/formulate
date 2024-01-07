@@ -186,6 +186,18 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return "np.exp(1)"
             case "e":
                 return "np.exp(1)"
+            case "max":
+                return f"root_max({self.arguments[0]})"
+            case "min":
+                return f"root_min({self.arguments[0]})"
+            case "sum":
+                return f"root_sum({self.arguments[0]})"
+            case "no_of_entries":
+                return f"root_length({self.arguments[0]})"
+            case "min_if":
+                return f"root_min_if({self.arguments[0]}, {self.arguments[1]})"
+            case "max_if":
+                return f"root_max_if({self.arguments[0]}, {self.arguments[1]})"
             case _ :
                 raise ValueError("Not a valid function!")
 
