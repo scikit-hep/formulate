@@ -38,10 +38,12 @@ dependencies = [
 test = [
   "pytest >=6",
   "pytest-cov >=3",
+  "lark",
 ]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
+  "lark",
 ]
 docs = [
   "sphinx>=4.0",
