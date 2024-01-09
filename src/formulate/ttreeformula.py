@@ -9,7 +9,7 @@ import lark
 
 from . import matching_tree
 
-expression_grammar = """
+expression_grammar = r'''
 start: expression
 expression: disjunction | disjunction ":" expression -> multi_out
 disjunction: conjunction | conjunction "||" conjunction -> lor
@@ -47,7 +47,7 @@ CNAME: /[A-Za-z_$]([A-Za-z0-9_$]|\s*\.\s*)*/
 %import common.NUMBER
 %import common.WS
 %ignore WS
-"""
+'''
 
 
 def exp_to_ptree(exp: str):
