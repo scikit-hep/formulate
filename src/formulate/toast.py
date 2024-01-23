@@ -139,7 +139,9 @@ def toast(ptnode: matching_tree.ptnode):
             return AST.Call(funcs, func_arguments, index=func_names[0].start_pos)
 
         case matching_tree.ptnode("symbol", children):
-            temp_symbol = AST.Symbol(str(children[0]), index=children[0].start_pos)
+            var_name = _get_func_names(children[0])[0]
+            print(var_name)
+            temp_symbol = AST.Symbol(str(var_name), index=var_name.start_pos)
             # if temp_symbol.check_CNAME() is not None:
             return temp_symbol
             # else:

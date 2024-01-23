@@ -36,14 +36,14 @@ factor:  pow  | factor  matpos+ -> matr
                 | "-" factor          -> neg
 pow:     atom | atom "**" factor -> pow
 matpos: "[" [sum] "]"
-atom:    "(" expression ")" | CNAME -> symbol
+atom:    "(" expression ")" | var_name -> symbol
                             | NUMBER -> literal
                             | func_name trailer  -> func
-func_name: CNAME | CNAME "::" func_name
+func_name: NAME | NAME "::" func_name
+var_name: NAME | NAME "." var_name
 trailer: "(" [arglist] ")"
 arglist: expression ("," expression)* [","]
-CNAME: /[A-Za-z_$]([A-Za-z0-9_$]|\s*\.\s*)*/
-
+NAME: /[A-Za-z_][A-Za-z0-9_]*\$?/
 %import common.NUMBER
 %import common.WS
 %ignore WS

@@ -34,11 +34,11 @@ class Symbol(AST):  # Symbol: value referenced by name
     def __str__(self):
         return self.symbol
 
-    def check_CNAME(self):
-        regex = "((\.)\2{2,})"
-        x = re.search(regex, self.symbol)
-        print(x)
-        return x
+    # def check_CNAME(self):
+    #     regex = "((\.)\2{2,})"
+    #     x = re.search(regex, self.symbol)
+    #     print(x)
+    #     return x
 
     def to_python(self):
         return self.symbol
@@ -186,6 +186,8 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return "np.exp(1)"
             case "e":
                 return "np.exp(1)"
+            case "Math::sqrt":
+                return f"np.sqrt({self.arguments[0]})"
             case "max":
                 return f"root_max({self.arguments[0]})"
             case "min":

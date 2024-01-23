@@ -2,226 +2,156 @@ from __future__ import annotations
 
 import formulate
 
+from formulate.toast import toast
+
+import ast
+
 
 def test_simple_add():
-    a = formulate.ttreeformula.exp_to_ptree("a+2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a+2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a+2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a+2.0)"))
 
 
 def test_simple_sub():
-    a = formulate.ttreeformula.exp_to_ptree("a-2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a-2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a-2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a-2.0)"))
 
 
 def test_simple_mul():
-    a = formulate.ttreeformula.exp_to_ptree("f*2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(f*2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("f*2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(f*2.0)"))
 
 
 def test_simple_div():
-    a = formulate.ttreeformula.exp_to_ptree("a/2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a/2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a/2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a/2.0)"))
 
 
 def test_simple_lt():
-    a = formulate.ttreeformula.exp_to_ptree("a<2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a<2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a<2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a<2.0)"))
 
 
 def test_simple_lte():
-    a = formulate.ttreeformula.exp_to_ptree("a<=2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a<=2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a<=2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a<=2.0)"))
 
 
 def test_simple_gt():
-    a = formulate.ttreeformula.exp_to_ptree("a>2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a>2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a>2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a>2.0)"))
 
 
 def test_simple_gte():
-    a = formulate.ttreeformula.exp_to_ptree("a>=2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a>=2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a>=2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a>=2.0)"))
 
 
 def test_simple_eq():
-    a = formulate.ttreeformula.exp_to_ptree("a==2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a==2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a==2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a==2.0)"))
 
 
 def test_simple_neq():
-    a = formulate.ttreeformula.exp_to_ptree("a!=2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a!=2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a!=2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a!=2.0)"))
 
 
 def test_simple_bor():
-    a = formulate.ttreeformula.exp_to_ptree("a|b")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a|b)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a|b"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.bitwise_or(a,b)"))
 
 
 def test_simple_band():
-    a = formulate.ttreeformula.exp_to_ptree("a&c")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a&c)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a&c"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.bitwise_and(a,c)"))
 
 
 def test_simple_bxor():
-    a = formulate.ttreeformula.exp_to_ptree("a^2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a^2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a^2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a^2.0)"))
 
 
 def test_simple_land():
-    a = formulate.ttreeformula.exp_to_ptree("a&&2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a&&2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a&&2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a and 2.0)"))
 
 
 def test_simple_lor():
-    a = formulate.ttreeformula.exp_to_ptree("a||2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a||2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a||2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a or 2.0)"))
 
 
 def test_simple_pow():
-    a = formulate.ttreeformula.exp_to_ptree("a**2")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(a**2)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a**2.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a**2.0)"))
 
 
 def test_simple_matrix():
-    a = formulate.ttreeformula.exp_to_ptree("a[45][1]")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "a[45][1]"
+    a = toast(formulate.ttreeformula.exp_to_ptree("a[45][1]"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a[:, 45.0, 1.0]"))
 
 
 def test_simple_function():
-    a = formulate.ttreeformula.exp_to_ptree("Math::sqrt(4)")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "Math::sqrt(4)"
-
-
-def test_simple_function2():
-    a = formulate.ttreeformula.exp_to_ptree("Math::sqrt::three(4)")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "Math::sqrt::three(4)"
-
-
-def test_simple_function3():
-    a = formulate.ttreeformula.exp_to_ptree("Math::sqrt::three::four(4)")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "Math::sqrt::three::four(4)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("Math::sqrt(4)"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.sqrt(4.0)"))
 
 
 def test_simple_unary_pos():
-    a = formulate.ttreeformula.exp_to_ptree("+5")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(+5)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("+5.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(+5.0)"))
 
 
 def test_simple_unary_neg():
-    a = formulate.ttreeformula.exp_to_ptree("-5")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(-5)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("-5.0"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(-5.0)"))
 
 
 def test_simple_unary_binv():
-    a = formulate.ttreeformula.exp_to_ptree("~bool")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(~bool)"
+    a = toast(formulate.ttreeformula.exp_to_ptree("~bool"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.invert(bool)"))
 
 
 def test_simple_unary_linv():
-    a = formulate.ttreeformula.exp_to_ptree("!bool")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(!bool)"
-
-
-def test_simple_matrix_unary_pos():
-    a = formulate.ttreeformula.exp_to_ptree("Math::sqrt::three::four(-4)")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "Math::sqrt::three::four((-4))"
+    a = toast(formulate.ttreeformula.exp_to_ptree("!bool"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.logical_not(bool)"))
 
 
 def test_unary_binary_pos():
-    a = formulate.ttreeformula.exp_to_ptree("2 - -6")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(2-(-6))"
+    a = toast(formulate.ttreeformula.exp_to_ptree("2.0 - -6"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(2.0-(-6.0))"))
 
 
 def test_complex_matrix():
-    a = formulate.ttreeformula.exp_to_ptree("mat1[a**23][mat2[45 - -34]]")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "mat1[(a**23)][mat2[(45-(-34))]]"
+    a = toast(formulate.ttreeformula.exp_to_ptree("mat1[a**23][mat2[45 - -34]]"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(mat1[:,(a**23.0),(mat2[:,(45.0-(-34.0))])])"))
 
 
 def test_complex_exp():
-    a = formulate.ttreeformula.exp_to_ptree("~a**b*23/(var||45)")
-    aa = []
-    tree = formulate._utils._ptree_to_string(a, aa)
-    out = "".join(tree)
-    assert out == "(~((a**b)*(23/(var||45))))"
+    a = toast(formulate.ttreeformula.exp_to_ptree("~a**b*23/(var||45)"))
+    out = a.to_python()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.invert(((a**b)*(23.0/(var or 45.0))))"))
