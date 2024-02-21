@@ -184,10 +184,62 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return "np.pi"
             case "e":
                 return "np.exp(1)"
-            case "e":
-                return "np.exp(1)"
+            case "inf":
+                return "np.inf"
+            case "nan":
+                return "np.nan"
+            case "sqrt2":
+                return "np.sqrt(2)"
+            case "piby2":
+                return "(np.pi/2)" 
+            case "piby4":
+                return "(np.pi/4)"            
+            case "2pi":
+                return "(np.pi*2.0)"
+            case "ln10":
+                return f"np.log(10)"
+            case "loge":
+                return f"np.log10(np.exp(1))"
+            case "log":
+                return f"np.log10({self.arguments[0]})"
+            case "log2":
+                return f"(np.log({self.arguments[0]})/log(2))"
+            case "degtorad":
+                return f"np.radians({self.arguments[0]})"
+            case "radtodeg":
+                return f"np.degrees({self.arguments[0]})"
+            case "exp":
+                return f"np.exp({self.arguments[0]})"
+            case "sin":
+                return f"np.sin({self.arguments[0]})"
+            case "asin":
+                return f"np.arcsin({self.arguments[0]})"
+            case "sinh":
+                return f"np.sinh({self.arguments[0]})"
+            case "asinh":
+                return f"np.arcsinh({self.arguments[0]})"
+            case "cos":
+                return f"np.cos({self.arguments[0]})"
+            case "arccos":
+                return f"np.arccos({self.arguments[0]})"
+            case "cosh":
+                return f"np.cosh({self.arguments[0]})"    
+            case "acosh":
+                return f"np.arccosh({self.arguments[0]})"
+            case "tan":
+                return f"np.tan({self.arguments[0]})"
+            case "arctan":
+                return f"np.arctan({self.arguments[0]})"
+            case "tanh":
+                return f"np.tanh({self.arguments[0]})"
+            case "atanh":
+                return f"np.arctanh({self.arguments[0]})"
             case "Math::sqrt":
                 return f"np.sqrt({self.arguments[0]})"
+            case "ceil":
+                return f"np.ceil({self.arguments[0]})"
+            case "abs":
+                return f"np.abs({self.arguments[0]})"
             case "max":
                 return f"root_max({self.arguments[0]})"
             case "min":
