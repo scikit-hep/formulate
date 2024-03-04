@@ -96,6 +96,9 @@ FUNC_MAPPING = {
     "TMATH::ATANH": "atanh",
     "TMATH::CEIL": "ceil",
     "TMATH::ABS": "abs",
+    "TMath::Even": "even",
+    "TMath::Factorial": "factorial",
+    "TMath::Floor": "floor",
     "LENGTH$": "no_of_entries", #ak.num, axis = 1
     "ITERATION$": "current_iteration",
     "SUM$": "sum",

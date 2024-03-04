@@ -240,6 +240,14 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return f"np.ceil({self.arguments[0]})"
             case "abs":
                 return f"np.abs({self.arguments[0]})"
+            case "even":
+                return f"! ({self.arguments[0]} % 2)"
+            case "factorial":
+                return f"np.math.factorial({self.arguments[0]})"
+            case "floor":
+                return f"! np.floor({self.arguments[0]})"
+            case "abs":
+                return f"np.abs({self.arguments[0]})"
             case "max":
                 return f"root_max({self.arguments[0]})"
             case "min":
