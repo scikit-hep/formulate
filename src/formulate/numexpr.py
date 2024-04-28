@@ -10,10 +10,7 @@ import lark
 from . import matching_tree
 
 expression_grammar = r'''
-start: disjunction
-disjunction: conjunction | conjunction "||" conjunction -> lor
-conjunction: inversion | inversion "&&" inversion -> land
-inversion: comparison | "!" inversion -> linv
+start: comparison
 comparison: bitwise_or | comparison ">" bitwise_or -> gt
             | comparison ">=" bitwise_or -> gte
             | comparison "<" bitwise_or -> lt
@@ -30,11 +27,15 @@ sum:   term   | term "+" sum  -> add | term "-" sum  -> sub
 term:    factor | factor "*" term -> mul
                 | factor "/" term     -> div
                 | factor "%" term -> mod
-factor:  pow  | factor  matpos+ -> matr
-                | "+" factor  -> pos
+factor:  pow    | "+" factor  -> pos
                 | "-" factor          -> neg
-pow:     CNAME | CNAME "**" factor -> pow
-matpos: "[" [sum] "]"
+pow:     atom | atom "**" factor -> pow
+atom:    "(" comparison ")" | CNAME -> symbol
+                            | NUMBER -> literal
+                            | func_name trailer  -> func
+func_name: CNAME
+trailer: "(" [arglist] ")"
+arglist: comparison ("," comparison)* [","]
 %import common.CNAME
 %import common.NUMBER
 %import common.WS

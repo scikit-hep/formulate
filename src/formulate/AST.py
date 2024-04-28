@@ -236,6 +236,8 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return f"np.arctanh({self.arguments[0]})"
             case "Math::sqrt":
                 return f"np.sqrt({self.arguments[0]})"
+            case "sqrt":
+                return f"np.sqrt({self.arguments[0]})"
             case "ceil":
                 return f"np.ceil({self.arguments[0]})"
             case "abs":

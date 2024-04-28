@@ -64,14 +64,16 @@ FUNC_MAPPING = {
     "TMATH::QUIETNAN": "nan",
     "TMATH::SQRT2": "sqrt2",
     "SQRT2": "sqrt2",
+    "SQRT": "sqrt",
     "TMATH::PIOVER2": "piby2",
     "TMATH::PIOVER4": "piby4",
     "TMATH::TWOPI": "2pi",
     "LN10": "ln10",
     "TMATH::LN10": "ln10",
-    "TMATH::LogE": "loge",
-    "TMATH::Log": "log",
-    "TMATH::Log2": "log2",
+    "TMATH::LOGE": "loge",
+    "TMATH::LOG": "log",
+    "LOG": "log",
+    "TMATH::LOG2": "log2",
     "EXP": "exp",
     "TMATH::EXP": "exp",
     "TMATH::DEGTORAD": "degtorad",
@@ -112,16 +114,17 @@ FUNC_MAPPING = {
 
 def _get_func_names(func_names):
     children = []
+    print(func_names)
     if len(func_names.children) > 1:
         children.extend(_get_func_names(func_names.children[1]))
     children.append(func_names.children[0])
     return children
 
 
-def toast(ptnode: matching_tree.ptnode):
+def toast(ptnode: matching_tree.ptnode, nxp : bool):
     match ptnode:
         case matching_tree.ptnode(operator, (left, right)) if operator in BINARY_OP:
-            arguments = [toast(left), toast(right)]
+            arguments = [toast(left,nxp), toast(right,nxp)]
             return AST.BinaryOperator(
                 AST.Symbol(val_to_sign[operator], index=arguments[1].index),
                 arguments[0],
@@ -130,14 +133,14 @@ def toast(ptnode: matching_tree.ptnode):
             )
 
         case matching_tree.ptnode(operator, operand) if operator in UNARY_OP:
-            argument = toast(operand[0])
+            argument = toast(operand[0],nxp)
             return AST.UnaryOperator(
                 AST.Symbol(val_to_sign[operator], index=argument.index), argument
             )
 
         case matching_tree.ptnode("multi_out", (exp1, exp2)):
-            exp_node1 = toast(exp1)
-            exp_node2 = toast(exp2)
+            exp_node1 = toast(exp1,nxp)
+            exp_node2 = toast(exp2,nxp)
             exps = [exp_node1, exp_node2]
             if isinstance(exp_node2, AST.Call) and exp_node2.function == ":":
                 del exps[-1]
@@ -146,14 +149,14 @@ def toast(ptnode: matching_tree.ptnode):
             return AST.Call(val_to_sign["multi_out"], exps, index=exp_node1.index)
 
         case matching_tree.ptnode("matr", (array, *slice)):
-            var = toast(array)
-            paren = [toast(elem) for elem in slice]
+            var = toast(array,nxp)
+            paren = [toast(elem,nxp) for elem in slice]
             return AST.Matrix(var, paren, index=var.index)
 
         case matching_tree.ptnode("matpos", child):
             if child[0] is None:
                 return AST.Empty()
-            slice = toast(child[0])
+            slice = toast(child[0],nxp)
             return AST.Slice(slice, index=slice.index)
 
         case matching_tree.ptnode("func", (func_name, trailer)):
@@ -171,15 +174,19 @@ def toast(ptnode: matching_tree.ptnode):
                     func_arguments,
                     index=func_names[0].start_pos,
                 )
-
-            func_arguments = [toast(elem) for elem in trailer.children[0].children]
+            for elem in trailer.children[0].children:
+                print(elem)
+            func_arguments = [toast(elem,nxp) for elem in trailer.children[0].children]
 
             funcs = root_to_common(func_names, func_names[0].start_pos)
 
             return AST.Call(funcs, func_arguments, index=func_names[0].start_pos)
 
         case matching_tree.ptnode("symbol", children):
-            var_name = _get_func_names(children[0])[0]
+            if not nxp:
+                var_name = _get_func_names(children[0])[0]
+            else:
+                var_name = children[0]
             print(var_name)
             temp_symbol = AST.Symbol(str(var_name), index=var_name.start_pos)
             # if temp_symbol.check_CNAME() is not None:
@@ -191,7 +198,7 @@ def toast(ptnode: matching_tree.ptnode):
             return AST.Literal(float(children[0]), index=children[0].start_pos)
 
         case matching_tree.ptnode(_, (child,)):
-            return toast(child)
+            return toast(child,nxp)
 
         case _:
             raise TypeError(f"Unknown Node Type: {ptnode!r}.")
