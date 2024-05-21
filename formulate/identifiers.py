@@ -1,22 +1,16 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-try:
-    from enum import Enum, auto
-except ImportError:
-    from aenum import Enum, auto
-
+from enum import Enum, auto
 
 __all__ = [
-    'IDs',
-    'order_of_operations',
+    "IDs",
+    "order_of_operations",
 ]
 
 
 class IDs(Enum):
-    FIXED = auto()  # Something which can't change such as: constants, numbers and variables
+    FIXED = (
+        auto()
+    )  # Something which can't change such as: constants, numbers and variables
 
     MINUS = auto()
     PLUS = auto()
@@ -164,11 +158,12 @@ order_of_operations = [
 
 
 class ConstantIDs(Enum):
-    """Identifiers for constants
+    """Identifiers for constants.
 
-     - CGS => Use cm, g & s for units
-     - ERR => Uncertainty on quantity
+    - CGS => Use cm, g & s for units
+    - ERR => Uncertainty on quantity
     """
+
     TRUE = auto()
     FALSE = auto()
     INFINITY = auto()
