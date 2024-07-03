@@ -20,9 +20,11 @@ __all__ = ("__version__",)
 
 
 def from_root(exp : str, **kwargs) -> AST :
-    ptree = ttreeformula.exp_to_ptree(exp)
+    parser = ttreeformula.Lark_StandAlone()
+    ptree = parser.parse(exp)
     return toast.toast(ptree, nxp=False)
 
 def from_numexpr(exp : str, **kwargs) -> AST :
-    ptree = numexpr.exp_to_ptree(exp)
+    parser = numexpr.Lark_StandAlone()
+    ptree = parser.parse(exp)
     return toast.toast(ptree, nxp=True)
