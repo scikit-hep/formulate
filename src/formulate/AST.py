@@ -111,10 +111,10 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         return sign_mapping[str(sign)]
 
     def to_numexpr(self):
-        return self.left.to_numexpr() + str(self.sign.to_numexpr()) + self.right.to_numexpr()
+        return "(" + self.left.to_numexpr() + str(self.sign.to_numexpr()) + self.right.to_numexpr() + ")"
 
     def to_root(self):
-        return self.left.to_root() + str(self.sign.to_root()) + self.right.to_root()
+        return "(" + self.left.to_root() + str(self.sign.to_root()) + self.right.to_root() + ")"
 
     def to_python(self):
         if str(self.sign) in {
