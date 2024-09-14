@@ -5,7 +5,6 @@ formulate:  Easy conversions between different styles of expressions
 """
 
 
-import lark
 from . import numexpr_parser
 from . import ttreeformula_parser
 
