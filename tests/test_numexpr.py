@@ -8,120 +8,120 @@ import ast
 
 
 def test_simple_add():
-    a = toast(formulate.numexpr.exp_to_ptree("a+2.0"), nxp = True)
+    a = formulate.from_numexpr(("a+2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a+2.0)"))
 
 
 def test_simple_sub():
-    a = toast(formulate.numexpr.exp_to_ptree("a-2.0"), nxp = True)
+    a = formulate.from_numexpr(("a-2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a-2.0)"))
 
 
 def test_simple_mul():
-    a = toast(formulate.numexpr.exp_to_ptree("f*2.0"), nxp = True)
+    a = formulate.from_numexpr(("f*2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(f*2.0)"))
 
 
 def test_simple_div():
-    a = toast(formulate.numexpr.exp_to_ptree("a/2.0"), nxp = True)
+    a = formulate.from_numexpr(("a/2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a/2.0)"))
 
 
 def test_simple_lt():
-    a = toast(formulate.numexpr.exp_to_ptree("a<2.0"), nxp = True)
+    a = formulate.from_numexpr(("a<2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a<2.0)"))
 
 
 def test_simple_lte():
-    a = toast(formulate.numexpr.exp_to_ptree("a<=2.0"), nxp = True)
+    a = formulate.from_numexpr(("a<=2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a<=2.0)"))
 
 
 def test_simple_gt():
-    a = toast(formulate.numexpr.exp_to_ptree("a>2.0"), nxp = True)
+    a = formulate.from_numexpr(("a>2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a>2.0)"))
 
 
 def test_simple_gte():
-    a = toast(formulate.numexpr.exp_to_ptree("a>=2.0"), nxp = True)
+    a = formulate.from_numexpr(("a>=2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a>=2.0)"))
 
 
 def test_simple_eq():
-    a = toast(formulate.numexpr.exp_to_ptree("a==2.0"), nxp = True)
+    a = formulate.from_numexpr(("a==2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a==2.0)"))
 
 
 def test_simple_neq():
-    a = toast(formulate.numexpr.exp_to_ptree("a!=2.0"), nxp = True)
+    a = formulate.from_numexpr(("a!=2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a!=2.0)"))
 
 
 def test_simple_bor():
-    a = toast(formulate.numexpr.exp_to_ptree("a|b"), nxp = True)
+    a = formulate.from_numexpr(("a|b"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b"))
 
 
 def test_simple_band():
-    a = toast(formulate.numexpr.exp_to_ptree("a&c"), nxp = True)
+    a = formulate.from_numexpr(("a&c"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & c"))
 
 
 def test_simple_bxor():
-    a = toast(formulate.numexpr.exp_to_ptree("a^2.0"), nxp = True)
+    a = formulate.from_numexpr(("a^2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a^2.0)"))
 
 def test_simple_pow():
-    a = toast(formulate.numexpr.exp_to_ptree("a**2.0"), nxp = True)
+    a = formulate.from_numexpr(("a**2.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a**2.0)"))
 
 
 def test_simple_function():
-    a = toast(formulate.numexpr.exp_to_ptree("sqrt(4)"), nxp = True)
+    a = formulate.from_numexpr(("sqrt(4)"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("sqrt(4.0)"))
 
 
 def test_simple_unary_pos():
-    a = toast(formulate.numexpr.exp_to_ptree("+5.0"), nxp = True)
+    a = formulate.from_numexpr(("+5.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(+5.0)"))
 
 
 def test_simple_unary_neg():
-    a = toast(formulate.numexpr.exp_to_ptree("-5.0"), nxp = True)
+    a = formulate.from_numexpr(("-5.0"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(-5.0)"))
 
 
 def test_simple_unary_binv():
-    a = toast(formulate.numexpr.exp_to_ptree("~bool"), nxp = True)
+    a = formulate.from_numexpr(("~bool"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("~bool"))
 
 
 
 def test_unary_binary_pos():
-    a = toast(formulate.numexpr.exp_to_ptree("2.0 - -6"), nxp = True)
+    a = formulate.from_numexpr(("2.0 - -6"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(2.0-(-6.0))"))
 
 
 def test_complex_exp():
-    a = toast(formulate.numexpr.exp_to_ptree("(~a**b)*23/(var|45)"), nxp = True)
+    a = formulate.from_numexpr(("(~a**b)*23/(var|45)"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("((~(a**b))*(23.0/(var|45.0)))"))

@@ -7,7 +7,9 @@ formulate:  Easy conversions between different styles of expressions
 
 from __future__ import annotations
 
-from . import ttreeformula, numexpr  # noqa  # noqa
+from . import ttreeformula_parser, numexpr_parser  # noqa  # noqa
+
+from . import convert_ptree
 
 from . import AST
 
@@ -20,11 +22,13 @@ __all__ = ("__version__",)
 
 
 def from_root(exp : str, **kwargs) -> AST :
-    parser = ttreeformula.Lark_StandAlone()
+    parser = ttreeformula_parser.Lark_StandAlone()
     ptree = parser.parse(exp)
+    convert_ptree.convert_ptree(ptree)
     return toast.toast(ptree, nxp=False)
 
 def from_numexpr(exp : str, **kwargs) -> AST :
-    parser = numexpr.Lark_StandAlone()
+    parser = numexpr_parser.Lark_StandAlone()
     ptree = parser.parse(exp)
+    convert_ptree.convert_ptree(ptree)
     return toast.toast(ptree, nxp=True)
