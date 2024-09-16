@@ -22,12 +22,14 @@ __all__ = ("__version__",)
 
 
 def from_root(exp : str, **kwargs) -> AST :
+    """Evaluate ttreformula expressions."""
     parser = ttreeformula_parser.Lark_StandAlone()
     ptree = parser.parse(exp)
     convert_ptree.convert_ptree(ptree)
     return toast.toast(ptree, nxp=False)
 
 def from_numexpr(exp : str, **kwargs) -> AST :
+    """Evaluate numexpr expressions."""
     parser = numexpr_parser.Lark_StandAlone()
     ptree = parser.parse(exp)
     convert_ptree.convert_ptree(ptree)
