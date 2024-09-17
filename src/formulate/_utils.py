@@ -5,7 +5,7 @@ formulate:  Easy conversions between different styles of expressions
 """
 from __future__ import annotations
 
-from . import numexpr_parse
+from . import numexpr_parser
 from . import  ttreeformula_parser
 
 UNARY_OP = {"pos", "neg", "binv", "linv"}
