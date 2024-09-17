@@ -1,6 +1,7 @@
 name: unittests
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "*"
