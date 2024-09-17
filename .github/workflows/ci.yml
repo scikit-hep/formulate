@@ -34,9 +34,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: formulate-env
 
-      - name: Install ROOT
-        run: |
-          mamba install root -y
+      # - name: Install ROOT
+      #   run: |
+      #     mamba install root -y
 
       - name: Install test dependencies
         run: |
