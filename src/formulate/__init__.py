@@ -4,7 +4,6 @@ Copyright (c) 2023 Aryan Roy. All rights reserved.
 formulate:  Easy conversions between different styles of expressions
 """
 
-
 from __future__ import annotations
 
 from . import ttreeformula_parser, numexpr_parser  # noqa  # noqa
