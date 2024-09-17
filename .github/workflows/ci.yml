@@ -2,9 +2,6 @@ name: unittests
 
 on:
   workflow_dispatch:
-    inputs:
-      publish-pypi:
-         type: boolean   
   push:
     tags:
       - "*"
