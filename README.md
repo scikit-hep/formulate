@@ -11,7 +11,7 @@
 [![Scikit-HEP][sk-badge]](https://scikit-hep.org/)
 
 <!-- prettier-ignore-start -->
-[actions-badge]:            https://github.com/Scikit-HEP/formulate/workflows/CI/badge.svg
+[actions-badge]:            https://github.com/scikit-hep/formulate/workflows/unittests/badge.svg
 [actions-link]:             https://github.com/Scikit-HEP/formulate/actions
 [conda-badge]:              https://img.shields.io/conda/vn/conda-forge/formulate
 [conda-link]:               https://github.com/conda-forge/formulate-feedstock
