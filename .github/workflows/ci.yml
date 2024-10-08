@@ -6,7 +6,7 @@ on:
     tags:
       - "*"
     branches:
-      - master
+      - main
       - "ci/*"
   pull_request:
 
@@ -65,7 +65,7 @@ jobs:
         with:
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@master
+      - uses: pypa/gh-action-pypi-publish@main
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
