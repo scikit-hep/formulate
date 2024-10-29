@@ -14,9 +14,8 @@ from . import AST
 
 from . import toast
 
-__version__ = "1.0.0rc1"
+from .version import __version__
 
-__all__ = ("__version__",)
 
 
 
