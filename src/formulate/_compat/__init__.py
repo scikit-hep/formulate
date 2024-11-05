@@ -1,8 +1,3 @@
-"""
-Copyright (c) 2023 Aryan Roy. All rights reserved.
-
-formulate:  Easy conversions between different styles of expressions
-"""
-
+# Licensed under a 3-clause BSD style license, see LICENSE.
 
 from __future__ import annotations

@@ -4,7 +4,8 @@ build-backend = "hatchling.build"
 [project]
 name = "formulate"
 authors = [
-  { name = "Aryan Roy", email = "aryanroy5678@gmail.com" },
+ { name = "Chris Burr", email = "c.b@cern.ch" },
+  { name = "Aryan Roy", email = "aryanroy5678@gmail.com" }
 ]
 maintainers = [
   { name = "The Scikit-HEP admins", email = "scikit-hep-admins@googlegroups.com" },
