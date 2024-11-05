@@ -14,8 +14,13 @@ from . import AST
 
 from . import toast
 
-from .version import __version__
+from ._version import __version__
 
+# print("======================")
+# print(__version__.__repr__())
+# print("======================")
+
+# __all__ = ("__version__",)
 
 
 
