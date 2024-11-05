@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 [project]
 name = "formulate"
@@ -54,8 +54,10 @@ Homepage = "https://github.com/Scikit-HEP/formulate"
 "Bug Tracker" = "https://github.com/Scikit-HEP/formulate/issues"
 Discussions = "https://github.com/Scikit-HEP/formulate/discussions"
 Changelog = "https://github.com/Scikit-HEP/formulate/releases"
+
 [tool.hatch]
-version.path = "src/formulate/__init__.py"
+version.source = "vcs"
+build.hooks.vcs.version-file = "src/formulate/_version.py"
 envs.default.dependencies = [
   "pytest",
   "pytest-cov",

@@ -104,3 +104,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 /formulate/version.py
+
+# DS_STORE
+**/.DS_Store
+
+# Versioning
+**/_version.py
