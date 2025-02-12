@@ -221,7 +221,6 @@ class Call(AST):  # Call: evaluate a function on arguments
         )
 
     def to_numexpr(self):
-        print(str(self.function))
         match str(self.function):
             case "pi":
                 return "arccos(-1)"
@@ -385,7 +384,6 @@ class Call(AST):  # Call: evaluate a function on arguments
 
 
     def to_python(self):
-        print(str(self.function))
         match str(self.function):
             case "pi":
                 return "np.pi"

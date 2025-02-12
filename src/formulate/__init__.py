@@ -12,13 +12,6 @@ from . import toast
 
 from ._version import __version__
 
-# print("======================")
-# print(__version__.__repr__())
-# print("======================")
-
-# __all__ = ("__version__",)
-
-
 
 def from_root(exp : str, **kwargs) -> AST :
     """Evaluate ttreformula expressions."""
