@@ -111,7 +111,6 @@ FUNC_MAPPING = {
 
 def _get_func_names(func_names):
     children = []
-    print(func_names)
     if len(func_names.children) > 1:
         children.extend(_get_func_names(func_names.children[1]))
     children.append(func_names.children[0])
@@ -172,7 +171,6 @@ def toast(ptnode: matching_tree.ptnode, nxp : bool):
                     index=func_names[0].start_pos,
                 )
             for elem in trailer.children[0].children:
-                print(elem)
             func_arguments = [toast(elem,nxp) for elem in trailer.children[0].children]
 
             funcs = root_to_common(func_names, func_names[0].start_pos)
@@ -184,7 +182,6 @@ def toast(ptnode: matching_tree.ptnode, nxp : bool):
                 var_name = _get_func_names(children[0])[0]
             else:
                 var_name = children[0]
-            print(var_name)
             temp_symbol = AST.Symbol(str(var_name), index=var_name.start_pos)
             # if temp_symbol.check_CNAME() is not None:
             return temp_symbol
