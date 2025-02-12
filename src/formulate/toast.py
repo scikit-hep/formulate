@@ -170,7 +170,7 @@ def toast(ptnode: matching_tree.ptnode, nxp : bool):
                     func_arguments,
                     index=func_names[0].start_pos,
                 )
-            for elem in trailer.children[0].children:
+
             func_arguments = [toast(elem,nxp) for elem in trailer.children[0].children]
 
             funcs = root_to_common(func_names, func_names[0].start_pos)
