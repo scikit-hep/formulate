@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -13,7 +14,7 @@ from __future__ import annotations
 
 project = "formulate"
 copyright = "2016-2024, The Scikit-HEP Administrators"
-author = "Aryan Roy"
+author = "Chris Burr, Jonas Eschle, Aryan Roy"
 
 
 # -- General configuration ---------------------------------------------------
@@ -27,6 +28,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
+    "jupyter_sphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -4,39 +4,40 @@ build-backend = "hatchling.build"
 [project]
 name = "formulate"
 authors = [
- { name = "Chris Burr", email = "c.b@cern.ch" },
-  { name = "Aryan Roy", email = "aryanroy5678@gmail.com" }
+    { name = "Chris Burr", email = "c.b@cern.ch" },
+    { name = "Aryan Roy", email = "aryanroy5678@gmail.com" },
+    { name = "Jonas Eschle", email = "jonas.eschle@gmail.com" }
 ]
 maintainers = [
-  { name = "The Scikit-HEP admins", email = "scikit-hep-admins@googlegroups.com" },
+    { name = "The Scikit-HEP admins", email = "scikit-hep-admins@googlegroups.com" },
 ]
 description = " Easy conversions between different styles of expressions"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
-  "Development Status :: 1 - Planning",
-  "Intended Audience :: Science/Research",
-  "Intended Audience :: Developers",
-  "License :: OSI Approved :: BSD License",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering",
-  "Typing :: Typed",
+    "Typing :: Typed",
 ]
 dynamic = ["version"]
 dependencies = [
-  "typing_extensions >=3.10",
+    "typing_extensions >=3.10",
 ]
 
 [project.optional-dependencies]
 test = [
-  "pytest >=6",
-  "pytest-cov >=3",
-  "lark",
+    "pytest >=6",
+    "pytest-cov >=3",
+    "lark",
   "hypothesis",
 ]
 dev = [
@@ -46,11 +47,19 @@ dev = [
   "hypothesis",
 ]
 docs = [
-  "sphinx>=4.0",
-  "myst_parser>=0.13",
-  "sphinx-book-theme>=0.1.0",
-  "sphinx_copybutton",
-  "furo",
+    "sphinx>=4.0",
+    "myst_parser>=0.13",
+    "sphinx-book-theme>=0.1.0",
+    "sphinx_copybutton",
+    "sphinx_rtd_theme",
+    "sphinx-autodoc-typehints",
+    "jupyter-sphinx>=0.3.2",
+    "numexpr",
+]
+dev = [
+    "formulate[docs]",
+    "formulate[test]",
+    "pre-commit",
 ]
 
 [project.urls]
@@ -63,8 +72,8 @@ Changelog = "https://github.com/Scikit-HEP/formulate/releases"
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/formulate/_version.py"
 envs.default.dependencies = [
-  "pytest",
-  "pytest-cov",
+    "pytest",
+    "pytest-cov",
 ]
 
 
@@ -75,13 +84,13 @@ xfail_strict = true
 filterwarnings = ["error"]
 log_cli_level = "INFO"
 testpaths = [
-  "tests",
+    "tests",
 ]
 
 
 [tool.mypy]
 files = "src"
-python_version = "3.7"
+python_version = "3.10"
 warn_unused_configs = true
 strict = true
 show_error_codes = true
@@ -91,41 +100,41 @@ warn_unreachable = true
 
 [tool.ruff]
 select = [
-  "E", "F", "W", # flake8
-  "B", "B904",   # flake8-bugbear
-  "I",           # isort
-  "ARG",         # flake8-unused-arguments
-  "C4",          # flake8-comprehensions
-  "EM",          # flake8-errmsg
-  "ICN",         # flake8-import-conventions
-  "ISC",         # flake8-implicit-str-concat
-  "G",           # flake8-logging-format
-  "PGH",         # pygrep-hooks
-  "PIE",         # flake8-pie
-  "PL",          # pylint
-  "PT",          # flake8-pytest-style
-  "PTH",         # flake8-use-pathlib
-  "RET",         # flake8-return
-  "RUF",         # Ruff-specific
-  "SIM",         # flake8-simplify
-  "T20",         # flake8-print
-  "UP",          # pyupgrade
-  "YTT",         # flake8-2020
-  "EXE",         # flake8-executable
-  "NPY",         # NumPy specific rules
-  "PD",          # pandas-vet
+    "E", "F", "W", # flake8
+    "B", "B904", # flake8-bugbear
+    "I", # isort
+    "ARG", # flake8-unused-arguments
+    "C4", # flake8-comprehensions
+    "EM", # flake8-errmsg
+    "ICN", # flake8-import-conventions
+    "ISC", # flake8-implicit-str-concat
+    "G", # flake8-logging-format
+    "PGH", # pygrep-hooks
+    "PIE", # flake8-pie
+    "PL", # pylint
+    "PT", # flake8-pytest-style
+    "PTH", # flake8-use-pathlib
+    "RET", # flake8-return
+    "RUF", # Ruff-specific
+    "SIM", # flake8-simplify
+    "T20", # flake8-print
+    "UP", # pyupgrade
+    "YTT", # flake8-2020
+    "EXE", # flake8-executable
+    "NPY", # NumPy specific rules
+    "PD", # pandas-vet
 ]
 extend-ignore = [
-  "PLR",    # Design related pylint codes
-  "E501",   # Line too long
-  "PT004",  # Use underscore for non-returning fixture (use usefixture instead)
+    "PLR", # Design related pylint codes
+    "E501", # Line too long
+    "PT004", # Use underscore for non-returning fixture (use usefixture instead)
 ]
-target-version = "py37"
+target-version = "py310"
 typing-modules = ["formulate._compat.typing"]
 src = ["src"]
 unfixable = [
-  "T20",  # Removes print statements
-  "F841", # Removes unused variables
+    "T20", # Removes print statements
+    "F841", # Removes unused variables
 ]
 exclude = []
 flake8-unused-arguments.ignore-variadic-names = true
@@ -138,13 +147,13 @@ isort.required-imports = ["from __future__ import annotations"]
 
 [tool.pylint]
 py-version = "3.7"
-ignore-paths= ["src/formulate/_version.py"]
+ignore-paths = ["src/formulate/_version.py"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
 messages_control.disable = [
-  "design",
-  "fixme",
-  "line-too-long",
-  "missing-module-docstring",
-  "wrong-import-position",
+    "design",
+    "fixme",
+    "line-too-long",
+    "missing-module-docstring",
+    "wrong-import-position",
 ]
