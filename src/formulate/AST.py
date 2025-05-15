@@ -3,13 +3,29 @@
 
 from __future__ import annotations
 
+from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from typing import Union
-import re
 
 
-class AST:  # only three types (and a superclass to set them up)
+class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them up)
     _fields = ()
+
+    @abstractmethod
+    def __str__(self):
+        raise NotImplementedError("__str__() not implemented, subclass must implement it")
+
+    @abstractmethod
+    def to_numexpr(self):
+        raise NotImplementedError("to_numexpr() not implemented, subclass must implement it")
+
+    @abstractmethod
+    def to_root(self):
+        raise NotImplementedError("to_root() not implemented, subclass must implement it")
+
+    @abstractmethod
+    def to_python(self):
+        raise NotImplementedError("to_python() not implemented, subclass must implement it")
 
 
 @dataclass
@@ -89,6 +105,8 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return pycode
 
 
+from dataclasses import dataclass
+
 @dataclass
 class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     sign: Symbol
@@ -108,48 +126,102 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         }
         return sign_mapping[str(sign)]
 
+    def _is_complex_expression(self):
+        """Check if this binary operator needs special parenthesis handling"""
+        # Check if this is a bitwise/logical operator inside multiplication/division
+        if str(self.sign) in {"&", "|", "&&", "||"}:
+            parent_op = getattr(self, "_parent_op", None)
+            if parent_op and str(parent_op) in {"/", "*"}:
+                return True
+
+        # Check if this is multiplication/division with bitwise/logical right operand
+        if str(self.sign) in {"/", "*"}:
+            if (isinstance(self.right, BinaryOperator) and
+                    str(self.right.sign) in {"&", "|", "&&", "||"}):
+                # Set a flag on the right operand to indicate it's part of a complex expression
+                setattr(self.right, "_parent_op", self.sign)
+                return True
+
+        return False
+
+    def _strip_parentheses(self, code):
+        """Remove outer parentheses if present"""
+        if code.startswith("(") and code.endswith(")"):
+            return code[1:-1]
+        return code
+
+    def _format_bitwise_logical(self, left_code, right_code):
+        """Format bitwise/logical operations with smart parenthesis removal"""
+        # If left operand is the same operator, remove its parentheses
+        if (isinstance(self.left, BinaryOperator) and
+                str(self.left.sign) == str(self.sign)):
+            left_code = self._strip_parentheses(left_code)
+
+        # Remove parentheses from right operand if it's simple
+        right_code = self._strip_parentheses(right_code)
+
+        return left_code, right_code
+
+    def _to_infix_format(self, method_name):
+        """Common logic for to_numexpr and to_root methods"""
+        is_complex = self._is_complex_expression()
+
+        if str(self.sign) in {"&", "|", "&&", "||"} and not is_complex:
+            # For standalone bitwise and logical operators, don't add extra parentheses
+            left_code = getattr(self.left, method_name)()
+            right_code = getattr(self.right, method_name)()
+
+            # Format operands
+            left_code, right_code = self._format_bitwise_logical(left_code, right_code)
+
+            # Get operator string
+            operator_str = str(getattr(self.sign, method_name)())
+
+            return left_code + operator_str + right_code
+        else:
+            # For other operators or complex expressions, keep the parentheses
+            left_code = getattr(self.left, method_name)()
+            right_code = getattr(self.right, method_name)()
+            operator_str = str(getattr(self.sign, method_name)())
+
+            return "(" + left_code + operator_str + right_code + ")"
+
     def to_numexpr(self):
-        return "(" + self.left.to_numexpr() + str(self.sign.to_numexpr()) + self.right.to_numexpr() + ")"
+        return self._to_infix_format('to_numexpr')
 
     def to_root(self):
-        return "(" + self.left.to_root() + str(self.sign.to_root()) + self.right.to_root() + ")"
+        return self._to_infix_format('to_root')
 
     def to_python(self):
-        if str(self.sign) in {
-            "&",
-            "|",
-        }:
-            pycode = (
-                self.binary_to_ufunc(self.sign)
-                + "("
-                + self.left.to_python()
-                + ","
-                + self.right.to_python()
-                + ")"
-            )
-        elif str(self.sign) in {
-            "&&",
-            "||",
-        }:
-            pycode = (
-                "("
-                + self.left.to_python()
-                + " "
-                + self.binary_to_ufunc(self.sign)
-                + " "
-                + self.right.to_python()
-                + ")"
-            )
-        else:
-            pycode = (
-                "("
-                + str(self.left.to_python())
-                + str(self.sign.to_python())
-                + str(self.right.to_python())
-                + ")"
-            )
-        return pycode
+        if str(self.sign) in {"&", "|"}:
+            # For bitwise operators, create function calls
+            left_code = self.left.to_python()
+            right_code = self.right.to_python()
+            func_name = self.binary_to_ufunc(self.sign)
 
+            # Note: The original code had identical branches for this check,
+            # so we can simplify it
+            return f"{func_name}({left_code},{right_code})"
+
+        elif str(self.sign) in {"&&", "||"}:
+            # Handle logical operators with infix notation
+            left_code = self.left.to_python()
+            right_code = self.right.to_python()
+
+            # Format operands (remove unnecessary parentheses)
+            left_code, right_code = self._format_bitwise_logical(left_code, right_code)
+
+            # Use infix notation with spaces
+            operator_str = " " + self.binary_to_ufunc(self.sign) + " "
+
+            return left_code + operator_str + right_code
+
+        else:
+            # For standard operators (+, -, *, /, etc.)
+            left_code = self._strip_parentheses(str(self.left.to_python()))
+            right_code = self._strip_parentheses(str(self.right.to_python()))
+
+            return left_code + str(self.sign.to_python()) + right_code
 
 @dataclass
 class Matrix(AST):  # Matrix: A matrix call
@@ -234,9 +306,9 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "sqrt2":
                 return "sqrt(2)"
             case "piby2":
-                return "(arccos(-1)/2)" 
+                return "(arccos(-1)/2)"
             case "piby4":
-                return "(arccos(-1)/4)"            
+                return "(arccos(-1)/4)"
             case "2pi":
                 return "(arccos(-1)*2.0)"
             case "ln10":
@@ -266,7 +338,7 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "arccos":
                 return f"arccos({self.arguments[0]})"
             case "cosh":
-                return f"cosh({self.arguments[0]})"    
+                return f"cosh({self.arguments[0]})"
             case "acosh":
                 return f"arccosh({self.arguments[0]})"
             case "tan":
@@ -309,9 +381,9 @@ class Call(AST):  # Call: evaluate a function on arguments
                 case "sqrt2":
                     return "TMATH::Sqrt2({self.arguments[0]})"
                 case "piby2":
-                    return "TMATH::PiOver4" 
+                    return "TMATH::PiOver4"
                 case "piby4":
-                    return "TMATH::PiOver4"            
+                    return "TMATH::PiOver4"
                 case "2pi":
                     return "TMATH::TwoPi"
                 case "ln10":
@@ -341,7 +413,7 @@ class Call(AST):  # Call: evaluate a function on arguments
                 case "arccos":
                     return f"TMATH::ACos({self.arguments[0]})"
                 case "cosh":
-                    return f"TMATH::CosH({self.arguments[0]})"    
+                    return f"TMATH::CosH({self.arguments[0]})"
                 case "acosh":
                     return f"TMATH::ACosH({self.arguments[0]})"
                 case "tan":
@@ -397,9 +469,9 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "sqrt2":
                 return "np.sqrt(2)"
             case "piby2":
-                return "(np.pi/2)" 
+                return "(np.pi/2)"
             case "piby4":
-                return "(np.pi/4)"            
+                return "(np.pi/4)"
             case "2pi":
                 return "(np.pi*2.0)"
             case "ln10":
@@ -429,7 +501,7 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "arccos":
                 return f"np.arccos({self.arguments[0]})"
             case "cosh":
-                return f"np.cosh({self.arguments[0]})"    
+                return f"np.cosh({self.arguments[0]})"
             case "acosh":
                 return f"np.arccosh({self.arguments[0]})"
             case "tan":

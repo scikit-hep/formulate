@@ -36,9 +36,7 @@ from typing import (
     Pattern as REPattern, ClassVar, Set, Mapping
 )
 
-
-class LarkError(Exception):
-    pass
+from lark import LarkError, ParseError
 
 
 class ConfigurationError(LarkError, ValueError):
@@ -54,8 +52,6 @@ class GrammarError(LarkError):
     pass
 
 
-class ParseError(LarkError):
-    pass
 
 
 class LexError(LarkError):
