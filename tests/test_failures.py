@@ -1,12 +1,15 @@
-# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 import pytest
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
+
 import formulate
-from hypothesis import given, strategies as st, settings, assume
+import formulate.numexpr_parser
+
 # Import both ttreeformula_parser and numexpr_parser exceptions
 import formulate.ttreeformula_parser
-import formulate.numexpr_parser
+
 
 # Test for empty strings
 def test_empty_string():
@@ -17,6 +20,7 @@ def test_empty_string():
     with pytest.raises(Exception):
         formulate.from_numexpr("")
 
+
 # Test for whitespace-only strings
 def test_whitespace_string():
     """Test that whitespace-only strings are rejected."""
@@ -25,6 +29,7 @@ def test_whitespace_string():
 
     with pytest.raises(Exception):
         formulate.from_numexpr("   ")
+
 
 # Test for invalid syntax
 def test_invalid_syntax():
@@ -36,6 +41,7 @@ def test_invalid_syntax():
 
     with pytest.raises(Exception):
         formulate.from_numexpr("a$b")
+
 
 # Test for unsupported operations
 def test_unsupported_operations():
@@ -52,6 +58,7 @@ def test_unsupported_operations():
 
     with pytest.raises(Exception):
         formulate.from_numexpr("a ?? b")  # Null coalescing operator is not supported
+
 
 # Test for very large expressions
 def test_very_large_expression():
@@ -79,8 +86,9 @@ def test_very_large_expression():
         # Other exceptions might indicate a problem
         pytest.fail(f"Unexpected exception: {e}")
 
+
 # Use Hypothesis to generate invalid expressions
-@given(st.text(alphabet=st.characters(blacklist_categories=('L', 'N')), min_size=1))
+@given(st.text(alphabet=st.characters(blacklist_categories=("L", "N")), min_size=1))
 @settings(max_examples=1000)
 def test_invalid_characters(s):
     """Test that expressions with invalid characters are rejected."""
@@ -95,10 +103,11 @@ def test_invalid_characters(s):
     with pytest.raises(Exception):
         formulate.from_numexpr(s)
 
+
 # Generate expressions with unbalanced parentheses
 @given(
     st.text(alphabet="(", min_size=1, max_size=10),
-    st.text(alphabet=")", min_size=0, max_size=9)
+    st.text(alphabet=")", min_size=0, max_size=9),
 )
 @settings(max_examples=100)
 def test_unbalanced_parentheses(open_parens, close_parens):
@@ -116,18 +125,19 @@ def test_unbalanced_parentheses(open_parens, close_parens):
     with pytest.raises(Exception):
         formulate.from_numexpr(expr)
 
+
 # Test for invalid operator combinations
 def test_invalid_operator_combinations():
     """Test that expressions with invalid operator combinations are rejected."""
     # Test specific invalid operator combinations
     invalid_expressions = [
-        "a@b",     # @ is not a valid operator
-        "a#b",     # # is not a valid operator
-        "a$b",     # $ is not a valid operator
-        "a`b",     # ` is not a valid operator
-        "a\\b",    # \ is not a valid operator
-        "a;b",     # ; is not a valid operator
-        "a?b",     # ? is not a valid operator
+        "a@b",  # @ is not a valid operator
+        "a#b",  # # is not a valid operator
+        "a$b",  # $ is not a valid operator
+        "a`b",  # ` is not a valid operator
+        "a\\b",  # \ is not a valid operator
+        "a;b",  # ; is not a valid operator
+        "a?b",  # ? is not a valid operator
     ]
 
     for expr in invalid_expressions:
@@ -137,10 +147,13 @@ def test_invalid_operator_combinations():
         with pytest.raises(Exception):
             formulate.from_numexpr(expr)
 
+
 # Generate expressions with missing operands
 @given(
-    st.sampled_from(['a', 'b', 'c', 'd', 'f', 'var']),
-    st.sampled_from(['+', '-', '*', '/', '<', '<=', '>', '>=', '==', '!=', '&', '|', '^', '**'])
+    st.sampled_from(["a", "b", "c", "d", "f", "var"]),
+    st.sampled_from(
+        ["+", "-", "*", "/", "<", "<=", ">", ">=", "==", "!=", "&", "|", "^", "**"]
+    ),
 )
 @settings(max_examples=100)
 def test_missing_operands(var, op):
@@ -150,14 +163,14 @@ def test_missing_operands(var, op):
     expr2 = f"{op}{var}"  # Missing left operand (except for unary operators)
 
     # The expressions should be rejected (except for unary + and -)
-    if op not in ['+', '-']:
+    if op not in ["+", "-"]:
         with pytest.raises(Exception):
             formulate.from_root(expr1)
 
         with pytest.raises(Exception):
             formulate.from_numexpr(expr1)
 
-    if op not in ['+', '-', '~', '!']:  # These can be unary operators
+    if op not in ["+", "-", "~", "!"]:  # These can be unary operators
         with pytest.raises(Exception):
             formulate.from_root(expr2)
 

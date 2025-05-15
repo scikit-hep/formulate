@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from typing import Union
 
 
 class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them up)
@@ -13,19 +11,27 @@ class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them 
 
     @abstractmethod
     def __str__(self):
-        raise NotImplementedError("__str__() not implemented, subclass must implement it")
+        raise NotImplementedError(
+            "__str__() not implemented, subclass must implement it"
+        )
 
     @abstractmethod
     def to_numexpr(self):
-        raise NotImplementedError("to_numexpr() not implemented, subclass must implement it")
+        raise NotImplementedError(
+            "to_numexpr() not implemented, subclass must implement it"
+        )
 
     @abstractmethod
     def to_root(self):
-        raise NotImplementedError("to_root() not implemented, subclass must implement it")
+        raise NotImplementedError(
+            "to_root() not implemented, subclass must implement it"
+        )
 
     @abstractmethod
     def to_python(self):
-        raise NotImplementedError("to_python() not implemented, subclass must implement it")
+        raise NotImplementedError(
+            "to_python() not implemented, subclass must implement it"
+        )
 
 
 @dataclass
@@ -77,7 +83,7 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
     index: int = None
 
     def __str__(self):
-        return "{0}({1})".format(str(self.sign), self.operand)
+        return f"{self.sign!s}({self.operand})"
 
     def unary_to_ufunc(self, sign):
         signmap = {"~": "np.invert", "!": "np.logical_not"}
@@ -88,7 +94,6 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
 
     def to_root(self):
         return "(" + self.sign.to_root() + self.operand.to_root() + ")"
-
 
     def to_python(self):
         if str(self.sign) in {"~", "!"}:
@@ -113,7 +118,7 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     index: int = None
 
     def __str__(self):
-        return "{0}({1},{2})".format(str(self.sign), self.left, self.right)
+        return f"{self.sign!s}({self.left},{self.right})"
 
     def binary_to_ufunc(self, sign):
         sign_mapping = {
@@ -134,10 +139,14 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
 
         # Check if this is multiplication/division with bitwise/logical right operand
         if str(self.sign) in {"/", "*"}:
-            if (isinstance(self.right, BinaryOperator) and
-                    str(self.right.sign) in {"&", "|", "&&", "||"}):
+            if isinstance(self.right, BinaryOperator) and str(self.right.sign) in {
+                "&",
+                "|",
+                "&&",
+                "||",
+            }:
                 # Set a flag on the right operand to indicate it's part of a complex expression
-                setattr(self.right, "_parent_op", self.sign)
+                self.right._parent_op = self.sign
                 return True
 
         return False
@@ -151,8 +160,9 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     def _format_bitwise_logical(self, left_code, right_code):
         """Format bitwise/logical operations with smart parenthesis removal"""
         # If left operand is the same operator, remove its parentheses
-        if (isinstance(self.left, BinaryOperator) and
-                str(self.left.sign) == str(self.sign)):
+        if isinstance(self.left, BinaryOperator) and str(self.left.sign) == str(
+            self.sign
+        ):
             left_code = self._strip_parentheses(left_code)
 
         # Remove parentheses from right operand if it's simple
@@ -176,19 +186,18 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
             operator_str = str(getattr(self.sign, method_name)())
 
             return left_code + operator_str + right_code
-        else:
-            # For other operators or complex expressions, keep the parentheses
-            left_code = getattr(self.left, method_name)()
-            right_code = getattr(self.right, method_name)()
-            operator_str = str(getattr(self.sign, method_name)())
+        # For other operators or complex expressions, keep the parentheses
+        left_code = getattr(self.left, method_name)()
+        right_code = getattr(self.right, method_name)()
+        operator_str = str(getattr(self.sign, method_name)())
 
-            return "(" + left_code + operator_str + right_code + ")"
+        return "(" + left_code + operator_str + right_code + ")"
 
     def to_numexpr(self):
-        return self._to_infix_format('to_numexpr')
+        return self._to_infix_format("to_numexpr")
 
     def to_root(self):
-        return self._to_infix_format('to_root')
+        return self._to_infix_format("to_root")
 
     def to_python(self):
         if str(self.sign) in {"&", "|"}:
@@ -201,7 +210,7 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
             # so we can simplify it
             return f"{func_name}({left_code},{right_code})"
 
-        elif str(self.sign) in {"&&", "||"}:
+        if str(self.sign) in {"&&", "||"}:
             # Handle logical operators with infix notation
             left_code = self.left.to_python()
             right_code = self.right.to_python()
@@ -214,12 +223,12 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
 
             return left_code + operator_str + right_code
 
-        else:
-            # For standard operators (+, -, *, /, etc.)
-            left_code = self._strip_parentheses(str(self.left.to_python()))
-            right_code = self._strip_parentheses(str(self.right.to_python()))
+        # For standard operators (+, -, *, /, etc.)
+        left_code = self._strip_parentheses(str(self.left.to_python()))
+        right_code = self._strip_parentheses(str(self.right.to_python()))
 
-            return left_code + str(self.sign.to_python()) + right_code
+        return left_code + str(self.sign.to_python()) + right_code
+
 
 @dataclass
 class Matrix(AST):  # Matrix: A matrix call
@@ -228,10 +237,13 @@ class Matrix(AST):  # Matrix: A matrix call
     index: int = None
 
     def __str__(self):
-        return "{0}[{1}]".format(str(self.var), ",".join(str(x) for x in self.paren))
+        return "{}[{}]".format(str(self.var), ",".join(str(x) for x in self.paren))
 
     def to_numexpr(self):
-        raise ValueError("Matrix operations are forbidden in Numexpr, please check the formula at index : " + str(self.index))
+        raise ValueError(
+            "Matrix operations are forbidden in Numexpr, please check the formula at index : "
+            + str(self.index)
+        )
 
     def to_root(self):
         index = ""
@@ -240,8 +252,8 @@ class Matrix(AST):  # Matrix: A matrix call
         return self.var.to_root() + index
 
     def to_python(self):
-        temp_str = [ "," + elem.to_python() for elem in self.paren]
-        return "(" + str(self.var.to_python()) + "[:" + "".join(temp_str)+"]" + ")"
+        temp_str = ["," + elem.to_python() for elem in self.paren]
+        return "(" + str(self.var.to_python()) + "[:" + "".join(temp_str) + "]" + ")"
 
 
 @dataclass
@@ -250,10 +262,13 @@ class Slice(AST):  # Slice: The slice for matrix
     index: int = None
 
     def __str__(self):
-        return "{0}".format(self.slices)
+        return f"{self.slices}"
 
     def to_numexpr(self):
-        raise ValueError("Matrix operations are forbidden in Numexpr, please check the formula at index : " + str(self.index))
+        raise ValueError(
+            "Matrix operations are forbidden in Numexpr, please check the formula at index : "
+            + str(self.index)
+        )
 
     def to_root(self):
         return self.slices.to_root()
@@ -281,12 +296,12 @@ class Empty(AST):  # Slice: The slice for matrix
 
 @dataclass
 class Call(AST):  # Call: evaluate a function on arguments
-    function: Union[list[Symbol], Symbol]
+    function: list[Symbol] | Symbol
     arguments: list[AST]
     index: int = None
 
     def __str__(self):
-        return "{0}({1})".format(
+        return "{}({})".format(
             self.function,
             ", ".join(str(x) for x in self.arguments),
         )
@@ -310,9 +325,9 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "2pi":
                 return "(arccos(-1)*2.0)"
             case "ln10":
-                return f"log(10)"
+                return "log(10)"
             case "loge":
-                return f"np.log10(np.exp(1))"
+                return "np.log10(np.exp(1))"
             case "log":
                 return f"log({self.arguments[0]})"
             case "log10":
@@ -363,96 +378,95 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return f"! np.floor({self.arguments[0]})"
             case "where":
                 return f"where({self.arguments[0]},{self.arguments[1]},{self.arguments[3]})"
-            case _ :
+            case _:
                 raise ValueError("Not a valid function!")
 
     def to_root(self):
-            match str(self.function):
-                case "pi":
-                    return "TMath::Pi"
-                case "e":
-                    return "TMath::E"
-                case "inf":
-                    return "TMATH::Infinity"
-                case "nan":
-                    return "TMATH::QuietNan"
-                case "sqrt2":
-                    return "TMATH::Sqrt2({self.arguments[0]})"
-                case "piby2":
-                    return "TMATH::PiOver4"
-                case "piby4":
-                    return "TMATH::PiOver4"
-                case "2pi":
-                    return "TMATH::TwoPi"
-                case "ln10":
-                    return f"TMATH::Ln10({self.arguments[0]})"
-                case "loge":
-                    return f"TMATH::LogE({self.arguments[0]})"
-                case "log":
-                    return f"TMATH::Log({self.arguments[0]})"
-                case "log2":
-                    return f"TMATH::Log2({self.arguments[0]})"
-                case "degtorad":
-                    return f"TMATH::DegToRad({self.arguments[0]})"
-                case "radtodeg":
-                    return f"TMATH::RadToDeg({self.arguments[0]})"
-                case "exp":
-                    return f"TMATH::Exp({self.arguments[0]})"
-                case "sin":
-                    return f"TMATH::Sin({self.arguments[0]})"
-                case "asin":
-                    return f"TMATH::ASin({self.arguments[0]})"
-                case "sinh":
-                    return f"TMATH::SinH({self.arguments[0]})"
-                case "asinh":
-                    return f"TMATH::ASinH({self.arguments[0]})"
-                case "cos":
-                    return f"TMATH::Cos({self.arguments[0]})"
-                case "arccos":
-                    return f"TMATH::ACos({self.arguments[0]})"
-                case "cosh":
-                    return f"TMATH::CosH({self.arguments[0]})"
-                case "acosh":
-                    return f"TMATH::ACosH({self.arguments[0]})"
-                case "tan":
-                    return f"TMATH::Tan({self.arguments[0]})"
-                case "arctan":
-                    return f"TMATH::ATan({self.arguments[0]})"
-                case "tanh":
-                    return f"TMATH::TanH({self.arguments[0]})"
-                case "atanh":
-                    return f"TMATH::ATanH({self.arguments[0]})"
-                case "Math::sqrt":
-                    return f"TMATH::Sqrt({self.arguments[0]})"
-                case "sqrt":
-                    return f"TMATH::Sqrt({self.arguments[0]})"
-                case "ceil":
-                    return f"TMATH::Ceil({self.arguments[0]})"
-                case "abs":
-                    return f"TMATH::Abs({self.arguments[0]})"
-                case "even":
-                    return f"TMATH::Even({self.arguments[0]})"
-                case "factorial":
-                    return f"TMATH::Factorial({self.arguments[0]})"
-                case "floor":
-                    return f"TMATH::Floor({self.arguments[0]})"
-                case "abs":
-                    return f"TMATH::Abs({self.arguments[0]})"
-                case "max":
-                    return f"Max$({self.arguments[0]})"
-                case "min":
-                    return f"Min$({self.arguments[0]})"
-                case "sum":
-                    return f"Sum$({self.arguments[0]})"
-                case "no_of_entries":
-                    return f"Length$({self.arguments[0]})"
-                case "min_if":
-                    return f"MinIf$({self.arguments[0]})"
-                case "max_if":
-                    return f"MaxIf$({self.arguments[0]})"
-                case _ :
-                    raise ValueError("Not a valid function!")
-
+        match str(self.function):
+            case "pi":
+                return "TMath::Pi"
+            case "e":
+                return "TMath::E"
+            case "inf":
+                return "TMATH::Infinity"
+            case "nan":
+                return "TMATH::QuietNan"
+            case "sqrt2":
+                return "TMATH::Sqrt2({self.arguments[0]})"
+            case "piby2":
+                return "TMATH::PiOver4"
+            case "piby4":
+                return "TMATH::PiOver4"
+            case "2pi":
+                return "TMATH::TwoPi"
+            case "ln10":
+                return f"TMATH::Ln10({self.arguments[0]})"
+            case "loge":
+                return f"TMATH::LogE({self.arguments[0]})"
+            case "log":
+                return f"TMATH::Log({self.arguments[0]})"
+            case "log2":
+                return f"TMATH::Log2({self.arguments[0]})"
+            case "degtorad":
+                return f"TMATH::DegToRad({self.arguments[0]})"
+            case "radtodeg":
+                return f"TMATH::RadToDeg({self.arguments[0]})"
+            case "exp":
+                return f"TMATH::Exp({self.arguments[0]})"
+            case "sin":
+                return f"TMATH::Sin({self.arguments[0]})"
+            case "asin":
+                return f"TMATH::ASin({self.arguments[0]})"
+            case "sinh":
+                return f"TMATH::SinH({self.arguments[0]})"
+            case "asinh":
+                return f"TMATH::ASinH({self.arguments[0]})"
+            case "cos":
+                return f"TMATH::Cos({self.arguments[0]})"
+            case "arccos":
+                return f"TMATH::ACos({self.arguments[0]})"
+            case "cosh":
+                return f"TMATH::CosH({self.arguments[0]})"
+            case "acosh":
+                return f"TMATH::ACosH({self.arguments[0]})"
+            case "tan":
+                return f"TMATH::Tan({self.arguments[0]})"
+            case "arctan":
+                return f"TMATH::ATan({self.arguments[0]})"
+            case "tanh":
+                return f"TMATH::TanH({self.arguments[0]})"
+            case "atanh":
+                return f"TMATH::ATanH({self.arguments[0]})"
+            case "Math::sqrt":
+                return f"TMATH::Sqrt({self.arguments[0]})"
+            case "sqrt":
+                return f"TMATH::Sqrt({self.arguments[0]})"
+            case "ceil":
+                return f"TMATH::Ceil({self.arguments[0]})"
+            case "abs":
+                return f"TMATH::Abs({self.arguments[0]})"
+            case "even":
+                return f"TMATH::Even({self.arguments[0]})"
+            case "factorial":
+                return f"TMATH::Factorial({self.arguments[0]})"
+            case "floor":
+                return f"TMATH::Floor({self.arguments[0]})"
+            case "abs":
+                return f"TMATH::Abs({self.arguments[0]})"
+            case "max":
+                return f"Max$({self.arguments[0]})"
+            case "min":
+                return f"Min$({self.arguments[0]})"
+            case "sum":
+                return f"Sum$({self.arguments[0]})"
+            case "no_of_entries":
+                return f"Length$({self.arguments[0]})"
+            case "min_if":
+                return f"MinIf$({self.arguments[0]})"
+            case "max_if":
+                return f"MaxIf$({self.arguments[0]})"
+            case _:
+                raise ValueError("Not a valid function!")
 
     def to_python(self):
         match str(self.function):
@@ -473,9 +487,9 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "2pi":
                 return "(np.pi*2.0)"
             case "ln10":
-                return f"np.log(10)"
+                return "np.log(10)"
             case "loge":
-                return f"np.log10(np.exp(1))"
+                return "np.log10(np.exp(1))"
             case "log":
                 return f"np.log10({self.arguments[0]})"
             case "log2":
@@ -538,5 +552,5 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return f"root_min_if({self.arguments[0]}, {self.arguments[1]})"
             case "max_if":
                 return f"root_max_if({self.arguments[0]}, {self.arguments[1]})"
-            case _ :
+            case _:
                 raise ValueError("Not a valid function!")

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
 from __future__ import annotations
 
 from . import AST, matching_tree
-
 
 UNARY_OP = {"pos", "neg", "binv", "linv"}
 
@@ -55,7 +53,7 @@ val_to_sign = {
 }
 
 FUNC_MAPPING = {
-    "MATH::PI": "pi", #np.pi
+    "MATH::PI": "pi",  # np.pi
     "PI": "pi",
     "TMATH::E": "e",
     "TMATH::INFINITY": "inf",
@@ -99,7 +97,7 @@ FUNC_MAPPING = {
     "TMATH::EVEN": "even",
     "TMATH::FACTORIAL": "factorial",
     "TMATH::FLOOR": "floor",
-    "LENGTH$": "no_of_entries", #ak.num, axis = 1
+    "LENGTH$": "no_of_entries",  # ak.num, axis = 1
     "ITERATION$": "current_iteration",
     "SUM$": "sum",
     "MIN$": "min",
@@ -118,10 +116,10 @@ def _get_func_names(func_names):
     return children
 
 
-def toast(ptnode: matching_tree.ptnode, nxp : bool):
+def toast(ptnode: matching_tree.ptnode, nxp: bool):
     match ptnode:
         case matching_tree.ptnode(operator, (left, right)) if operator in BINARY_OP:
-            arguments = [toast(left,nxp), toast(right,nxp)]
+            arguments = [toast(left, nxp), toast(right, nxp)]
             return AST.BinaryOperator(
                 AST.Symbol(val_to_sign[operator], index=arguments[1].index),
                 arguments[0],
@@ -130,14 +128,14 @@ def toast(ptnode: matching_tree.ptnode, nxp : bool):
             )
 
         case matching_tree.ptnode(operator, operand) if operator in UNARY_OP:
-            argument = toast(operand[0],nxp)
+            argument = toast(operand[0], nxp)
             return AST.UnaryOperator(
                 AST.Symbol(val_to_sign[operator], index=argument.index), argument
             )
 
         case matching_tree.ptnode("multi_out", (exp1, exp2)):
-            exp_node1 = toast(exp1,nxp)
-            exp_node2 = toast(exp2,nxp)
+            exp_node1 = toast(exp1, nxp)
+            exp_node2 = toast(exp2, nxp)
             exps = [exp_node1, exp_node2]
             if isinstance(exp_node2, AST.Call) and exp_node2.function == ":":
                 del exps[-1]
@@ -146,14 +144,14 @@ def toast(ptnode: matching_tree.ptnode, nxp : bool):
             return AST.Call(val_to_sign["multi_out"], exps, index=exp_node1.index)
 
         case matching_tree.ptnode("matr", (array, *slice)):
-            var = toast(array,nxp)
-            paren = [toast(elem,nxp) for elem in slice]
+            var = toast(array, nxp)
+            paren = [toast(elem, nxp) for elem in slice]
             return AST.Matrix(var, paren, index=var.index)
 
         case matching_tree.ptnode("matpos", child):
             if child[0] is None:
                 return AST.Empty()
-            slice = toast(child[0],nxp)
+            slice = toast(child[0], nxp)
             return AST.Slice(slice, index=slice.index)
 
         case matching_tree.ptnode("func", (func_name, trailer)):
@@ -172,7 +170,7 @@ def toast(ptnode: matching_tree.ptnode, nxp : bool):
                     index=func_names[0].start_pos,
                 )
 
-            func_arguments = [toast(elem,nxp) for elem in trailer.children[0].children]
+            func_arguments = [toast(elem, nxp) for elem in trailer.children[0].children]
 
             funcs = root_to_common(func_names, func_names[0].start_pos)
 
@@ -193,7 +191,7 @@ def toast(ptnode: matching_tree.ptnode, nxp : bool):
             return AST.Literal(float(children[0]), index=children[0].start_pos)
 
         case matching_tree.ptnode(_, (child,)):
-            return toast(child,nxp)
+            return toast(child, nxp)
 
         case _:
             raise TypeError(f"Unknown Node Type: {ptnode!r}.")

@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import random
 import sys
 import time
+
 import pytest
+
 import formulate
-import random
-import string
+
 
 def generate_long_expression(length=1000):
     """Generate a very long expression with the specified number of symbols and operators.
@@ -18,10 +19,10 @@ def generate_long_expression(length=1000):
         A string containing a valid expression with approximately the specified length.
     """
     # Define variables, operators, and constants to use in the expression
-    variables = ['a', 'b', 'c', 'd', 'x', 'y', 'z']
+    variables = ["a", "b", "c", "d", "x", "y", "z"]
     # Use a more limited set of operators to avoid syntax issues
-    binary_operators = ['+', '-', '*', '/']
-    constants = ['1.0', '2.0', '3.14', '42.0', '0.5']
+    binary_operators = ["+", "-", "*", "/"]
+    constants = ["1.0", "2.0", "3.14", "42.0", "0.5"]
 
     # Start with a simple expression
     expression = random.choice(variables)
@@ -55,6 +56,7 @@ def test_generate_long_expression():
         raise
         pytest.fail(f"Failed to parse generated expression, type={type(e)}: {e}")
 
+
 @pytest.mark.parametrize(
     "test_name, expr_length, loader1, converter1, intermediate, loader2, converter2",
     [
@@ -66,7 +68,7 @@ def test_generate_long_expression():
             ("to_python", lambda ast: ast.to_python()),
             False,
             (formulate.from_root, "from_root"),
-            ("to_python", lambda ast: ast.to_python())
+            ("to_python", lambda ast: ast.to_python()),
         ),
         # NumExpr: NumExpr -> Python -> NumExpr -> Python
         (
@@ -76,7 +78,7 @@ def test_generate_long_expression():
             ("to_python", lambda ast: ast.to_python()),
             False,
             (formulate.from_numexpr, "from_numexpr"),
-            ("to_python", lambda ast: ast.to_python())
+            ("to_python", lambda ast: ast.to_python()),
         ),
         # Root->NumExpr->Root: Root -> NumExpr -> NumExpr -> Root
         (
@@ -86,7 +88,7 @@ def test_generate_long_expression():
             ("to_numexpr", lambda ast: ast.to_numexpr()),
             True,
             (formulate.from_numexpr, "from_numexpr"),
-            ("to_root", lambda ast: ast.to_root())
+            ("to_root", lambda ast: ast.to_root()),
         ),
         # NumExpr->Root->NumExpr: NumExpr -> Root -> Root -> NumExpr
         (
@@ -96,11 +98,13 @@ def test_generate_long_expression():
             ("to_root", lambda ast: ast.to_root()),
             True,
             (formulate.from_root, "from_root"),
-            ("to_numexpr", lambda ast: ast.to_numexpr())
+            ("to_numexpr", lambda ast: ast.to_numexpr()),
         ),
-    ]
+    ],
 )
-def test_expression_performance(test_name, expr_length, loader1, converter1, intermediate, loader2, converter2):
+def test_expression_performance(
+    test_name, expr_length, loader1, converter1, intermediate, loader2, converter2
+):
     """Test that parsing and converting expressions takes less than 1 second.
 
     This parameterized test handles all combinations of loaders and converters:

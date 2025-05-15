@@ -1,20 +1,18 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
 from __future__ import annotations
 
-from . import ttreeformula_parser, numexpr_parser  # noqa  # noqa
-
-from . import convert_ptree
-
-from . import AST
-
-from . import toast
-
+from . import (
+    AST,
+    convert_ptree,
+    numexpr_parser,
+    toast,
+    ttreeformula_parser,
+)
 from ._version import __version__
 
 
-def from_root(exp : str, **kwargs) -> AST :
+def from_root(exp: str, **kwargs) -> AST:
     """Evaluate ttreformula expressions."""
     # Preprocess the expression to handle multiple occurrences of the same binary operator
     # This should be fixed in the actual parser, generated from Lark. Somehow, this only fails for
@@ -24,6 +22,7 @@ def from_root(exp : str, **kwargs) -> AST :
     ptree = parser.parse(exp)
     convert_ptree.convert_ptree(ptree)
     return toast.toast(ptree, nxp=False)
+
 
 def _preprocess_expression(exp: str) -> str:
     """Preprocess the expression to handle multiple occurrences of the same operator.
@@ -40,11 +39,12 @@ def _preprocess_expression(exp: str) -> str:
             exp: The expression to process
             operator: The operator to handle ('||', '&&', '|', or '&')
         """
-        import re
         # Escape special regex characters in the operator
         escaped_op = re.escape(operator)
         # Create the regex pattern for this operator
-        pattern = fr'([a-zA-Z0-9_]+{escaped_op}[a-zA-Z0-9_]+)({escaped_op}[a-zA-Z0-9_]+)+'
+        pattern = (
+            rf"([a-zA-Z0-9_]+{escaped_op}[a-zA-Z0-9_]+)({escaped_op}[a-zA-Z0-9_]+)+"
+        )
 
         matches = re.finditer(pattern, exp)
         for match in matches:
@@ -59,12 +59,13 @@ def _preprocess_expression(exp: str) -> str:
         return exp
 
     # Process each operator
-    for operator in ['||', '&&', '|', '&']:
+    for operator in ["||", "&&", "|", "&"]:
         exp = _add_parentheses_for_operator(exp, operator)
 
     return exp
 
-def from_numexpr(exp : str, **kwargs) -> AST :
+
+def from_numexpr(exp: str, **kwargs) -> AST:
     """Evaluate numexpr expressions."""
     parser = numexpr_parser.Lark_StandAlone()
     ptree = parser.parse(exp)
