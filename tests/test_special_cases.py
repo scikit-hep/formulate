@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from lark import LarkError
+
 import formulate
 import ast
 import numpy as np
@@ -9,7 +11,7 @@ from hypothesis import given, strategies as st
 
 
 # Fixtures
-@pytest.fixture
+@pytest.fixture(scope="module")
 def default_values():
     """Default values for expression evaluation."""
     return {
@@ -18,19 +20,19 @@ def default_values():
     }
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def simple_operators():
     """List of simple operators for testing."""
     return ['+', '-', '*', '/', '**', '<', '<=', '>', '>=', '==', '!=', '&', '|']
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def variable_names():
     """List of variable names for testing."""
     return ['a', 'b', 'c', 'd', 'f', 'var']
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def whitespace_test_cases():
     """Whitespace variation test cases."""
     return [
@@ -51,7 +53,7 @@ def whitespace_test_cases():
     ]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def bracket_test_cases():
     """Bracket variation test cases."""
     return [
@@ -86,7 +88,7 @@ def bracket_test_cases():
     ]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def complex_test_cases():
     """Complex expressions with whitespace and brackets."""
     return [
@@ -248,6 +250,7 @@ def test_complex_whitespace_and_brackets(reference, variations, default_values):
     var2=st.sampled_from(['a', 'b', 'c', 'd', 'f', 'var']),
     op=st.sampled_from(['+', '-', '*', '/', '**', '<', '<=', '>', '>=', '==', '!=', '&', '|'])
 )
+
 def test_hypothesis_simple_expression(var1, var2, op, default_values):
     """Test simple expressions with hypothesis."""
     expr = f"{var1}{op}{var2}"
