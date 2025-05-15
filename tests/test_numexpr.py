@@ -126,3 +126,87 @@ def test_complex_exp():
     a = formulate.from_numexpr(("(~a**b)*23/(var|45)"))
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("((~(a**b))*(23.0/(var|45.0)))"))
+
+
+def test_multiple_lor():
+    a = formulate.from_numexpr(("a|b|c"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c"))
+
+
+def test_multiple_land():
+    a = formulate.from_numexpr(("a&b&c"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c"))
+
+
+def test_multiple_bor():
+    a = formulate.from_numexpr(("a|b|c"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c"))
+
+
+def test_multiple_band():
+    a = formulate.from_numexpr(("a&b&c"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c"))
+
+
+def test_multiple_add():
+    a = formulate.from_numexpr(("a+b+c+d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a+(b+(c+d)))"))
+
+
+def test_multiple_sub():
+    a = formulate.from_numexpr(("a-b-c-d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a-(b-(c-d)))"))
+
+
+def test_multiple_mul():
+    a = formulate.from_numexpr(("a*b*c*d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a*(b*(c*d)))"))
+
+
+def test_multiple_div():
+    a = formulate.from_numexpr(("a/b/c/d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a/(b/(c/d)))"))
+
+
+def test_multiple_lor_four():
+    a = formulate.from_numexpr(("a|b|c|d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c | d"))
+
+
+def test_multiple_land_four():
+    a = formulate.from_numexpr(("a&b&c&d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c & d"))
+
+
+def test_multiple_bor_four():
+    a = formulate.from_numexpr(("a|b|c|d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c | d"))
+
+
+def test_multiple_band_four():
+    a = formulate.from_numexpr(("a&b&c&d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c & d"))
+
+
+def test_multiple_pow():
+    a = formulate.from_numexpr(("a**b**c**d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a**b**c**d)"))
+
+
+def test_multiple_bxor():
+    a = formulate.from_numexpr(("a^b^c^d"))
+    out = a.to_numexpr()
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a^b^c^d)"))
