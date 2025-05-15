@@ -399,3 +399,79 @@ def test_hypothesis_parsing_robustness(expr):
         # If parsing fails, it should raise an exception
         # This is expected behavior for invalid expressions
         pass
+
+
+@pytest.mark.parametrize("expression,equivalent_with_parentheses", [
+    # Test arithmetic operator precedence
+    ("a + b * c", "a + (b * c)"),           # Multiplication before addition
+    ("a * b + c", "(a * b) + c"),           # Multiplication before addition
+    ("a - b * c", "a - (b * c)"),           # Multiplication before subtraction
+    ("a * b - c", "(a * b) - c"),           # Multiplication before subtraction
+    ("a / b * c", "(a / b) * c"),           # Division and multiplication have same precedence, left-to-right
+    ("a * b / c", "(a * b) / c"),           # Multiplication and division have same precedence, left-to-right
+    ("a + b / c", "a + (b / c)"),           # Division before addition
+    ("a / b + c", "(a / b) + c"),           # Division before addition
+    ("a ** b * c", "(a ** b) * c"),         # Exponentiation before multiplication
+    ("a * b ** c", "a * (b ** c)"),         # Exponentiation before multiplication
+    ("a ** b ** c", "a ** (b ** c)"),       # Exponentiation is right-associative
+
+    # Test comparison operator precedence
+    ("a + b < c", "(a + b) < c"),           # Addition before comparison
+    ("a < b + c", "a < (b + c)"),           # Addition before comparison
+    ("a * b < c", "(a * b) < c"),           # Multiplication before comparison
+    ("a < b * c", "a < (b * c)"),           # Multiplication before comparison
+
+    # Test logical operator precedence
+    ("a & b | c", "(a & b) | c"),           # Bitwise AND before bitwise OR
+    ("a | b & c", "a | (b & c)"),           # Bitwise AND before bitwise OR
+    ("a < b & c < d", "(a < b) & (c < d)"), # Comparison before bitwise AND
+    ("a & b < c", "a & (b < c)"),           # Comparison before bitwise AND
+    ("a < b | c < d", "(a < b) | (c < d)"), # Comparison before bitwise OR
+    ("a | b < c", "a | (b < c)"),           # Comparison before bitwise OR
+
+    # Test complex expressions with multiple precedence levels
+    ("a + b * c ** d", "a + (b * (c ** d))"),       # Exponentiation, then multiplication, then addition
+    ("a ** b * c + d", "((a ** b) * c) + d"),       # Exponentiation, then multiplication, then addition
+    ("a < b + c * d", "a < (b + (c * d))"),         # Multiplication, then addition, then comparison
+    ("a & b | c & d", "(a & b) | (c & d)"),         # Bitwise AND before bitwise OR
+    ("a | b & c | d", "a | (b & c) | d"),           # Bitwise AND before bitwise OR
+    ("a < b & c < d | a < f", "((a < b) & (c < d)) | (a < f)"), # Comparison, then bitwise AND, then bitwise OR
+])
+def test_operator_precedence(expression, equivalent_with_parentheses, default_values):
+    """Test that operator precedence is correctly handled."""
+    assert_equivalent_expressions(expression, equivalent_with_parentheses, default_values)
+
+
+@pytest.mark.parametrize("expression,equivalent_with_parentheses", [
+    # Mix arithmetic and comparison operators with power
+    ("a ** b > c", "(a ** b) > c"),                 # Power before comparison
+    ("a > b ** c", "a > (b ** c)"),                 # Power before comparison
+    ("a ** (b > c)", "a ** (b > c)"),               # Parentheses override precedence
+
+    # Mix arithmetic, comparison, and logical operators
+    ("a ** b & c ** d", "(a ** b) & (c ** d)"),     # Power before logical AND
+    ("a & b ** c", "a & (b ** c)"),                 # Power before logical AND
+    ("a ** b | c ** d", "(a ** b) | (c ** d)"),     # Power before logical OR
+    ("a | b ** c", "a | (b ** c)"),                 # Power before logical OR
+
+    # Complex mixed expressions with power
+    ("a ** b < c & d > a ** b", "((a ** b) < c) & (d > (a ** b))"), # Power, then comparison, then logical
+    ("a < b ** c | d > a ** c", "((a < (b ** c)) | (d > (a ** c)))"), # Power, then comparison, then logical
+    ("a ** b * c < d + a / b", "((a ** b) * c) < (d + (a / b))"),   # Complex arithmetic with comparison
+
+    # Mix all operator types
+    ("a ** b * c / d + a - b < c & d > a | b <= c", "(((((a ** b) * c) / d) + a) - b) < c & (d > a) | (b <= c)"),
+    ("a | b & c < d + a * b ** c", "a | (b & (c < (d + (a * (b ** c)))))"),
+    ("a ** b < c & d ** a > b | c ** d != a", "(((a ** b) < c) & ((d ** a) > b)) | ((c ** d) != a)"),
+
+    # Nested expressions with mixed operators
+    ("a ** (b < c & d > a)", "a ** ((b < c) & (d > a))"),           # Power of a logical expression
+    ("a ** (b + c * d) < a | b", "(a ** (b + (c * d))) < a | b"),   # Complex power expression in comparison
+
+    # Additional complex cases
+    ("a ** b ** c < d & a | b ** c > d", "(((a ** (b ** c)) < d) & a) | ((b ** c) > d)"),
+    ("a < b & c ** d > a | b < c ** d", "((a < b) & ((c ** d) > a)) | (b < (c ** d))"),
+])
+def test_mixed_operator_types(expression, equivalent_with_parentheses, default_values):
+    """Test expressions that mix different operator types, with emphasis on power operator."""
+    assert_equivalent_expressions(expression, equivalent_with_parentheses, default_values)
