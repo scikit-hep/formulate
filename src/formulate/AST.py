@@ -105,8 +105,6 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return pycode
 
 
-from dataclasses import dataclass
-
 @dataclass
 class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     sign: Symbol
