@@ -146,10 +146,7 @@ def test_multiple_bor():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c"))
 
 
-def test_multiple_band():
-    a = formulate.from_numexpr(("a&b&c"))
-    out = a.to_numexpr()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c"))
+# Removed redundant test_multiple_band function.
 
 
 def test_multiple_add():
