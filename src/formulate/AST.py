@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
 from __future__ import annotations
@@ -469,5 +470,3 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return f"root_max_if({self.arguments[0]}, {self.arguments[1]})"
             case _ :
                 raise ValueError("Not a valid function!")
-
-

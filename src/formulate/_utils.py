@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
 from __future__ import annotations
@@ -103,7 +104,7 @@ def _ptree_to_string(exp_tree, out_exp: list):
             out_exp.extend(_ptree_to_string(tail, []))
             out_exp.append(")")
             return out_exp
-            
+
         if exp_tree.data != "matr":
             out_exp.append("(")
         out_exp.extend(_ptree_to_string(children[0], []))
@@ -119,7 +120,7 @@ def _ptree_to_string(exp_tree, out_exp: list):
 
             if exp_tree.data == "matr":
                 out_exp.append("]")
-                
+
         if exp_tree.data != "matr":
             out_exp.append(")")
     return out_exp
