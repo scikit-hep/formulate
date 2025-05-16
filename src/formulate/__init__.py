@@ -46,16 +46,17 @@ def _preprocess_expression(exp: str) -> str:
             rf"([a-zA-Z0-9_]+{escaped_op}[a-zA-Z0-9_]+)({escaped_op}[a-zA-Z0-9_]+)+"
         )
 
-        matches = re.finditer(pattern, exp)
-        for match in matches:
+        def replace_match(match):
             original = match.group(0)
             parts = original.split(operator)
             # Create a new expression with parentheses
             new_expr = parts[0]
             for part in parts[1:]:
                 new_expr = f"({new_expr}{operator}{part})"
-            exp = exp.replace(original, new_expr)
+            return new_expr
 
+        # Use re.sub with the callback function
+        exp = re.sub(pattern, replace_match, exp)
         return exp
 
     # Process each operator
