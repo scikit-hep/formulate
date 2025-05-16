@@ -12,7 +12,7 @@ from __future__ import annotations
 # -- Project information -----------------------------------------------------
 
 project = "formulate"
-copyright = "2016-2024, The Scikit-HEP Administrators"
+copyright = "2016-2025, The Scikit-HEP Administrators"
 author = "Chris Burr, Jonas Eschle, Aryan Roy"
 
 
