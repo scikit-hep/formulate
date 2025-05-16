@@ -4,6 +4,12 @@
 # Required
 version: 2
 
+build:
+  os: ubuntu-lts-latest
+  tools:
+    python: "latest"
+  commands:
+    - git fetch --unshallow --tags || (git fetch --depth=50 && git fetch --tags)
 
 python:
   install:
