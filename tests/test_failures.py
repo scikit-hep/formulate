@@ -119,10 +119,10 @@ def test_unbalanced_parentheses(open_parens, close_parens):
     expr = "a" + open_parens + "+b" + close_parens
 
     # The expression should be rejected
-    with pytest.raises(Exception):
+    with pytest.raises(formulate.exceptions.ParseError):
         formulate.from_root(expr)
 
-    with pytest.raises(Exception):
+    with pytest.raises(formulate.exceptions.ParseError):
         formulate.from_numexpr(expr)
 
 

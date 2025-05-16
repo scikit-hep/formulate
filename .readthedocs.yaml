@@ -4,16 +4,12 @@
 # Required
 version: 2
 
-build:
-    os: ubuntu-lts-latest
-    tools:
-        python: latest
 
 python:
   install:
     - method: pip
       path: .
-      extras:
+      extra_requirements:
         - docs
 
 
