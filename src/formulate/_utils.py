@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from . import numexpr_parser
-from . import  ttreeformula_parser
+from . import numexpr_parser, ttreeformula_parser
 
 UNARY_OP = {"pos", "neg", "binv", "linv"}
 with_sign = {}
@@ -33,14 +32,18 @@ val_to_sign = {
 
 
 def _ptree_to_string(exp_tree, out_exp: list):
-    if isinstance(exp_tree, numexpr_parser.Token) or isinstance(exp_tree, ttreeformula_parser.Token):
+    if isinstance(exp_tree, numexpr_parser.Token) or isinstance(
+        exp_tree, ttreeformula_parser.Token
+    ):
         out_exp.append(str(exp_tree))
         return out_exp
 
-    elif exp_tree is None:
+    if exp_tree is None:
         return out_exp
 
-    elif isinstance(exp_tree.data, numexpr_parser.Token) or isinstance(exp_tree.data, ttreeformula_parser.Token):
+    if isinstance(exp_tree.data, numexpr_parser.Token) or isinstance(
+        exp_tree.data, ttreeformula_parser.Token
+    ):
         cur_type = exp_tree.data.type
         cur_val = exp_tree.data.value
         children = exp_tree.children
@@ -90,7 +93,10 @@ def _ptree_to_string(exp_tree, out_exp: list):
             if len(head.children) > 1:
                 subchild = head.children[1]
 
-                while not (isinstance(subchild, numexpr_parser.Token) or isinstance(subchild, ttreeformula_parser.Token)):
+                while not (
+                    isinstance(subchild, numexpr_parser.Token)
+                    or isinstance(subchild, ttreeformula_parser.Token)
+                ):
                     out_exp.append("::")
                     out_exp.append(str(subchild.children[0]))
 
@@ -103,13 +109,12 @@ def _ptree_to_string(exp_tree, out_exp: list):
             out_exp.extend(_ptree_to_string(tail, []))
             out_exp.append(")")
             return out_exp
-            
+
         if exp_tree.data != "matr":
             out_exp.append("(")
         out_exp.extend(_ptree_to_string(children[0], []))
 
         for i in range(1, len(children)):
-
             if exp_tree.data == "matr":
                 out_exp.append("[")
 
@@ -119,7 +124,7 @@ def _ptree_to_string(exp_tree, out_exp: list):
 
             if exp_tree.data == "matr":
                 out_exp.append("]")
-                
+
         if exp_tree.data != "matr":
             out_exp.append(")")
     return out_exp

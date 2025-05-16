@@ -110,3 +110,6 @@ venv.bak/
 
 # Versioning
 **/_version.py
+
+# PyCharm
+/.idea
