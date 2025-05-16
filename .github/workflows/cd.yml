@@ -1,13 +1,21 @@
 name: CD
 
 on:
-  workflow_dispatch:
   release:
     types:
       - published
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+    branches:
+      - main
+      - "ci/*"
+  pull_request:
 
 jobs:
   dist:
+    name: Build dist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,9 +25,10 @@ jobs:
       - uses: hynek/build-and-inspect-python-package@v2
 
 
+
   deploy:
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: [dist]
+    needs: [ dist ]
     runs-on: ubuntu-latest
     environment:
       name: pypi

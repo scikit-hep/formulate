@@ -1,0 +1,4 @@
+Performance Considerations
+================================================
+
+TODO

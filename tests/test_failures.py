@@ -109,7 +109,7 @@ def test_invalid_characters(s):
     st.text(alphabet="(", min_size=1, max_size=10),
     st.text(alphabet=")", min_size=0, max_size=9),
 )
-@settings(max_examples=100)
+@settings(max_examples=1000)
 def test_unbalanced_parentheses(open_parens, close_parens):
     """Test that expressions with unbalanced parentheses are rejected."""
     # Ensure we have more opening parentheses than closing ones
@@ -119,10 +119,10 @@ def test_unbalanced_parentheses(open_parens, close_parens):
     expr = "a" + open_parens + "+b" + close_parens
 
     # The expression should be rejected
-    with pytest.raises(Exception):
+    with pytest.raises(formulate.exceptions.ParseError):
         formulate.from_root(expr)
 
-    with pytest.raises(Exception):
+    with pytest.raises(formulate.exceptions.ParseError):
         formulate.from_numexpr(expr)
 
 
