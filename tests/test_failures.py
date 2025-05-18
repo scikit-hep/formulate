@@ -148,6 +148,72 @@ def test_invalid_operator_combinations():
             formulate.from_numexpr(expr)
 
 
+# Test for invalid function calls
+def test_invalid_function_calls():
+    """Test that expressions with invalid function calls are rejected."""
+    # Test specific invalid function calls
+    invalid_expressions = [
+        "abs()",  # Missing argument
+        "sqrt(,)",  # Invalid argument
+        "cos(a b)",  # Missing operator
+        "exp(,a)",  # Leading comma
+        "abs(a",  # Unclosed parenthesis
+        "sqrt a)",  # Missing opening parenthesis
+    ]
+
+    for expr in invalid_expressions:
+        # Test from_root
+        with pytest.raises(Exception):
+            formulate.from_root(expr)
+
+        # Test from_numexpr
+        with pytest.raises(Exception):
+            formulate.from_numexpr(expr)
+
+    # Some expressions might be valid in both ROOT and numexpr
+    # We'll test these separately in a different test
+
+    # Note: Expressions with unknown functions like "unknown_func(a)" are actually valid in both ROOT and numexpr
+    # The library appears to handle unknown functions gracefully
+
+    # Note: Expressions with trailing commas like "tan(a,)" are actually valid in both ROOT and numexpr
+
+
+# Test for valid function calls but ensure all conversion methods are called
+def test_function_calls_conversion():
+    """Test that valid function calls can be converted to all formats."""
+    # Test specific valid function calls
+    valid_expressions = [
+        "abs(a)",
+        "sqrt(b)",
+        "sin(c)",
+        "cos(d)",
+        "tan(a)",
+        "exp(b)",
+        "log(c)",
+        "abs(a+b)",
+        "sqrt(c*d)",
+    ]
+
+    for expr in valid_expressions:
+        try:
+            # Test from_root
+            a = formulate.from_root(expr)
+            # Ensure all conversion methods are called
+            a.to_root()
+            a.to_python()
+            a.to_numexpr()
+
+            # Test from_numexpr
+            b = formulate.from_numexpr(expr)
+            # Ensure all conversion methods are called
+            b.to_root()
+            b.to_python()
+            b.to_numexpr()
+        except Exception as e:
+            pytest.fail(f"Conversion failed for {expr}: {e}")
+
+
 # Generate expressions with missing operands
 @given(
     st.sampled_from(["a", "b", "c", "d", "f", "var"]),

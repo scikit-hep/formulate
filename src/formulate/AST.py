@@ -197,7 +197,11 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         return self._to_infix_format("to_numexpr")
 
     def to_root(self):
-        return self._to_infix_format("to_root")
+        # Always add parentheses for consistency
+        result = self._to_infix_format("to_root")
+        if not result.startswith("("):
+            result = "(" + result + ")"
+        return result
 
     def to_python(self):
         if str(self.sign) in {"&", "|"}:
@@ -384,87 +388,89 @@ class Call(AST):  # Call: evaluate a function on arguments
     def to_root(self):
         match str(self.function):
             case "pi":
-                return "TMath::Pi"
+                return "(TMath::Pi)"
             case "e":
-                return "TMath::E"
+                return "(TMath::E)"
             case "inf":
-                return "TMATH::Infinity"
+                return "(TMATH::Infinity)"
             case "nan":
-                return "TMATH::QuietNan"
+                return "(TMATH::QuietNan)"
             case "sqrt2":
-                return "TMATH::Sqrt2({self.arguments[0]})"
+                return f"(TMATH::Sqrt2({self.arguments[0]}))"
             case "piby2":
-                return "TMATH::PiOver4"
+                return "(TMATH::PiOver4)"
             case "piby4":
-                return "TMATH::PiOver4"
+                return "(TMATH::PiOver4)"
             case "2pi":
-                return "TMATH::TwoPi"
+                return "(TMATH::TwoPi)"
             case "ln10":
-                return f"TMATH::Ln10({self.arguments[0]})"
+                return f"(TMATH::Ln10({self.arguments[0]}))"
             case "loge":
-                return f"TMATH::LogE({self.arguments[0]})"
+                return f"(TMATH::LogE({self.arguments[0]}))"
             case "log":
-                return f"TMATH::Log({self.arguments[0]})"
+                return f"(TMATH::Log({self.arguments[0]}))"
             case "log2":
-                return f"TMATH::Log2({self.arguments[0]})"
+                return f"(TMATH::Log2({self.arguments[0]}))"
             case "degtorad":
-                return f"TMATH::DegToRad({self.arguments[0]})"
+                return f"(TMATH::DegToRad({self.arguments[0]}))"
             case "radtodeg":
-                return f"TMATH::RadToDeg({self.arguments[0]})"
+                return f"(TMATH::RadToDeg({self.arguments[0]}))"
             case "exp":
-                return f"TMATH::Exp({self.arguments[0]})"
+                return f"(TMATH::Exp({self.arguments[0]}))"
             case "sin":
-                return f"TMATH::Sin({self.arguments[0]})"
+                return f"(TMATH::Sin({self.arguments[0]}))"
             case "asin":
-                return f"TMATH::ASin({self.arguments[0]})"
+                return f"(TMATH::ASin({self.arguments[0]}))"
             case "sinh":
-                return f"TMATH::SinH({self.arguments[0]})"
+                return f"(TMATH::SinH({self.arguments[0]}))"
             case "asinh":
-                return f"TMATH::ASinH({self.arguments[0]})"
+                return f"(TMATH::ASinH({self.arguments[0]}))"
             case "cos":
-                return f"TMATH::Cos({self.arguments[0]})"
+                return f"(TMATH::Cos({self.arguments[0]}))"
             case "arccos":
-                return f"TMATH::ACos({self.arguments[0]})"
+                return f"(TMATH::ACos({self.arguments[0]}))"
             case "cosh":
-                return f"TMATH::CosH({self.arguments[0]})"
+                return f"(TMATH::CosH({self.arguments[0]}))"
             case "acosh":
-                return f"TMATH::ACosH({self.arguments[0]})"
+                return f"(TMATH::ACosH({self.arguments[0]}))"
             case "tan":
-                return f"TMATH::Tan({self.arguments[0]})"
+                return f"(TMATH::Tan({self.arguments[0]}))"
             case "arctan":
-                return f"TMATH::ATan({self.arguments[0]})"
+                return f"(TMATH::ATan({self.arguments[0]}))"
             case "tanh":
-                return f"TMATH::TanH({self.arguments[0]})"
+                return f"(TMATH::TanH({self.arguments[0]}))"
             case "atanh":
-                return f"TMATH::ATanH({self.arguments[0]})"
+                return f"(TMATH::ATanH({self.arguments[0]}))"
             case "Math::sqrt":
-                return f"TMATH::Sqrt({self.arguments[0]})"
+                return f"(TMATH::Sqrt({self.arguments[0]}))"
             case "sqrt":
-                return f"TMATH::Sqrt({self.arguments[0]})"
+                return f"(TMATH::Sqrt({self.arguments[0]}))"
             case "ceil":
-                return f"TMATH::Ceil({self.arguments[0]})"
+                return f"(TMATH::Ceil({self.arguments[0]}))"
             case "abs":
-                return f"TMATH::Abs({self.arguments[0]})"
+                # Handle the argument specially to avoid double parentheses for negative numbers
+                arg = self.arguments[0].to_root()
+                if arg.startswith("(") and arg.endswith(")"):
+                    arg = arg[1:-1]  # Remove outer parentheses
+                return f"(TMATH::Abs({arg}))"
             case "even":
-                return f"TMATH::Even({self.arguments[0]})"
+                return f"(TMATH::Even({self.arguments[0]}))"
             case "factorial":
-                return f"TMATH::Factorial({self.arguments[0]})"
+                return f"(TMATH::Factorial({self.arguments[0]}))"
             case "floor":
-                return f"TMATH::Floor({self.arguments[0]})"
-            case "abs":
-                return f"TMATH::Abs({self.arguments[0]})"
+                return f"(TMATH::Floor({self.arguments[0]}))"
             case "max":
-                return f"Max$({self.arguments[0]})"
+                return f"(Max$({self.arguments[0]}))"
             case "min":
-                return f"Min$({self.arguments[0]})"
+                return f"(Min$({self.arguments[0]}))"
             case "sum":
-                return f"Sum$({self.arguments[0]})"
+                return f"(Sum$({self.arguments[0]}))"
             case "no_of_entries":
-                return f"Length$({self.arguments[0]})"
+                return f"(Length$({self.arguments[0]}))"
             case "min_if":
-                return f"MinIf$({self.arguments[0]})"
+                return f"(MinIf$({self.arguments[0]}))"
             case "max_if":
-                return f"MaxIf$({self.arguments[0]})"
+                return f"(MaxIf$({self.arguments[0]}))"
             case _:
                 raise ValueError("Not a valid function!")
 
@@ -533,7 +539,7 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "abs":
                 return f"np.abs({self.arguments[0]})"
             case "even":
-                return f"! ({self.arguments[0]} % 2)"
+                return f"not ({self.arguments[0]} % 2)"
             case "factorial":
                 return f"np.math.factorial({self.arguments[0]})"
             case "floor":
