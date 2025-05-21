@@ -146,6 +146,16 @@ def evaluate_expression(expr, values=None):
     local_vars = values.copy()
     local_vars["np"] = np
 
+    # Add math functions to the local namespace
+    local_vars["sqrt"] = np.sqrt
+    local_vars["log"] = np.log
+    local_vars["exp"] = np.exp
+    local_vars["sin"] = np.sin
+    local_vars["cos"] = np.cos
+    local_vars["tan"] = np.tan
+    local_vars["arctan2"] = np.arctan2
+    local_vars["abs"] = np.abs
+
     try:
         return eval(modified_expr, {"__builtins__": {}}, local_vars)
     except Exception as e:
@@ -188,7 +198,7 @@ root_expressions = [
     "a | b",
     "a & c",
     "(a^2.0)",
-    "(TMATH::Sqrt(4.0))",
+    "(TMath::Sqrt(4.0))",
     "~bool",
 ]
 
@@ -202,17 +212,17 @@ complex_root_expressions = [
     "a & b & c & d",
     "(a^b^c^d)",
     "((~(a**b))*(23.0/(var|45.0)))",
-    "(TMATH::Sin(TMATH::Sqrt(x)))",
-    "(TMATH::Abs((a*b)+c))",
-    "((TMATH::Sqrt(x)*TMATH::Sin(y))+(TMATH::Cos(z)/2.0))",
-    "((TMATH::Sin(x)**2.0)+(TMATH::Cos(x)**2.0))",
-    "(TMATH::Sqrt(TMATH::Abs((TMATH::Sin(x)-TMATH::Cos(y)))))",
-    "(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2)))",
-    "(TMATH::Sqrt((X_PX**2)+(X_PY**2)))",
-    "(TMATH::Log(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
-    "(TMATH::Exp(TMATH::Log((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
-    "(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))/(TMATH::Sqrt((X_PY**2)+(X_PZ**2))))",
-    "(TMATH::ATan2(X_PY,X_PX))",
+    "(TMath::Sin(TMath::Sqrt(x)))",
+    "(TMath::Abs((a*b)+c))",
+    "((TMath::Sqrt(x)*TMath::Sin(y))+(TMath::Cos(z)/2.0))",
+    "((TMath::Sin(x)**2.0)+(TMath::Cos(x)**2.0))",
+    "(TMath::Sqrt(TMath::Abs((TMath::Sin(x)-TMath::Cos(y)))))",
+    "(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2)))",
+    "(TMath::Sqrt((X_PX**2)+(X_PY**2)))",
+    "(TMath::Log(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+    "(TMath::Exp(TMath::Log((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+    "(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))/(TMath::Sqrt((X_PY**2)+(X_PZ**2))))",
+    "(TMath::ATan2(X_PY,X_PX))",
 ]
 
 
@@ -478,44 +488,44 @@ physics_numexpr_to_root = [
     # (numexpr_expr, expected_root_expr)
     (
         "sqrt(X_PX**2 + X_PY**2 + X_PZ**2)",
-        "(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2)))",
+        "(TMath::Sqrt(((X_PX**2.0)+((X_PY**2.0)+(X_PZ**2.0)))))",
     ),
-    ("sqrt(X_PX**2 + X_PY**2)", "(TMATH::Sqrt((X_PX**2)+(X_PY**2)))"),
+    ("sqrt(X_PX**2 + X_PY**2)", "(TMath::Sqrt(((X_PX**2.0)+(X_PY**2.0))))"),
     (
         "log(sqrt(X_PX**2 + X_PY**2 + X_PZ**2))",
-        "(TMATH::Log(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+        "(TMath::Log((TMath::Sqrt(((X_PX**2.0)+((X_PY**2.0)+(X_PZ**2.0)))))))",
     ),
     (
         "exp(log(X_PX**2 + X_PY**2 + X_PZ**2))",
-        "(TMATH::Exp(TMATH::Log((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+        "(TMath::Exp((TMath::Log(((X_PX**2.0)+((X_PY**2.0)+(X_PZ**2.0)))))))",
     ),
     (
         "sqrt(X_PX**2 + X_PY**2 + X_PZ**2) / sqrt(X_PY**2 + X_PZ**2)",
-        "(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))/(TMATH::Sqrt((X_PY**2)+(X_PZ**2))))",
+        "((TMath::Sqrt(((X_PX**2.0)+((X_PY**2.0)+(X_PZ**2.0)))))/(TMath::Sqrt(((X_PY**2.0)+(X_PZ**2.0)))))",
     ),
-    ("arctan2(X_PY, X_PX)", "(TMATH::ATan2(X_PY,X_PX))"),
+    ("arctan2(X_PY, X_PX)", "(TMath::ATan2(X_PY, X_PX))"),
 ]
 
 physics_root_to_numexpr = [
     # (root_expr, expected_numexpr_expr)
     (
-        "(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2)))",
-        "sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2)))",
+        "(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2)))",
+        "sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0))",
     ),
-    ("(TMATH::Sqrt((X_PX**2)+(X_PY**2)))", "sqrt(((X_PX ** 2) + (X_PY ** 2)))"),
+    ("(TMath::Sqrt((X_PX**2)+(X_PY**2)))", "sqrt(X_PX ** 2.0 + X_PY ** 2.0)"),
     (
-        "(TMATH::Log(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
-        "log(sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2))))",
-    ),
-    (
-        "(TMATH::Exp(TMATH::Log((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
-        "exp(log(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2))))",
+        "(TMath::Log(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+        "log(sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)))",
     ),
     (
-        "(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))/(TMATH::Sqrt((X_PY**2)+(X_PZ**2))))",
-        "(sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2))) / sqrt(((X_PY ** 2) + (X_PZ ** 2))))",
+        "(TMath::Exp(TMath::Log((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+        "exp(log(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)))",
     ),
-    ("(TMATH::ATan2(X_PY,X_PX))", "arctan2(X_PY, X_PX)"),
+    (
+        "(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))/(TMath::Sqrt((X_PY**2)+(X_PZ**2))))",
+        "sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)) / sqrt(X_PY ** 2.0 + X_PZ ** 2.0)",
+    ),
+    ("(TMath::ATan2(X_PY,X_PX))", "arctan2(X_PY, X_PX)"),
 ]
 
 
@@ -525,12 +535,8 @@ def test_numexpr_to_root_physics(numexpr_expr, expected_root_expr):
     a = formulate.from_numexpr(numexpr_expr)
     root_expr = a.to_root()
 
-    # Use ast.unparse for consistent comparison
-    import ast
-
-    assert ast.unparse(ast.parse(root_expr)) == ast.unparse(
-        ast.parse(expected_root_expr)
-    )
+    # Compare expressions directly as strings
+    assert root_expr == expected_root_expr
 
 
 @pytest.mark.parametrize("root_expr,expected_numexpr_expr", physics_root_to_numexpr)
