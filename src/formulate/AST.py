@@ -337,7 +337,7 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "log2":
                 return f"(log({self.arguments[0].to_numexpr()})/log(2))"
             case "degtorad":
-                return f"np.radians({self.arguments[0].to_numexpr()})"
+                return f"degtorad({self.arguments[0].to_numexpr()})"
             case "radtodeg":
                 return f"np.degrees({self.arguments[0].to_numexpr()})"
             case "exp":
@@ -353,7 +353,7 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "cos":
                 return f"cos({self.arguments[0].to_numexpr()})"
             case "acos" | "arccos":
-                return f"arccos({self.arguments[0].to_numexpr()})"
+                return f"acos({self.arguments[0].to_numexpr()})"
             case "cosh":
                 return f"cosh({self.arguments[0].to_numexpr()})"
             case "acosh":
@@ -382,6 +382,12 @@ class Call(AST):  # Call: evaluate a function on arguments
                 raise ValueError("Cannot translate to Numexpr!")
             case "floor":
                 return f"floor({self.arguments[0].to_numexpr()})"
+            case "max":
+                return f"maximum({self.arguments[0].to_numexpr()})"
+            case "min":
+                return f"minimum({self.arguments[0].to_numexpr()})"
+            case "sum":
+                return f"sum({self.arguments[0].to_numexpr()})"
             case "where":
                 return f"where({self.arguments[0].to_numexpr()},{self.arguments[1].to_numexpr()},{self.arguments[2].to_numexpr()})"
             case ":":
