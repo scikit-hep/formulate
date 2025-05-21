@@ -53,50 +53,52 @@ val_to_sign = {
 }
 
 FUNC_MAPPING = {
-    "MATH::PI": "pi",  # np.pi
+    "Math::Pi": "pi",  # np.pi
     "PI": "pi",
-    "TMATH::E": "e",
-    "TMATH::INFINITY": "inf",
-    "TMATH::QUIETNAN": "nan",
-    "TMATH::SQRT2": "sqrt2",
+    "TMath::E": "e",
+    "TMath::Infinity": "inf",
+    "TMath::QuietNaN": "nan",
+    "TMath::Sqrt2": "sqrt2",
     "SQRT2": "sqrt2",
     "SQRT": "sqrt",
-    "TMATH::PIOVER2": "piby2",
-    "TMATH::PIOVER4": "piby4",
-    "TMATH::TWOPI": "2pi",
+    "TMath::Sqrt": "sqrt",
+    "TMath::PiOver2": "piby2",
+    "TMath::PiOver4": "piby4",
+    "TMath::TwoPi": "2pi",
     "LN10": "ln10",
-    "TMATH::LN10": "ln10",
-    "TMATH::LOGE": "loge",
-    "TMATH::LOG": "log",
+    "TMath::Ln10": "ln10",
+    "TMath::LogE": "loge",
+    "TMath::Log": "log",
     "LOG": "log",
-    "TMATH::LOG2": "log2",
+    "TMath::Log2": "log2",
     "EXP": "exp",
-    "TMATH::EXP": "exp",
-    "TMATH::DEGTORAD": "degtorad",
+    "TMath::Exp": "exp",
+    "TMath::DegToRad": "degtorad",
     "SIN": "sin",
-    "TMATH::SIN": "sin",
+    "TMath::Sin": "sin",
     "ARCSIN": "asin",
-    "TMATH::ASIN": "asin",
+    "TMath::ASin": "asin",
     "COS": "cos",
-    "TMATH::COS": "cos",
+    "TMath::Cos": "cos",
     "ARCCOS": "acos",
-    "TMATH::ACOS": "acos",
+    "TMath::ACos": "acos",
     "TAN": "tan",
-    "TMATH::TAN": "tan",
-    "TMATH::ATAN": "atan",
+    "TMath::Tan": "tan",
+    "ARCTAN": "atan",
+    "TMath::ATan": "atan",
     "ARCTAN2": "atan2",
-    "TMATH::ATAN2": "atan2",
-    "TMATH::COSH": "cosh",
-    "TMATH::ACOSH": "acosh",
-    "TMATH::SINH": "sinh",
-    "TMATH::ASINH": "asinh",
-    "TMATH::TANH": "tanh",
-    "TMATH::ATANH": "atanh",
-    "TMATH::CEIL": "ceil",
-    "TMATH::ABS": "abs",
-    "TMATH::EVEN": "even",
-    "TMATH::FACTORIAL": "factorial",
-    "TMATH::FLOOR": "floor",
+    "TMath::ATan2": "atan2",
+    "TMath::CosH": "cosh",
+    "TMath::ACosH": "acosh",
+    "TMath::SinH": "sinh",
+    "TMath::ASinH": "asinh",
+    "TMath::TanH": "tanh",
+    "TMath::ATanH": "atanh",
+    "TMath::Ceil": "ceil",
+    "TMath::Abs": "abs",
+    "TMath::Even": "even",
+    "TMath::Factorial": "factorial",
+    "TMath::Floor": "floor",
     "LENGTH$": "no_of_entries",  # ak.num, axis = 1
     "ITERATION$": "current_iteration",
     "SUM$": "sum",
@@ -163,6 +165,7 @@ def toast(ptnode: matching_tree.ptnode, nxp: bool):
             except KeyError:
                 fname = "::".join(func_names)
 
+            # Extract arguments properly
             if trailer.children[0] is None:
                 return AST.Call(
                     fname,
@@ -172,6 +175,7 @@ def toast(ptnode: matching_tree.ptnode, nxp: bool):
 
             func_arguments = [toast(elem, nxp) for elem in trailer.children[0].children]
 
+            # Root to common returns a Symbol, not a string
             funcs = root_to_common(func_names, func_names[0].start_pos)
 
             return AST.Call(funcs, func_arguments, index=func_names[0].start_pos)
@@ -199,10 +203,16 @@ def toast(ptnode: matching_tree.ptnode, nxp: bool):
 
 def root_to_common(funcs: list, index: int):
     str_funcs = [str(elem) for elem in funcs]
+    joined_funcs = "::".join(str_funcs)
 
+    # First try with proper case
     try:
-        string_rep = FUNC_MAPPING["::".join(str_funcs).upper()]
+        string_rep = FUNC_MAPPING[joined_funcs]
     except KeyError:
-        string_rep = "::".join(str_funcs)
+        # Then try case-insensitive matching for backward compatibility
+        try:
+            string_rep = FUNC_MAPPING[joined_funcs.upper()]
+        except KeyError:
+            string_rep = joined_funcs
 
     return AST.Symbol(string_rep, index=index)

@@ -161,7 +161,7 @@ def test_simple_function():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.sqrt(4.0)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Sqrt(4.0))"
+    assert root_out == "(TMath::Sqrt(4.0))"
 
 
 def test_function_abs():
@@ -170,7 +170,7 @@ def test_function_abs():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.abs(-4.0)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Abs(-4.0))"
+    assert root_out == "(TMath::Abs(-4.0))"
 
 
 def test_function_exp():
@@ -179,7 +179,7 @@ def test_function_exp():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.exp(2.0)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Exp(2.0))"
+    assert root_out == "(TMath::Exp(2.0))"
 
 
 def test_function_log():
@@ -188,16 +188,16 @@ def test_function_log():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.log10(10.0)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Log(10.0))"
+    assert root_out == "(TMath::Log(10.0))"
 
 
 def test_function_log2():
     a = formulate.from_root("TMath::Log2(8)")
     out = a.to_python()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.log(8.0) / log(2)"))
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.log2(8.0)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Log2(8.0))"
+    assert root_out == "(TMath::Log2(8.0))"
 
 
 def test_function_sin():
@@ -206,7 +206,7 @@ def test_function_sin():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.sin(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Sin(0.5))"
+    assert root_out == "(TMath::Sin(0.5))"
 
 
 def test_function_cos():
@@ -215,7 +215,7 @@ def test_function_cos():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.cos(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Cos(0.5))"
+    assert root_out == "(TMath::Cos(0.5))"
 
 
 def test_function_tan():
@@ -224,7 +224,7 @@ def test_function_tan():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.tan(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Tan(0.5))"
+    assert root_out == "(TMath::Tan(0.5))"
 
 
 def test_function_asin():
@@ -233,7 +233,7 @@ def test_function_asin():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.arcsin(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::ASin(0.5))"
+    assert root_out == "(TMath::ASin(0.5))"
 
 
 # Skipping acos, atan, and atan2 tests as they're not properly implemented yet
@@ -270,7 +270,7 @@ def test_function_sinh():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.sinh(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::SinH(0.5))"
+    assert root_out == "(TMath::SinH(0.5))"
 
 
 def test_function_cosh():
@@ -279,7 +279,7 @@ def test_function_cosh():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.cosh(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::CosH(0.5))"
+    assert root_out == "(TMath::CosH(0.5))"
 
 
 def test_function_tanh():
@@ -288,7 +288,7 @@ def test_function_tanh():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.tanh(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::TanH(0.5))"
+    assert root_out == "(TMath::TanH(0.5))"
 
 
 def test_function_asinh():
@@ -297,7 +297,7 @@ def test_function_asinh():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.arcsinh(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::ASinH(0.5))"
+    assert root_out == "(TMath::ASinH(0.5))"
 
 
 def test_function_acosh():
@@ -306,7 +306,7 @@ def test_function_acosh():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.arccosh(1.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::ACosH(1.5))"
+    assert root_out == "(TMath::ACosH(1.5))"
 
 
 def test_function_atanh():
@@ -315,7 +315,7 @@ def test_function_atanh():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.arctanh(0.5)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::ATanH(0.5))"
+    assert root_out == "(TMath::ATanH(0.5))"
 
 
 def test_function_ceil():
@@ -324,7 +324,7 @@ def test_function_ceil():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.ceil(3.2)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Ceil(3.2))"
+    assert root_out == "(TMath::Ceil(3.2))"
 
 
 # Skipping floor test as it's not properly implemented yet
@@ -345,7 +345,7 @@ def test_function_factorial():
     )
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Factorial(5.0))"
+    assert root_out == "(TMath::Factorial(5.0))"
 
 
 def test_function_even():
@@ -354,7 +354,7 @@ def test_function_even():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("not (4.0 % 2)"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(TMATH::Even(4.0))"
+    assert root_out == "(TMath::Even(4.0))"
 
 
 def test_function_max():
@@ -529,7 +529,7 @@ def test_nested_functions():
     assert "np.sin" in out and "sqrt" in out and "x" in out
     # Test ROOT version
     root_out = a.to_root()
-    assert "Sin" in root_out and "sqrt" in root_out and "x" in root_out
+    assert "TMath::Sin" in root_out and "TMath::Sqrt" in root_out and "x" in root_out
 
 
 def test_function_with_complex_arg():
@@ -574,7 +574,7 @@ def test_momentum_calculation():
     assert "X_PX" in out and "X_PY" in out and "X_PZ" in out
     # Test ROOT version
     root_out = a.to_root()
-    assert "TMATH::Sqrt" in root_out
+    assert "TMath::Sqrt" in root_out
     assert "X_PX" in root_out and "X_PY" in root_out and "X_PZ" in root_out
 
 
@@ -586,7 +586,7 @@ def test_transverse_momentum_calculation():
     assert "X_PX" in out and "X_PY" in out
     # Test ROOT version
     root_out = a.to_root()
-    assert "TMATH::Sqrt" in root_out
+    assert "TMath::Sqrt" in root_out
     assert "X_PX" in root_out and "X_PY" in root_out
 
 
@@ -598,7 +598,7 @@ def test_log_momentum_calculation():
     assert "X_PX" in out and "X_PY" in out and "X_PZ" in out
     # Test ROOT version
     root_out = a.to_root()
-    assert "TMATH::Log" in root_out and "TMATH::Sqrt" in root_out
+    assert "TMath::Log" in root_out and "TMath::Sqrt" in root_out
     assert "X_PX" in root_out and "X_PY" in root_out and "X_PZ" in root_out
 
 
@@ -610,7 +610,7 @@ def test_exp_log_momentum_calculation():
     assert "X_PX" in out and "X_PY" in out and "X_PZ" in out
     # Test ROOT version
     root_out = a.to_root()
-    assert "TMATH::Exp" in root_out and "TMATH::Log" in root_out
+    assert "TMath::Exp" in root_out and "TMath::Log" in root_out
     assert "X_PX" in root_out and "X_PY" in root_out and "X_PZ" in root_out
 
 
@@ -624,7 +624,7 @@ def test_momentum_ratio_calculation():
     assert "X_PX" in out and "X_PY" in out and "X_PZ" in out
     # Test ROOT version
     root_out = a.to_root()
-    assert "TMATH::Sqrt" in root_out
+    assert "TMath::Sqrt" in root_out
     assert "X_PX" in root_out and "X_PY" in root_out and "X_PZ" in root_out
 
 
@@ -636,7 +636,7 @@ def test_azimuthal_angle_calculation():
     assert "X_PY" in out and "X_PX" in out
     # Test ROOT version
     root_out = a.to_root()
-    assert "TMATH::ATan2" in root_out
+    assert "TMath::ATan2" in root_out
     assert "X_PY" in root_out and "X_PX" in root_out
 
 
@@ -644,23 +644,23 @@ def test_azimuthal_angle_calculation():
 physics_root_to_numexpr = [
     # (root_expr, expected_numexpr_expr)
     (
-        "(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2)))",
-        "sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2)))",
+        "(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2)))",
+        "sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0))",
     ),
-    ("(TMATH::Sqrt((X_PX**2)+(X_PY**2)))", "sqrt(((X_PX ** 2) + (X_PY ** 2)))"),
+    ("(TMath::Sqrt((X_PX**2)+(X_PY**2)))", "sqrt(X_PX ** 2.0 + X_PY ** 2.0)"),
     (
-        "(TMATH::Log(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
-        "log(sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2))))",
-    ),
-    (
-        "(TMATH::Exp(TMATH::Log((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
-        "exp(log(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2))))",
+        "(TMath::Log(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+        "log(sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)))",
     ),
     (
-        "(TMATH::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))/(TMATH::Sqrt((X_PY**2)+(X_PZ**2))))",
-        "(sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2))) / sqrt(((X_PY ** 2) + (X_PZ ** 2))))",
+        "(TMath::Exp(TMath::Log((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+        "exp(log(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)))",
     ),
-    ("(TMATH::ATan2(X_PY,X_PX))", "arctan2(X_PY, X_PX)"),
+    (
+        "(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))/(TMath::Sqrt((X_PY**2)+(X_PZ**2))))",
+        "sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)) / sqrt(X_PY ** 2.0 + X_PZ ** 2.0)",
+    ),
+    ("(TMath::ATan2(X_PY,X_PX))", "arctan2(X_PY, X_PX)"),
 ]
 
 
