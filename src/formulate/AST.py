@@ -5,6 +5,14 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 
+# Try to import ROOT, but don't fail if it's not available
+try:
+    import ROOT
+
+    HAS_ROOT = True
+except ImportError:
+    HAS_ROOT = False
+
 
 class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them up)
     _fields = ()
@@ -26,6 +34,97 @@ class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them 
         raise NotImplementedError(
             "to_root() not implemented, subclass must implement it"
         )
+
+    def validate_root_formula(self, variables=None):
+        """
+        Validate if the ROOT formula is valid by attempting to compile it.
+
+        Args:
+            variables (dict, optional): Dictionary of variable names and values for evaluation.
+                                       Defaults to None.
+
+        Returns:
+            bool: True if the formula is valid, False otherwise.
+        """
+        if not HAS_ROOT:
+            return None  # ROOT not available
+
+        try:
+            root_expr = self.to_root()
+
+            # Create variable declarations
+            var_declarations = ""
+            if variables:
+                for name, value in variables.items():
+                    var_declarations += f"double {name} = {value};\n"
+
+            # Create a temporary C++ function
+            func_name = f"TFormula____id{abs(hash(root_expr))}"
+            cpp_code = f"""
+            #include <TMath.h>
+            double {func_name}() {{
+                {var_declarations}
+                return {root_expr};
+            }}
+            """
+
+            # Compile the function
+            ROOT.gInterpreter.Declare(cpp_code)
+
+            # Try to call the function
+            getattr(ROOT, func_name)()
+            return True
+        except Exception as e:
+            print(f"ROOT validation error: {e}")
+            return False
+
+    def evaluate_root(self, variables=None):
+        """
+        Evaluate the ROOT formula with the given variables.
+
+        Args:
+            variables (dict, optional): Dictionary of variable names and values for evaluation.
+                                       Defaults to None.
+
+        Returns:
+            float: The result of evaluating the formula, or None if ROOT is not available
+                  or the formula is invalid.
+        """
+        if not HAS_ROOT:
+            return None  # ROOT not available
+
+        # Validate the formula first
+        if not self.validate_root_formula(variables):
+            return None  # Invalid formula
+
+        try:
+            root_expr = self.to_root()
+
+            # Create variable declarations
+            var_declarations = ""
+            if variables:
+                for name, value in variables.items():
+                    var_declarations += f"double {name} = {value};\n"
+
+            # Create a temporary C++ function
+            func_name = f"TFormula____eval_id{abs(hash(root_expr))}"
+            cpp_code = f"""
+            #include <TMath.h>
+            double {func_name}() {{
+                {var_declarations}
+                return {root_expr};
+            }}
+            """
+
+            # Compile the function
+            ROOT.gInterpreter.Declare(cpp_code)
+
+            # Call the function
+            result = getattr(ROOT, func_name)()
+            return result
+        except Exception as e:
+            print(f"ROOT evaluation error: {e}")
+            return None  # Error during evaluation
 
     @abstractmethod
     def to_python(self):
@@ -70,6 +169,7 @@ class Symbol(AST):  # Symbol: value referenced by name
         return self.symbol
 
     def to_root(self):
+        # ROOT uses TMath::Power() for exponentiation, not **
         return self.symbol
 
     def to_python(self):
@@ -196,12 +296,113 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     def to_numexpr(self):
         return self._to_infix_format("to_numexpr")
 
+    def _get_operator_precedence(self, op):
+        """
+        Get the operator precedence in C++ (ROOT).
+        Lower numbers indicate higher precedence.
+        """
+        # C++ operator precedence (simplified for our needs)
+        precedence = {
+            "**": 2,  # Power (not a C++ operator, but we handle it specially)
+            "*": 5,  # Multiplication
+            "/": 5,  # Division
+            "%": 5,  # Modulo
+            "+": 6,  # Addition
+            "-": 6,  # Subtraction
+            "<": 8,  # Less than
+            "<=": 8,  # Less than or equal
+            ">": 8,  # Greater than
+            ">=": 8,  # Greater than or equal
+            "==": 9,  # Equal
+            "!=": 9,  # Not equal
+            "&": 10,  # Bitwise AND
+            "^": 11,  # Bitwise XOR
+            "|": 12,  # Bitwise OR
+            "&&": 13,  # Logical AND
+            "||": 14,  # Logical OR
+        }
+        return precedence.get(op, 99)  # Default to lowest precedence if unknown
+
+    def _is_parenthesized_expression(self, expr_str):
+        """
+        Check if the expression string is already properly parenthesized.
+        """
+        if not (expr_str.startswith("(") and expr_str.endswith(")")):
+            return False
+
+        # Count opening and closing parentheses
+        open_count = 0
+        for i, char in enumerate(expr_str):
+            if char == "(":
+                open_count += 1
+            elif char == ")":
+                open_count -= 1
+                # If we reach 0 before the end, it's not fully parenthesized
+                if open_count == 0 and i < len(expr_str) - 1:
+                    return False
+
+        return True
+
     def to_root(self):
-        # Always add parentheses for consistency
-        result = self._to_infix_format("to_root")
-        if not result.startswith("("):
-            result = "(" + result + ")"
-        return result
+        # Special handling for power operator in ROOT
+        if str(self.sign) == "**":
+            left_code = self.left.to_root()
+            right_code = self.right.to_root()
+
+            # Remove outer parentheses from operands to avoid double parentheses
+            if left_code.startswith("(") and left_code.endswith(")"):
+                left_code = left_code[1:-1]
+            if right_code.startswith("(") and right_code.endswith(")"):
+                right_code = right_code[1:-1]
+
+            return f"TMath::Power({left_code},{right_code})"
+
+        # Get the current operator and its precedence
+        current_op = str(self.sign)
+        current_precedence = self._get_operator_precedence(current_op)
+
+        # Get the left and right operands
+        left_code = self.left.to_root()
+        right_code = self.right.to_root()
+
+        # Check if left operand needs parentheses
+        if isinstance(self.left, BinaryOperator):
+            left_op = str(self.left.sign)
+            left_precedence = self._get_operator_precedence(left_op)
+
+            # Add parentheses if left operator has lower precedence
+            # or if they have the same precedence but the operation is not associative
+            if left_precedence > current_precedence or (
+                left_precedence == current_precedence and current_op in {"-", "/", "%"}
+            ):
+                if not self._is_parenthesized_expression(left_code):
+                    left_code = "(" + left_code + ")"
+
+        # Check if right operand needs parentheses
+        if isinstance(self.right, BinaryOperator):
+            right_op = str(self.right.sign)
+            right_precedence = self._get_operator_precedence(right_op)
+
+            # Add parentheses if right operator has lower precedence
+            # or if they have the same precedence but the operation is not associative
+            # or if current operator is non-commutative (-, /, %)
+            if right_precedence > current_precedence or (
+                right_precedence == current_precedence
+                and (current_op in {"-", "/", "%"} or right_op in {"-", "/", "%"})
+            ):
+                if not self._is_parenthesized_expression(right_code):
+                    right_code = "(" + right_code + ")"
+
+        # For bitwise and logical operators, use the special formatting
+        if current_op in {"&", "|", "&&", "||"}:
+            left_code, right_code = self._format_bitwise_logical(left_code, right_code)
+
+        # For addition and multiplication, don't add extra parentheses
+        if current_op in {"+", "*"}:
+            return left_code + str(self.sign.to_root()) + right_code
+
+        # For other operators, wrap the entire expression in parentheses for consistency
+        return "(" + left_code + str(self.sign.to_root()) + right_code + ")"
 
     def to_python(self):
         if str(self.sign) in {"&", "|"}:
@@ -332,7 +533,7 @@ class Call(AST):  # Call: evaluate a function on arguments
                 return "log(10)"
             case "loge":
                 return "np.log10(np.exp(1))"
-            case "log":
+            case "log" | "TMath::Log10":
                 return f"log({self.arguments[0].to_numexpr()})"
             case "log2":
                 return f"(log({self.arguments[0].to_numexpr()})/log(2))"
@@ -393,101 +594,110 @@ class Call(AST):  # Call: evaluate a function on arguments
             case ":":
                 # Special case for multi_out
                 return ", ".join(arg.to_numexpr() for arg in self.arguments)
+            case "TMath::Power":
+                # Handle ROOT's power function
+                return f"({self.arguments[0].to_numexpr()}**{self.arguments[1].to_numexpr()})"
             case _:
                 raise ValueError(f"Not a valid function: {self.function}")
 
     def to_root(self):
+        # Helper function to process arguments
+        def process_arg(arg):
+            arg_code = arg.to_root()
+            # Remove outer parentheses to avoid double parentheses
+            if arg_code.startswith("(") and arg_code.endswith(")"):
+                arg_code = arg_code[1:-1]
+            return arg_code
+
         match str(self.function):
             case "pi":
-                return "(TMath::Pi)"
+                return "TMath::Pi()"
             case "e":
-                return "(TMath::E)"
+                return "TMath::E()"
             case "inf":
-                return "(TMath::Infinity)"
+                return "TMath::Infinity()"
             case "nan":
-                return "(TMath::QuietNaN)"
+                return "TMath::QuietNaN()"
             case "sqrt2":
-                return "(TMath::Sqrt2)"
+                return "TMath::Sqrt2()"
             case "piby2":
-                return "(TMath::PiOver2)"  # Fixed typo: was PiOver4
+                return "TMath::PiOver2()"
             case "piby4":
-                return "(TMath::PiOver4)"
+                return "TMath::PiOver4()"
             case "2pi":
-                return "(TMath::TwoPi)"
+                return "TMath::TwoPi()"
             case "ln10":
-                return "(TMath::Ln10)"
+                return "TMath::Ln10()"
             case "loge":
-                return "(TMath::LogE)"
+                return "TMath::LogE()"
             case "log":
-                return f"(TMath::Log({self.arguments[0].to_root()}))"
+                # In Python/numexpr, log is base 10, but in ROOT, Log is natural log (base e)
+                # So we need to use Log10 in ROOT to match Python's log
+                return f"TMath::Log10({process_arg(self.arguments[0])})"
             case "log2":
-                return f"(TMath::Log2({self.arguments[0].to_root()}))"
+                return f"TMath::Log2({process_arg(self.arguments[0])})"
             case "degtorad":
-                return f"(TMath::DegToRad({self.arguments[0].to_root()}))"
+                return f"TMath::DegToRad({process_arg(self.arguments[0])})"
             case "radtodeg":
-                return f"(TMath::RadToDeg({self.arguments[0].to_root()}))"
+                return f"TMath::RadToDeg({process_arg(self.arguments[0])})"
             case "exp":
-                return f"(TMath::Exp({self.arguments[0].to_root()}))"
+                return f"TMath::Exp({process_arg(self.arguments[0])})"
             case "sin":
-                return f"(TMath::Sin({self.arguments[0].to_root()}))"
+                return f"TMath::Sin({process_arg(self.arguments[0])})"
             case "asin" | "arcsin":
-                return f"(TMath::ASin({self.arguments[0].to_root()}))"
+                return f"TMath::ASin({process_arg(self.arguments[0])})"
             case "sinh":
-                return f"(TMath::SinH({self.arguments[0].to_root()}))"
+                return f"TMath::SinH({process_arg(self.arguments[0])})"
             case "asinh":
-                return f"(TMath::ASinH({self.arguments[0].to_root()}))"
+                return f"TMath::ASinH({process_arg(self.arguments[0])})"
             case "cos":
-                return f"(TMath::Cos({self.arguments[0].to_root()}))"
+                return f"TMath::Cos({process_arg(self.arguments[0])})"
             case "acos" | "arccos":
-                return f"(TMath::ACos({self.arguments[0].to_root()}))"
+                return f"TMath::ACos({process_arg(self.arguments[0])})"
             case "cosh":
-                return f"(TMath::CosH({self.arguments[0].to_root()}))"
+                return f"TMath::CosH({process_arg(self.arguments[0])})"
             case "acosh":
-                return f"(TMath::ACosH({self.arguments[0].to_root()}))"
+                return f"TMath::ACosH({process_arg(self.arguments[0])})"
             case "tan":
-                return f"(TMath::Tan({self.arguments[0].to_root()}))"
+                return f"TMath::Tan({process_arg(self.arguments[0])})"
             case "atan" | "arctan":
-                return f"(TMath::ATan({self.arguments[0].to_root()}))"
+                return f"TMath::ATan({process_arg(self.arguments[0])})"
             case "atan2" | "arctan2":
-                return f"(TMath::ATan2({self.arguments[0].to_root()}, {self.arguments[1].to_root()}))"
+                return f"TMath::ATan2({process_arg(self.arguments[0])}, {process_arg(self.arguments[1])})"
             case "tanh":
-                return f"(TMath::TanH({self.arguments[0].to_root()}))"
+                return f"TMath::TanH({process_arg(self.arguments[0])})"
             case "atanh":
-                return f"(TMath::ATanH({self.arguments[0].to_root()}))"
+                return f"TMath::ATanH({process_arg(self.arguments[0])})"
             case "Math::sqrt":
-                return f"(TMath::Sqrt({self.arguments[0].to_root()}))"
+                return f"TMath::Sqrt({process_arg(self.arguments[0])})"
             case "sqrt":
-                return f"(TMath::Sqrt({self.arguments[0].to_root()}))"
+                return f"TMath::Sqrt({process_arg(self.arguments[0])})"
             case "ceil":
-                return f"(TMath::Ceil({self.arguments[0].to_root()}))"
+                return f"TMath::Ceil({process_arg(self.arguments[0])})"
             case "abs":
-                # Handle the argument specially to avoid double parentheses for negative numbers
-                arg = self.arguments[0].to_root()
-                if arg.startswith("(") and arg.endswith(")"):
-                    arg = arg[1:-1]  # Remove outer parentheses
-                return f"(TMath::Abs({arg}))"
+                return f"TMath::Abs({process_arg(self.arguments[0])})"
             case "even":
-                return f"(TMath::Even({self.arguments[0].to_root()}))"
+                return f"TMath::Even({process_arg(self.arguments[0])})"
             case "factorial":
-                return f"(TMath::Factorial({self.arguments[0].to_root()}))"
+                return f"TMath::Factorial({process_arg(self.arguments[0])})"
             case "floor":
-                return f"(TMath::Floor({self.arguments[0].to_root()}))"
+                return f"TMath::Floor({process_arg(self.arguments[0])})"
             case "max":
-                return f"(Max$({self.arguments[0].to_root()}))"
+                return f"Max$({process_arg(self.arguments[0])})"
             case "min":
-                return f"(Min$({self.arguments[0].to_root()}))"
+                return f"Min$({process_arg(self.arguments[0])})"
             case "sum":
-                return f"(Sum$({self.arguments[0].to_root()}))"
+                return f"Sum$({process_arg(self.arguments[0])})"
             case "no_of_entries":
-                return f"(Length$({self.arguments[0].to_root()}))"
+                return f"Length$({process_arg(self.arguments[0])})"
             case "min_if":
                 if len(self.arguments) >= 2:
-                    return f"(MinIf$({self.arguments[0].to_root()}, {self.arguments[1].to_root()}))"
-                return f"(MinIf$({self.arguments[0].to_root()}))"
+                    return f"MinIf$({process_arg(self.arguments[0])}, {process_arg(self.arguments[1])})"
+                return f"MinIf$({process_arg(self.arguments[0])})"
             case "max_if":
                 if len(self.arguments) >= 2:
-                    return f"(MaxIf$({self.arguments[0].to_root()}, {self.arguments[1].to_root()}))"
-                return f"(MaxIf$({self.arguments[0].to_root()}))"
+                    return f"MaxIf$({process_arg(self.arguments[0])}, {process_arg(self.arguments[1])})"
+                return f"MaxIf$({process_arg(self.arguments[0])})"
             case ":":
                 # Special case for multi_out
                 return ", ".join(arg.to_root() for arg in self.arguments)

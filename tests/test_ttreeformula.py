@@ -141,12 +141,12 @@ def test_simple_lor():
 
 
 def test_simple_pow():
-    a = formulate.from_root("a**2.0")
+    a = formulate.from_root("a^2.0")
     out = a.to_python()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a**2.0"))
     # Test ROOT version
     root_out = a.to_root()
-    assert root_out == "(a**2.0)"
+    assert root_out == "(a^2.0)"
 
 
 def test_simple_matrix():
