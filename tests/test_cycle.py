@@ -156,6 +156,28 @@ def evaluate_expression(expr, values=None):
     local_vars["arctan2"] = np.arctan2
     local_vars["abs"] = np.abs
 
+    # Add ROOT TMath functions
+    local_vars["TMath"] = type(
+        "TMath",
+        (),
+        {
+            "Power": pow,
+            "Sqrt": np.sqrt,
+            "Log": np.log,
+            "Log10": np.log10,
+            "Exp": np.exp,
+            "Sin": np.sin,
+            "Cos": np.cos,
+            "Tan": np.tan,
+            "ATan2": np.arctan2,
+            "Abs": np.abs,
+        },
+    )
+
+    # Replace ROOT's :: syntax with Python's . syntax
+    if "TMath::" in modified_expr:
+        modified_expr = modified_expr.replace("TMath::", "TMath.")
+
     try:
         return eval(modified_expr, {"__builtins__": {}}, local_vars)
     except Exception as e:
@@ -488,44 +510,50 @@ physics_numexpr_to_root = [
     # (numexpr_expr, expected_root_expr)
     (
         "sqrt(X_PX**2 + X_PY**2 + X_PZ**2)",
-        "(TMath::Sqrt(((X_PX**2.0)+((X_PY**2.0)+(X_PZ**2.0)))))",
+        "TMath::Sqrt(TMath::Power(X_PX,2.0)+TMath::Power(X_PY,2.0)+TMath::Power(X_PZ,2.0))",
     ),
-    ("sqrt(X_PX**2 + X_PY**2)", "(TMath::Sqrt(((X_PX**2.0)+(X_PY**2.0))))"),
+    (
+        "sqrt(X_PX**2 + X_PY**2)",
+        "TMath::Sqrt(TMath::Power(X_PX,2.0)+TMath::Power(X_PY,2.0))",
+    ),
     (
         "log(sqrt(X_PX**2 + X_PY**2 + X_PZ**2))",
-        "(TMath::Log((TMath::Sqrt(((X_PX**2.0)+((X_PY**2.0)+(X_PZ**2.0)))))))",
+        "TMath::Log(TMath::Sqrt(TMath::Power(X_PX,2.0)+TMath::Power(X_PY,2.0)+TMath::Power(X_PZ,2.0)))",
     ),
     (
         "exp(log(X_PX**2 + X_PY**2 + X_PZ**2))",
-        "(TMath::Exp((TMath::Log(((X_PX**2.0)+((X_PY**2.0)+(X_PZ**2.0)))))))",
+        "TMath::Exp(TMath::Log(TMath::Power(X_PX,2.0)+TMath::Power(X_PY,2.0)+TMath::Power(X_PZ,2.0)))",
     ),
     (
         "sqrt(X_PX**2 + X_PY**2 + X_PZ**2) / sqrt(X_PY**2 + X_PZ**2)",
-        "((TMath::Sqrt(((X_PX**2.0)+((X_PY**2.0)+(X_PZ**2.0)))))/(TMath::Sqrt(((X_PY**2.0)+(X_PZ**2.0)))))",
+        "TMath::Sqrt(TMath::Power(X_PX,2.0)+TMath::Power(X_PY,2.0)+TMath::Power(X_PZ,2.0))/TMath::Sqrt(TMath::Power(X_PY,2.0)+TMath::Power(X_PZ,2.0))",
     ),
-    ("arctan2(X_PY, X_PX)", "(TMath::ATan2(X_PY, X_PX))"),
+    ("arctan2(X_PY, X_PX)", "TMath::ATan2(X_PY, X_PX)"),
 ]
 
 physics_root_to_numexpr = [
     # (root_expr, expected_numexpr_expr)
     (
-        "(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2)))",
+        "TMath::Sqrt((TMath::Power(X_PX,2))+(TMath::Power(X_PY,2))+(TMath::Power(X_PZ,2)))",
         "sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0))",
     ),
-    ("(TMath::Sqrt((X_PX**2)+(X_PY**2)))", "sqrt(X_PX ** 2.0 + X_PY ** 2.0)"),
     (
-        "(TMath::Log(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+        "TMath::Sqrt((TMath::Power(X_PX,2))+(TMath::Power(X_PY,2)))",
+        "sqrt(X_PX ** 2.0 + X_PY ** 2.0)",
+    ),
+    (
+        "TMath::Log(TMath::Sqrt((TMath::Power(X_PX,2))+(TMath::Power(X_PY,2))+(TMath::Power(X_PZ,2))))",
         "log(sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)))",
     ),
     (
-        "(TMath::Exp(TMath::Log((X_PX**2)+(X_PY**2)+(X_PZ**2))))",
+        "TMath::Exp(TMath::Log((TMath::Power(X_PX,2))+(TMath::Power(X_PY,2))+(TMath::Power(X_PZ,2))))",
         "exp(log(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)))",
     ),
     (
-        "(TMath::Sqrt((X_PX**2)+(X_PY**2)+(X_PZ**2))/(TMath::Sqrt((X_PY**2)+(X_PZ**2))))",
+        "TMath::Sqrt((TMath::Power(X_PX,2))+(TMath::Power(X_PY,2))+(TMath::Power(X_PZ,2)))/(TMath::Sqrt((TMath::Power(X_PY,2))+(TMath::Power(X_PZ,2))))",
         "sqrt(X_PX ** 2.0 + (X_PY ** 2.0 + X_PZ ** 2.0)) / sqrt(X_PY ** 2.0 + X_PZ ** 2.0)",
     ),
-    ("(TMath::ATan2(X_PY,X_PX))", "arctan2(X_PY, X_PX)"),
+    ("TMath::ATan2(X_PY,X_PX)", "arctan2(X_PY, X_PX)"),
 ]
 
 

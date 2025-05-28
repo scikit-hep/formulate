@@ -102,56 +102,6 @@ def validate_root_formula(expr, variables=None):
             return False
 
 
-# Helper function to evaluate ROOT expressions
-def evaluate_root_expr(expr, variables=None):
-    """
-    Evaluate a ROOT expression using ROOT.TFormula.
-
-    Args:
-        expr (str): The ROOT expression to evaluate
-        variables (dict): Dictionary of variable names and values
-
-    Returns:
-        float: The result of evaluating the expression
-    """
-    if not HAS_ROOT:
-        pytest.skip("ROOT not available")
-
-    # Validate the formula first
-    if not validate_root_formula(expr, variables):
-        pytest.skip(f"Invalid ROOT formula: {expr}")
-
-    # ROOT's TFormula doesn't handle variables directly by name
-    # We need to create a C++ function that uses the variables
-
-    # Create variable declarations
-    var_declarations = ""
-    var_assignments = ""
-    if variables:
-        for name, value in variables.items():
-            var_declarations += f"double {name} = {value};\n"
-
-    # Include TMath header
-    includes = "#include <TMath.h>\n"
-
-    # Create a temporary C++ function
-    func_name = f"TFormula____id{abs(hash(expr))}"
-    cpp_code = f"""
-    {includes}
-    double {func_name}() {{
-        {var_declarations}
-        return {expr};
-    }}
-    """
-
-    # Compile the function
-    ROOT.gInterpreter.Declare(cpp_code)
-
-    # Call the function
-    result = getattr(ROOT, func_name)()
-    return result
-
-
 # Simple expressions for parametrized testing
 simple_expressions = [
     # (numexpr_expr, expected_root_expr)
@@ -184,7 +134,7 @@ function_simple_expressions = [
     ("sin(x)", "TMath::Sin(x)"),
     ("cos(x)", "TMath::Cos(x)"),
     ("tan(x)", "TMath::Tan(x)"),
-    ("log(x)", "TMath::Log10(x)"),
+    ("log(x)", "TMath::Log(x)"),
     ("exp(x)", "TMath::Exp(x)"),
     ("sqrt(x)", "TMath::Sqrt(x)"),
 ]
@@ -714,11 +664,6 @@ def test_numexpr_python_root_comparison(expr):
         assert abs(py_result - root_result) < 1e-10, (
             f"Python result: {py_result}, ROOT result: {root_result}"
         )
-
-    # Print success message
-    print(f"Expression '{expr}' evaluated successfully in both Python and ROOT")
-    print(f"  Python: {python_expr} = {py_result}")
-    print(f"  ROOT: {root_expr} = {root_result}")
 
 
 @pytest.mark.parametrize("expr", physics_comparison_expressions)

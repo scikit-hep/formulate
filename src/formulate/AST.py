@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 
@@ -91,7 +92,9 @@ class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them 
                   or the formula is invalid.
         """
         if not HAS_ROOT:
-            return None  # ROOT not available
+            raise ImportError(
+                "ROOT is not available or cannot be imported. Please install ROOT to use this feature."
+            )
 
         # Validate the formula first
         if not self.validate_root_formula(variables):
@@ -107,7 +110,11 @@ class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them 
                     var_declarations += f"double {name} = {value};\n"
 
             # Create a temporary C++ function
-            func_name = f"TFormula____eval_id{abs(hash(root_expr))}"
+            hashable_string = root_expr + var_declarations
+            m = hashlib.sha256()
+            m.update(hashable_string.encode())
+
+            func_name = f"TFormula____eval_id{m.hexdigest()}"
             cpp_code = f"""
             #include <TMath.h>
             double {func_name}() {{
@@ -123,8 +130,9 @@ class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them 
             result = getattr(ROOT, func_name)()
             return result
         except Exception as e:
-            print(f"ROOT evaluation error: {e}")
-            return None  # Error during evaluation
+            raise ValueError(f"ROOT evaluation error: {e}") from e
+            # print(f"ROOT evaluation error: {e}")
+            # return None  # Error during evaluation
 
     @abstractmethod
     def to_python(self):
@@ -397,12 +405,8 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         if current_op in {"&", "|", "&&", "||"}:
             left_code, right_code = self._format_bitwise_logical(left_code, right_code)
 
-        # For addition and multiplication, don't add extra parentheses
-        if current_op in {"+", "*"}:
-            return left_code + str(self.sign.to_root()) + right_code
-
-        # For other operators, wrap the entire expression in parentheses for consistency
-        return "(" + left_code + str(self.sign.to_root()) + right_code + ")"
+        # For all operators, don't add extra parentheses
+        return left_code + str(self.sign.to_root()) + right_code
 
     def to_python(self):
         if str(self.sign) in {"&", "|"}:
@@ -428,11 +432,14 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
 
             return left_code + operator_str + right_code
 
-        # For standard operators (+, -, *, /, etc.)
-        left_code = self._strip_parentheses(str(self.left.to_python()))
-        right_code = self._strip_parentheses(str(self.right.to_python()))
-
-        return left_code + str(self.sign.to_python()) + right_code
+        pycode = (
+            "("
+            + str(self.left.to_python())
+            + str(self.sign.to_python())
+            + str(self.right.to_python())
+            + ")"
+        )
+        return pycode
 
 
 @dataclass
@@ -532,9 +539,11 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "ln10":
                 return "log(10)"
             case "loge":
-                return "np.log10(np.exp(1))"
-            case "log" | "TMath::Log10":
+                return "np.log(np.exp(1))"
+            case "log" | "TMath::Log":
                 return f"log({self.arguments[0].to_numexpr()})"
+            case "log10" | "TMath::Log10":
+                return f"log10({self.arguments[0].to_numexpr()})"
             case "log2":
                 return f"(log({self.arguments[0].to_numexpr()})/log(2))"
             case "degtorad":
@@ -631,8 +640,8 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "loge":
                 return "TMath::LogE()"
             case "log":
-                # In Python/numexpr, log is base 10, but in ROOT, Log is natural log (base e)
-                # So we need to use Log10 in ROOT to match Python's log
+                return f"TMath::Log({process_arg(self.arguments[0])})"
+            case "log10":
                 return f"TMath::Log10({process_arg(self.arguments[0])})"
             case "log2":
                 return f"TMath::Log2({process_arg(self.arguments[0])})"
@@ -725,8 +734,10 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "ln10":
                 return "np.log(10)"
             case "loge":
-                return "np.log10(np.exp(1))"
+                return "np.log(np.exp(1))"
             case "log":
+                return f"np.log({self.arguments[0].to_python()})"
+            case "log10":
                 return f"np.log10({self.arguments[0].to_python()})"
             case "log2":
                 return f"np.log2({self.arguments[0].to_python()})"  # Fixed: simplify to log2
