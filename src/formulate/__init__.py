@@ -5,14 +5,13 @@ from __future__ import annotations
 from . import (
     AST,
     convert_ptree,
-    exceptions,
     numexpr_parser,
     toast,
     ttreeformula_parser,
 )
 from ._version import __version__
 
-__all__ = ["__version__", "exceptions", "from_numexpr", "from_root"]
+__all__ = ["__version__", "from_numexpr", "from_root"]
 
 
 def from_root(exp: str, *, standalone: bool = True, **kwargs) -> AST:
