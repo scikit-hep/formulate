@@ -12,66 +12,50 @@ from . import (
 )
 from ._version import __version__
 
-__all__ = ["exceptions", "from_numexpr", "from_root"]
+__all__ = ["__version__", "exceptions", "from_numexpr", "from_root"]
 
 
-def from_root(exp: str, **kwargs) -> AST:
-    """Evaluate ttreformula expressions."""
-    # Preprocess the expression to handle multiple occurrences of the same binary operator
-    # This should be fixed in the actual parser, generated from Lark. Somehow, this only fails for
-    # root parsing
-    exp = _preprocess_expression(exp)
-    parser = ttreeformula_parser.Lark_StandAlone()
+def from_root(exp: str, *, standalone: bool = True, **kwargs) -> AST:
+    """Evaluate ttreeformula expressions."""
+    if standalone:
+        parser = ttreeformula_parser.Lark_StandAlone()
+    else:
+        # TODO: Is there a better way to do this?
+        try:
+            import lark
+        except ImportError as err:
+            msg = "lark needs to be installed for non-standalone parsing"
+            raise ImportError(msg) from err
+        from pathlib import Path
+
+        module_path = Path(__file__).parent
+        grammar_path = module_path / "ttreeformula_grammar.lark"
+        with grammar_path.open("r") as f:
+            grammar = f.read()
+        parser = lark.Lark(grammar, parser="lalr")
     ptree = parser.parse(exp)
     convert_ptree.convert_ptree(ptree)
     return toast.toast(ptree, nxp=False)
 
 
-def _preprocess_expression(exp: str) -> str:
-    """Preprocess the expression to handle multiple occurrences of the same operator.
-
-    This function adds parentheses to group operators correctly.
-    For example, "a||b||c" becomes "((a||b)||c)".
-    """
-    import re
-
-    def _add_parentheses_for_operator(exp: str, operator: str) -> str:
-        """Add parentheses for a specific operator to ensure correct precedence.
-
-        Args:
-            exp: The expression to process
-            operator: The operator to handle ('||', '&&', '|', or '&')
-        """
-        # Escape special regex characters in the operator
-        escaped_op = re.escape(operator)
-        # Create the regex pattern for this operator
-        pattern = (
-            rf"([a-zA-Z0-9_]+{escaped_op}[a-zA-Z0-9_]+)({escaped_op}[a-zA-Z0-9_]+)+"
-        )
-
-        def replace_match(match):
-            original = match.group(0)
-            parts = original.split(operator)
-            # Create a new expression with parentheses
-            new_expr = parts[0]
-            for part in parts[1:]:
-                new_expr = f"({new_expr}{operator}{part})"
-            return new_expr
-
-        # Use re.sub with the callback function
-        exp = re.sub(pattern, replace_match, exp)
-        return exp
-
-    # Process each operator
-    for operator in ["||", "&&", "|", "&"]:
-        exp = _add_parentheses_for_operator(exp, operator)
-
-    return exp
-
-
-def from_numexpr(exp: str, **kwargs) -> AST:
+def from_numexpr(exp: str, *, standalone: bool = True, **kwargs) -> AST:
     """Evaluate numexpr expressions."""
-    parser = numexpr_parser.Lark_StandAlone()
+    if standalone:
+        parser = numexpr_parser.Lark_StandAlone()
+    else:
+        # TODO: Is there a better way to do this?
+        try:
+            import lark
+        except ImportError as err:
+            msg = "lark needs to be installed for non-standalone parsing"
+            raise ImportError(msg) from err
+        from pathlib import Path
+
+        module_path = Path(__file__).parent
+        grammar_path = module_path / "numexpr_grammar.lark"
+        with grammar_path.open("r") as f:
+            grammar = f.read()
+        parser = lark.Lark(grammar, parser="lalr")
     ptree = parser.parse(exp)
-    convert_ptree.convert_ptree(ptree)
+    convert_ptree.convert_ptree(ptree, standalone)
     return toast.toast(ptree, nxp=True)

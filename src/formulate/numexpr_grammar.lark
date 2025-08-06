@@ -1,0 +1,56 @@
+start: expr
+
+expr: comp_expr
+
+comp_expr: or_expr
+         | comp_expr ">" or_expr -> gt
+         | comp_expr ">=" or_expr -> gte
+         | comp_expr "<" or_expr -> lt
+         | comp_expr "<=" or_expr -> lte
+         | comp_expr "!=" or_expr -> neq
+         | comp_expr "==" or_expr -> eq
+
+or_expr: xor_expr
+        | or_expr "|" xor_expr -> bor
+
+xor_expr: and_expr
+        | xor_expr "^" and_expr -> bxor
+
+and_expr: inv_expr
+        | and_expr "&" inv_expr -> band
+
+inv_expr: shift_expr
+        | "~" inv_expr -> binv
+
+shift_expr: sum
+            | shift_expr "<<" sum -> lshift
+            | shift_expr ">>" sum -> rshift
+
+sum: term
+    | term "+" sum  -> add
+    | term "-" sum  -> sub
+
+term: factor
+    | factor "*" term -> mul
+    | factor "/" term -> div
+    | factor "%" term -> mod
+
+factor: pow
+        | "+" factor -> pos
+        | "-" factor -> neg
+
+pow: atom
+    | atom "**" factor -> pow
+
+atom: "(" expr ")"
+    | CNAME -> symbol
+    | NUMBER -> literal
+    | func_name trailer  -> func
+
+func_name: CNAME
+trailer: "(" [arglist] ")"
+arglist: expr ("," expr)* [","]
+%import common.CNAME
+%import common.NUMBER
+%import common.WS
+%ignore WS
