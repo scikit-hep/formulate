@@ -1,3 +1,6 @@
+# Operator precedence is taken from https://en.cppreference.com/w/cpp/language/operator_precedence.html
+# TTreeFormula does not explicitly list precedence, so we assume it follows C++ precedence rules.
+
 start: expression
 
 expression: disjunction
@@ -6,19 +9,8 @@ expression: disjunction
 disjunction: conjunction
            | disjunction "||" conjunction -> lor
 
-conjunction: inversion
-           | conjunction "&&" inversion -> land
-
-inversion: comparison
-         | "!" inversion -> linv
-
-comparison: bitwise_or
-          | comparison ">" bitwise_or -> gt
-          | comparison ">=" bitwise_or -> gte
-          | comparison "<" bitwise_or -> lt
-          | comparison "<=" bitwise_or -> lte
-          | comparison ("!=" ) bitwise_or -> neq
-          | comparison "==" bitwise_or -> eq
+conjunction: bitwise_or
+           | conjunction "&&" bitwise_or -> land
 
 bitwise_or: bitwise_xor
           | bitwise_or "|" bitwise_xor -> bor
@@ -26,11 +18,19 @@ bitwise_or: bitwise_xor
 bitwise_xor: bitwise_and
            | bitwise_xor "^" bitwise_and -> bxor
 
-bitwise_and: bitwise_inversion
-            | bitwise_and "&" bitwise_inversion -> band
+bitwise_and: equality
+            | bitwise_and "&" equality -> band
 
-bitwise_inversion: shift_expr
-                 | "~" bitwise_inversion -> binv
+equality: comparison
+        | equality "==" comparison -> eq
+        | equality ("!=" ) comparison -> neq
+
+comparison: shift_expr
+          | comparison ">" shift_expr -> gt
+          | comparison ">=" shift_expr -> gte
+          | comparison "<" shift_expr -> lt
+          | comparison "<=" shift_expr -> lte
+
 shift_expr: sum
           | shift_expr "<<" sum -> lshift
           | shift_expr ">>" sum -> rshift
@@ -48,7 +48,10 @@ factor: pow
       | factor matpos+ -> matr
       | "+" factor -> pos
       | "-" factor -> neg
+      | "!" factor -> linv
+      | "~" factor -> binv
 
+# Note that this is the only operation that groups from the right.
 pow: atom
    | atom "**" factor -> pow
 
