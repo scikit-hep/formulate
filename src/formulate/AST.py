@@ -11,27 +11,23 @@ class AST(metaclass=ABCMeta):  # only three types (and a superclass to set them 
 
     @abstractmethod
     def __str__(self):
-        raise NotImplementedError(
-            "__str__() not implemented, subclass must implement it"
-        )
+        msg = "__str__() not implemented, subclass must implement it"
+        raise NotImplementedError(msg)
 
     @abstractmethod
     def to_numexpr(self):
-        raise NotImplementedError(
-            "to_numexpr() not implemented, subclass must implement it"
-        )
+        msg = "to_numexpr() not implemented, subclass must implement it"
+        raise NotImplementedError(msg)
 
     @abstractmethod
     def to_root(self):
-        raise NotImplementedError(
-            "to_root() not implemented, subclass must implement it"
-        )
+        msg = "to_root() not implemented, subclass must implement it"
+        raise NotImplementedError(msg)
 
     @abstractmethod
     def to_python(self):
-        raise NotImplementedError(
-            "to_python() not implemented, subclass must implement it"
-        )
+        msg = "to_python() not implemented, subclass must implement it"
+        raise NotImplementedError(msg)
 
 
 @dataclass
@@ -138,16 +134,20 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
                 return True
 
         # Check if this is multiplication/division with bitwise/logical right operand
-        if str(self.sign) in {"/", "*"}:
-            if isinstance(self.right, BinaryOperator) and str(self.right.sign) in {
+        if (
+            str(self.sign) in {"/", "*"}
+            and isinstance(self.right, BinaryOperator)
+            and str(self.right.sign)
+            in {
                 "&",
                 "|",
                 "&&",
                 "||",
-            }:
-                # Set a flag on the right operand to indicate it's part of a complex expression
-                self.right._parent_op = self.sign
-                return True
+            }
+        ):
+            # Set a flag on the right operand to indicate it's part of a complex expression
+            self.right._parent_op = self.sign
+            return True
 
         return False
 
@@ -285,7 +285,7 @@ class Empty(AST):  # Slice: The slice for matrix
         return ""
 
     def to_numexpr(self):
-        raise ""
+        return ""
 
     def to_root(self):
         return ""
@@ -315,7 +315,8 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "inf":
                 return "inf"
             case "nan":
-                raise ValueError("No equivalent in Numexpr!")
+                msg = "NaN is not supported in NumExpr"
+                raise ValueError(msg)
             case "sqrt2":
                 return "sqrt(2)"
             case "piby2":
@@ -329,57 +330,59 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "loge":
                 return "np.log10(np.exp(1))"
             case "log":
-                return f"log({self.arguments[0]})"
+                return f"log({self.arguments[0].to_numexpr()})"
             case "log10":
-                return f"(log10({self.arguments[0]})/log(2))"
+                return f"(log({self.arguments[0].to_numexpr()})/log(10))"
             case "degtorad":
-                return f"np.radians({self.arguments[0]})"
+                return f"np.radians({self.arguments[0].to_numexpr()})"
             case "radtodeg":
-                return f"np.degrees({self.arguments[0]})"
+                return f"np.degrees({self.arguments[0].to_numexpr()})"
             case "exp":
-                return f"np.exp({self.arguments[0]})"
+                return f"np.exp({self.arguments[0].to_numexpr()})"
             case "sin":
-                return f"sin({self.arguments[0]})"
+                return f"sin({self.arguments[0].to_numexpr()})"
             case "asin":
-                return f"arcsin({self.arguments[0]})"
+                return f"arcsin({self.arguments[0].to_numexpr()})"
             case "sinh":
-                return f"sinh({self.arguments[0]})"
+                return f"sinh({self.arguments[0].to_numexpr()})"
             case "asinh":
-                return f"arcsinh({self.arguments[0]})"
+                return f"arcsinh({self.arguments[0].to_numexpr()})"
             case "cos":
-                return f"cos({self.arguments[0]})"
+                return f"cos({self.arguments[0].to_numexpr()})"
             case "arccos":
-                return f"arccos({self.arguments[0]})"
+                return f"arccos({self.arguments[0].to_numexpr()})"
             case "cosh":
-                return f"cosh({self.arguments[0]})"
+                return f"cosh({self.arguments[0].to_numexpr()})"
             case "acosh":
-                return f"arccosh({self.arguments[0]})"
+                return f"arccosh({self.arguments[0].to_numexpr()})"
             case "tan":
-                return f"tan({self.arguments[0]})"
+                return f"tan({self.arguments[0].to_numexpr()})"
             case "arctan":
-                return f"arctan({self.arguments[0]})"
+                return f"arctan({self.arguments[0].to_numexpr()})"
             case "tanh":
-                return f"tanh({self.arguments[0]})"
+                return f"tanh({self.arguments[0].to_numexpr()})"
             case "atanh":
-                return f"arctanh({self.arguments[0]})"
+                return f"arctanh({self.arguments[0].to_numexpr()})"
             case "Math::sqrt":
-                return f"sqrt({self.arguments[0]})"
+                return f"sqrt({self.arguments[0].to_numexpr()})"
             case "sqrt":
-                return f"sqrt({self.arguments[0]})"
+                return f"sqrt({self.arguments[0].to_numexpr()})"
             case "ceil":
-                return f"ceil({self.arguments[0]})"
+                return f"ceil({self.arguments[0].to_numexpr()})"
             case "abs":
-                return f"abs({self.arguments[0]})"
+                return f"abs({self.arguments[0].to_numexpr()})"
             case "even":
-                return f"not ({self.arguments[0]} % 2)"
+                return f"not ({self.arguments[0].to_numexpr()} % 2)"
             case "factorial":
-                raise ValueError("Cannot translate to Numexpr!")
+                msg = "factorial is not supported in NumExpr"
+                raise ValueError(msg)
             case "floor":
                 return f"! np.floor({self.arguments[0]})"
             case "where":
-                return f"where({self.arguments[0]},{self.arguments[1]},{self.arguments[3]})"
+                return f"where({self.arguments[0].to_numexpr()},{self.arguments[1].to_numexpr()},{self.arguments[2].to_numexpr()})"
             case _:
-                raise ValueError("Not a valid function!")
+                msg = f"{self.function} is not supported in NumExpr"
+                raise ValueError(msg)
 
     def to_root(self):
         match str(self.function):
@@ -388,85 +391,86 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "e":
                 return "TMath::E"
             case "inf":
-                return "TMATH::Infinity"
+                return "TMath::Infinity"
             case "nan":
-                return "TMATH::QuietNan"
+                return "TMath::QuietNan"
             case "sqrt2":
-                return "TMATH::Sqrt2({self.arguments[0]})"
+                return "TMath::Sqrt2({self.arguments[0]})"
             case "piby2":
-                return "TMATH::PiOver4"
+                return "TMath::PiOver4"
             case "piby4":
-                return "TMATH::PiOver4"
+                return "TMath::PiOver4"
             case "2pi":
-                return "TMATH::TwoPi"
+                return "TMath::TwoPi"
             case "ln10":
-                return f"TMATH::Ln10({self.arguments[0]})"
+                return f"TMath::Ln10({self.arguments[0].to_root()})"
             case "loge":
-                return f"TMATH::LogE({self.arguments[0]})"
+                return f"TMath::LogE({self.arguments[0].to_root()})"
             case "log":
-                return f"TMATH::Log({self.arguments[0]})"
+                return f"TMath::Log({self.arguments[0].to_root()})"
             case "log2":
-                return f"TMATH::Log2({self.arguments[0]})"
+                return f"TMath::Log2({self.arguments[0].to_root()})"
             case "degtorad":
-                return f"TMATH::DegToRad({self.arguments[0]})"
+                return f"TMath::DegToRad({self.arguments[0].to_root()})"
             case "radtodeg":
-                return f"TMATH::RadToDeg({self.arguments[0]})"
+                return f"TMath::RadToDeg({self.arguments[0].to_root()})"
             case "exp":
-                return f"TMATH::Exp({self.arguments[0]})"
+                return f"TMath::Exp({self.arguments[0].to_root()})"
             case "sin":
-                return f"TMATH::Sin({self.arguments[0]})"
+                return f"TMath::Sin({self.arguments[0].to_root()})"
             case "asin":
-                return f"TMATH::ASin({self.arguments[0]})"
+                return f"TMath::ASin({self.arguments[0].to_root()})"
             case "sinh":
-                return f"TMATH::SinH({self.arguments[0]})"
+                return f"TMath::SinH({self.arguments[0].to_root()})"
             case "asinh":
-                return f"TMATH::ASinH({self.arguments[0]})"
+                return f"TMath::ASinH({self.arguments[0].to_root()})"
             case "cos":
-                return f"TMATH::Cos({self.arguments[0]})"
+                return f"TMath::Cos({self.arguments[0].to_root()})"
             case "arccos":
-                return f"TMATH::ACos({self.arguments[0]})"
+                return f"TMath::ACos({self.arguments[0].to_root()})"
             case "cosh":
-                return f"TMATH::CosH({self.arguments[0]})"
+                return f"TMath::CosH({self.arguments[0].to_root()})"
             case "acosh":
-                return f"TMATH::ACosH({self.arguments[0]})"
+                return f"TMath::ACosH({self.arguments[0].to_root()})"
             case "tan":
-                return f"TMATH::Tan({self.arguments[0]})"
+                return f"TMath::Tan({self.arguments[0].to_root()})"
             case "arctan":
-                return f"TMATH::ATan({self.arguments[0]})"
+                return f"TMath::ATan({self.arguments[0].to_root()})"
             case "tanh":
-                return f"TMATH::TanH({self.arguments[0]})"
+                return f"TMath::TanH({self.arguments[0].to_root()})"
             case "atanh":
-                return f"TMATH::ATanH({self.arguments[0]})"
-            case "Math::sqrt":
-                return f"TMATH::Sqrt({self.arguments[0]})"
+                return f"TMath::ATanH({self.arguments[0].to_root()})"
+            case "TMath::Sqrt":
+                return f"TMath::Sqrt({self.arguments[0].to_root()})"
             case "sqrt":
-                return f"TMATH::Sqrt({self.arguments[0]})"
+                return f"TMath::Sqrt({self.arguments[0].to_root()})"
             case "ceil":
-                return f"TMATH::Ceil({self.arguments[0]})"
+                return f"TMath::Ceil({self.arguments[0].to_root()})"
             case "abs":
-                return f"TMATH::Abs({self.arguments[0]})"
+                return f"TMath::Abs({self.arguments[0].to_root()})"
             case "even":
-                return f"TMATH::Even({self.arguments[0]})"
+                return f"TMath::Even({self.arguments[0].to_root()})"
             case "factorial":
-                return f"TMATH::Factorial({self.arguments[0]})"
+                return f"TMath::Factorial({self.arguments[0].to_root()})"
             case "floor":
-                return f"TMATH::Floor({self.arguments[0]})"
+                return f"TMath::Floor({self.arguments[0].to_root()})"
             case "abs":
-                return f"TMATH::Abs({self.arguments[0]})"
+                return f"TMath::Abs({self.arguments[0].to_root()})"
             case "max":
-                return f"Max$({self.arguments[0]})"
+                return f"Max$({self.arguments[0].to_root()})"
             case "min":
-                return f"Min$({self.arguments[0]})"
+                return f"Min$({self.arguments[0].to_root()})"
             case "sum":
-                return f"Sum$({self.arguments[0]})"
+                return f"Sum$({self.arguments[0].to_root()})"
             case "no_of_entries":
-                return f"Length$({self.arguments[0]})"
+                return f"Length$({self.arguments[0].to_root()})"
             case "min_if":
-                return f"MinIf$({self.arguments[0]})"
+                return f"MinIf$({self.arguments[0].to_root()})"
             case "max_if":
-                return f"MaxIf$({self.arguments[0]})"
+                return f"MaxIf$({self.arguments[0].to_root()})"
             case _:
-                raise ValueError("Not a valid function!")
+                msg = f"{self.function} is not supported in ROOT"
+                raise ValueError(msg)
 
     def to_python(self):
         match str(self.function):
@@ -491,66 +495,67 @@ class Call(AST):  # Call: evaluate a function on arguments
             case "loge":
                 return "np.log10(np.exp(1))"
             case "log":
-                return f"np.log10({self.arguments[0]})"
+                return f"np.log10({self.arguments[0].to_python()})"
             case "log2":
-                return f"(np.log({self.arguments[0]})/log(2))"
+                return f"(np.log({self.arguments[0].to_python()})/log(2))"
             case "degtorad":
-                return f"np.radians({self.arguments[0]})"
+                return f"np.radians({self.arguments[0].to_python()})"
             case "radtodeg":
-                return f"np.degrees({self.arguments[0]})"
+                return f"np.degrees({self.arguments[0].to_python()})"
             case "exp":
-                return f"np.exp({self.arguments[0]})"
+                return f"np.exp({self.arguments[0].to_python()})"
             case "sin":
-                return f"np.sin({self.arguments[0]})"
+                return f"np.sin({self.arguments[0].to_python()})"
             case "asin":
-                return f"np.arcsin({self.arguments[0]})"
+                return f"np.arcsin({self.arguments[0].to_python()})"
             case "sinh":
-                return f"np.sinh({self.arguments[0]})"
+                return f"np.sinh({self.arguments[0].to_python()})"
             case "asinh":
-                return f"np.arcsinh({self.arguments[0]})"
+                return f"np.arcsinh({self.arguments[0].to_python()})"
             case "cos":
-                return f"np.cos({self.arguments[0]})"
+                return f"np.cos({self.arguments[0].to_python()})"
             case "arccos":
-                return f"np.arccos({self.arguments[0]})"
+                return f"np.arccos({self.arguments[0].to_python()})"
             case "cosh":
-                return f"np.cosh({self.arguments[0]})"
+                return f"np.cosh({self.arguments[0].to_python()})"
             case "acosh":
-                return f"np.arccosh({self.arguments[0]})"
+                return f"np.arccosh({self.arguments[0].to_python()})"
             case "tan":
-                return f"np.tan({self.arguments[0]})"
+                return f"np.tan({self.arguments[0].to_python()})"
             case "arctan":
-                return f"np.arctan({self.arguments[0]})"
+                return f"np.arctan({self.arguments[0].to_python()})"
             case "tanh":
-                return f"np.tanh({self.arguments[0]})"
+                return f"np.tanh({self.arguments[0].to_python()})"
             case "atanh":
-                return f"np.arctanh({self.arguments[0]})"
+                return f"np.arctanh({self.arguments[0].to_python()})"
             case "Math::sqrt":
-                return f"np.sqrt({self.arguments[0]})"
+                return f"np.sqrt({self.arguments[0].to_python()})"
             case "sqrt":
-                return f"np.sqrt({self.arguments[0]})"
+                return f"np.sqrt({self.arguments[0].to_python()})"
             case "ceil":
-                return f"np.ceil({self.arguments[0]})"
+                return f"np.ceil({self.arguments[0].to_python()})"
             case "abs":
-                return f"np.abs({self.arguments[0]})"
+                return f"np.abs({self.arguments[0].to_python()})"
             case "even":
-                return f"! ({self.arguments[0]} % 2)"
+                return f"! ({self.arguments[0].to_python()} % 2)"
             case "factorial":
-                return f"np.math.factorial({self.arguments[0]})"
+                return f"np.math.factorial({self.arguments[0].to_python()})"
             case "floor":
-                return f"! np.floor({self.arguments[0]})"
+                return f"! np.floor({self.arguments[0].to_python()})"
             case "abs":
-                return f"np.abs({self.arguments[0]})"
+                return f"np.abs({self.arguments[0].to_python()})"
             case "max":
-                return f"root_max({self.arguments[0]})"
+                return f"root_max({self.arguments[0].to_python()})"
             case "min":
-                return f"root_min({self.arguments[0]})"
+                return f"root_min({self.arguments[0].to_python()})"
             case "sum":
-                return f"root_sum({self.arguments[0]})"
+                return f"root_sum({self.arguments[0].to_python()})"
             case "no_of_entries":
-                return f"root_length({self.arguments[0]})"
+                return f"root_length({self.arguments[0].to_python()})"
             case "min_if":
-                return f"root_min_if({self.arguments[0]}, {self.arguments[1]})"
+                return f"root_min_if({self.arguments[0].to_python()}, {self.arguments[1].to_python()})"
             case "max_if":
-                return f"root_max_if({self.arguments[0]}, {self.arguments[1]})"
+                return f"root_max_if({self.arguments[0].to_python()}, {self.arguments[1].to_python()})"
             case _:
-                raise ValueError("Not a valid function!")
+                msg = f"{self.function} is not supported in Python"
+                raise ValueError(msg)
