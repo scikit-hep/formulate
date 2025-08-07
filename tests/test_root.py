@@ -92,7 +92,7 @@ def test_simple_pow():
 def test_simple_function():
     a = formulate.from_numexpr("sqrt(4)")
     out = a.to_root()
-    assert out == "TMATH::Sqrt(4.0)"
+    assert out == "TMath::Sqrt(4.0)"
 
 
 def test_simple_unary_pos():

@@ -155,7 +155,7 @@ def test_complex_exp():
     a = formulate.from_root("~a**b*23/(var||45)")
     out = a.to_python()
     assert ast.unparse(ast.parse(out)) == ast.unparse(
-        ast.parse("np.invert(a**b*23.0/var or 45.0)")
+        ast.parse("np.invert(a**b)*23.0/var or 45.0")
     )
 
 
