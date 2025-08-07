@@ -1,46 +1,52 @@
+# Operator precedence is taken from https://docs.python.org/3/reference/expressions.html#operator-precedence
+# Chained comparisons are not supported since they are expanded with `and`, which is not supported in NumExpr.
+# E.g. "a < b < c" becomes "a < b and b < c".
+# See https://docs.python.org/3/reference/expressions.html#comparisons for more details.
+
 start: expr
 
 expr: comp_expr
 
+# Note that chained comparisons are disallowed. See note above.
 comp_expr: or_expr
-         | comp_expr ">" or_expr -> gt
-         | comp_expr ">=" or_expr -> gte
-         | comp_expr "<" or_expr -> lt
-         | comp_expr "<=" or_expr -> lte
-         | comp_expr "!=" or_expr -> neq
-         | comp_expr "==" or_expr -> eq
+         | or_expr ">" or_expr -> gt
+         | or_expr ">=" or_expr -> gte
+         | or_expr "<" or_expr -> lt
+         | or_expr "<=" or_expr -> lte
+         | or_expr "!=" or_expr -> neq
+         | or_expr "==" or_expr -> eq
 
 or_expr: xor_expr
-        | or_expr "|" xor_expr -> bor
+       | or_expr "|" xor_expr -> bor
 
 xor_expr: and_expr
         | xor_expr "^" and_expr -> bxor
 
-and_expr: inv_expr
-        | and_expr "&" inv_expr -> band
-
-inv_expr: shift_expr
-        | "~" inv_expr -> binv
+and_expr: shift_expr
+        | and_expr "&" shift_expr -> band
 
 shift_expr: sum
-            | shift_expr "<<" sum -> lshift
-            | shift_expr ">>" sum -> rshift
+          | shift_expr "<<" sum -> lshift
+          | shift_expr ">>" sum -> rshift
 
 sum: term
-    | term "+" sum  -> add
-    | term "-" sum  -> sub
+   | sum "+" term  -> add
+   | sum "-" term  -> sub
 
+# TODO: Should @ and // be (at least partially) supported?
 term: factor
-    | factor "*" term -> mul
-    | factor "/" term -> div
-    | factor "%" term -> mod
+    | term "*" factor -> mul
+    | term "/" factor -> div
+    | term "%" factor -> mod
 
 factor: pow
-        | "+" factor -> pos
-        | "-" factor -> neg
+      | "+" factor -> pos
+      | "-" factor -> neg
+      | "~" factor -> binv
 
+# Note that this is the only operation that groups from the right.
 pow: atom
-    | atom "**" factor -> pow
+   | atom "**" factor -> pow
 
 atom: "(" expr ")"
     | CNAME -> symbol
