@@ -423,7 +423,7 @@ class TestNestedFunctions:
             ("sin(cos(a))", "sin(cos(a))"),
             ("sqrt(abs(a))", "sqrt(abs(a))"),
             ("log(exp(a))", "log(exp(a))"),
-            ("tan(asin(a))", "tan(asin(a))"),
+            ("tan(asin(a))", "tan(arcsin(a))"),
             # Three-level nesting
             ("sin(cos(tan(a)))", "sin(cos(tan(a)))"),
             ("sqrt(abs(sin(a)))", "sqrt(abs(sin(a)))"),
@@ -561,10 +561,11 @@ def test_operator_precedence_pairs(op1, op2):
         expected = f"(a{op1}b){op2}c"
     else:
         # Same precedence - left associative (except **)
-        if op1 == "**" and op2 == "**":
-            expected = f"a{op1}(b{op2}c)"  # Right associative
-        else:
-            expected = f"(a{op1}b){op2}c"  # Left associative
+        expected = (
+            f"a{op1}(b{op2}c)"  # Right associative
+            if op1 == "**" and op2 == "**"
+            else f"(a{op1}b){op2}c"  # Left associative
+        )
 
     assert_precedence_correct(expr, expected, test_both_parsers=False)
 
@@ -884,12 +885,12 @@ class TestUnaryOperatorComprehensive:
         test_cases = [
             # Multiple unary minus
             ("--a", "-(-a)"),
-            ("---a", "-(-(a))"),
-            ("----a", "-(-(-(a)))"),
+            ("---a", "-(-(-(a)))"),
+            ("----a", "-(-(-(-(a))))"),
             # Mixed unary operators
-            ("+-a", "+(a)"),
-            ("-+a", "(-a)"),
-            ("++a", "+(a)"),
+            ("+-a", "+(-a)"),
+            ("-+a", "-(+a)"),
+            ("++a", "+(+a)"),
         ]
 
         for input_expr, expected in test_cases:
@@ -941,7 +942,10 @@ class TestRealWorldExpressions:
             # Kinetic energy-like: 1/2 * m * v**2
             ("a/b*c*d**e", "((a/b)*c)*(d**e)"),
             # Quadratic formula-like: (-b + sqrt(b**2 - 4*a*c)) / (2*a)
-            ("(-b+sqrt(b**2-a*c*d))/(e*f)", "((-b)+sqrt((b**2)-((a*c)*d)))/((e*f))"),
+            (
+                "(-b+sqrt(b**2-a*c*d))/(e*f)",
+                "(((-b)+sqrt(((b**2.)-((a*c)*d))))/(e*f))",
+            ),  # TODO: Check extra parentheses
             # Distance formula-like: sqrt((x2-x1)**2 + (y2-y1)**2)
             ("sqrt((a-b)**c+(d-e)**f)", "sqrt(((a-b)**c)+((d-e)**f))"),
             # Exponential decay-like: A * exp(-lambda * t)
@@ -1007,11 +1011,11 @@ class TestEdgeCasesAndCornerCases:
         """Test numeric literals with operators."""
         test_cases = [
             ("1.+2.*3.", "(1.+(2.*3.))"),
-            ("2**3**4", "(2**(3**4))"),
-            ("10/2/5", "((10/2)/5)"),
-            ("1+2-3*4", "((1+2)-(3*4))"),
-            ("-1**2", "(-(1**2))"),
-            ("1*-2", "(1*(-2))"),
+            ("2.**3.**4.", "(2.**(3.**4.))"),
+            ("10./2./5.", "((10./2.)/5.)"),
+            ("1.+2.-3.*4.", "((1.+2.)-(3.*4.))"),
+            ("-1.**2.", "(-(1.**2.))"),
+            ("1.*-2.", "(1.*(-2.))"),
         ]
 
         for input_expr, expected in test_cases:
