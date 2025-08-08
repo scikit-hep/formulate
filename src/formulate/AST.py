@@ -56,12 +56,6 @@ class Symbol(AST):  # Symbol: value referenced by name
     def __str__(self):
         return self.symbol
 
-    # def check_CNAME(self):
-    #     regex = "((\.)\2{2,})"
-    #     x = re.search(regex, self.symbol)
-    #     print(x)
-    #     return x
-
     def to_numexpr(self):
         return self.symbol
 
@@ -86,7 +80,7 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return signmap[str(sign)]
 
     def to_numexpr(self):
-        return "(" + self.sign.to_root() + self.operand.to_numexpr() + ")"
+        return "(" + self.sign.to_numexpr() + self.operand.to_numexpr() + ")"
 
     def to_root(self):
         return "(" + self.sign.to_root() + self.operand.to_root() + ")"
