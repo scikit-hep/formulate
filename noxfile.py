@@ -100,30 +100,3 @@ def build(session: nox.Session) -> None:
 
     session.install("build")
     session.run("python", "-m", "build")
-
-
-@nox.session
-def standalone_parsers(session: nox.Session) -> None:
-    """
-    Generate the standalone Lark parsers.
-    """
-
-    module_path = DIR / "src" / "formulate"
-
-    session.install("lark")
-    session.run(
-        "python",
-        "-m",
-        "lark.tools.standalone",
-        str(module_path / "numexpr_grammar.lark"),
-        "-o",
-        str(module_path / "numexpr_parser.py"),
-    )
-    session.run(
-        "python",
-        "-m",
-        "lark.tools.standalone",
-        str(module_path / "ttreeformula_grammar.lark"),
-        "-o",
-        str(module_path / "ttreeformula_parser.py"),
-    )

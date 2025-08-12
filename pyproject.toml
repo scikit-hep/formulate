@@ -1,6 +1,8 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling", "hatch-vcs", "lark"]
 build-backend = "hatchling.build"
+[tool.hatch.build.targets.wheel.hooks.custom]
+
 [project]
 name = "formulate"
 authors = [
