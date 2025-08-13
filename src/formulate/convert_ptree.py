@@ -5,7 +5,7 @@ from . import matching_tree, numexpr_parser, ttreeformula_parser
 
 
 def convert_ptree(raw_ptree):
-    if isinstance(raw_ptree, numexpr_parser.Token | ttreeformula_parser.Token):
+    if isinstance(raw_ptree, numexpr_parser.Token | ttreeformula_parser.Token | None):
         return
 
     raw_ptree.__class__ = matching_tree.ptnode

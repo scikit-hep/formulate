@@ -19,7 +19,7 @@ def from_root(exp: str, **kwargs) -> AST:
     parser = ttreeformula_parser.Lark_StandAlone()
     ptree = parser.parse(exp)
     convert_ptree.convert_ptree(ptree)
-    return toast.toast(ptree, nxp=False)
+    return toast.toast(ptree)
 
 
 def from_numexpr(exp: str, **kwargs) -> AST:
@@ -27,4 +27,4 @@ def from_numexpr(exp: str, **kwargs) -> AST:
     parser = numexpr_parser.Lark_StandAlone()
     ptree = parser.parse(exp)
     convert_ptree.convert_ptree(ptree)
-    return toast.toast(ptree, nxp=True)
+    return toast.toast(ptree)

@@ -2,207 +2,128 @@
 
 from __future__ import annotations
 
+from ast import literal_eval
+from keyword import iskeyword
+
 from . import AST, matching_tree
-
-UNARY_OP = {"pos", "neg", "binv", "linv"}
-
-BINARY_OP = {
-    "add",
-    "sub",
-    "div",
-    "mul",
-    "lt",
-    "gt",
-    "lte",
-    "gte",
-    "eq",
-    "neq",
-    "band",
-    "bor",
-    "bxor",
-    "linv",
-    "land",
-    "lor",
-    "pow",
-    "mod",
-}
-val_to_sign = {
-    "add": "+",
-    "sub": "-",
-    "div": "/",
-    "mul": "*",
-    "lt": "<",
-    "gt": ">",
-    "lte": "<=",
-    "gte": ">=",
-    "eq": "==",
-    "neq": "!=",
-    "band": "&",
-    "bor": "|",
-    "bxor": "^",
-    "linv": "!",
-    "land": "&&",
-    "lor": "||",
-    "neg": "-",
-    "pos": "+",
-    "binv": "~",
-    "linv": "!",
-    "pow": "**",
-    "mod": "%",
-    "multi_out": ":",
-}
-
-FUNC_MAPPING = {
-    "MATH::PI": "pi",  # np.pi
-    "PI": "pi",
-    "TMATH::E": "e",
-    "TMATH::INFINITY": "inf",
-    "TMATH::QUIETNAN": "nan",
-    "TMATH::SQRT2": "sqrt2",
-    "SQRT2": "sqrt2",
-    "SQRT": "sqrt",
-    "TMATH::PIOVER2": "piby2",
-    "TMATH::PIOVER4": "piby4",
-    "TMATH::TWOPI": "2pi",
-    "LN10": "ln10",
-    "TMATH::LN10": "ln10",
-    "TMATH::LOGE": "loge",
-    "TMATH::LOG": "log",
-    "LOG": "log",
-    "TMATH::LOG2": "log2",
-    "EXP": "exp",
-    "TMATH::EXP": "exp",
-    "TMATH::DEGTORAD": "degtorad",
-    "SIN": "sin",
-    "TMATH::SIN": "sin",
-    "ARCSIN": "asin",
-    "TMATH::ASIN": "asin",
-    "COS": "cos",
-    "TMATH::COS": "cos",
-    "ARCCOS": "acos",
-    "TMATH::ACOS": "acos",
-    "TAN": "tan",
-    "TMATH::TAN": "tan",
-    "TMATH::ATAN": "atan",
-    "ARCTAN2": "atan2",
-    "TMATH::ATAN2": "atan2",
-    "TMATH::COSH": "cosh",
-    "TMATH::ACOSH": "acosh",
-    "TMATH::SINH": "sinh",
-    "TMATH::ASINH": "asinh",
-    "TMATH::TANH": "tanh",
-    "TMATH::ATANH": "atanh",
-    "TMATH::CEIL": "ceil",
-    "TMATH::ABS": "abs",
-    "TMATH::EVEN": "even",
-    "TMATH::FACTORIAL": "factorial",
-    "TMATH::FLOOR": "floor",
-    "LENGTH$": "no_of_entries",  # ak.num, axis = 1
-    "ITERATION$": "current_iteration",
-    "SUM$": "sum",
-    "MIN$": "min",
-    "MAX$": "max",
-    "MINIF$": "min_if",
-    "MAXIF$": "max_if",
-    "ALT$": "alternate",
-}
+from .identifiers import (
+    BINARY_OPERATORS,
+    CONSTANTS,
+    FUNCTION_ALIASES,
+    FUNCTIONS,
+    NAMESPACES,
+    UNARY_OPERATORS,
+)
 
 
-def _get_func_names(func_names):
+# TODO: This might drop important information
+def _get_var_name(node):
+    if isinstance(node, matching_tree.ptnode):
+        return _get_var_name(node.children[0])
+    return str(node)
+
+
+def _get_raw_function_name(func_names, invert=True):
     children = []
     if len(func_names.children) > 1:
-        children.extend(_get_func_names(func_names.children[1]))
+        children.extend(_get_raw_function_name(func_names.children[1], False))
     children.append(func_names.children[0])
+    if invert:
+        children.reverse()
     return children
 
 
-def toast(ptnode: matching_tree.ptnode, nxp: bool):
+def _get_function_name(node):
+    raw_name = _get_raw_function_name(node)
+    full_name = "::".join(raw_name)
+    pieces = full_name.replace(".", "::").split("::")
+    if len(pieces) == 1:
+        name = pieces[0]
+    elif len(pieces) == 2:
+        if pieces[0].lower() not in NAMESPACES:
+            msg = f'Unknown namespace "{pieces[0]}"'
+            raise ValueError(msg)
+        name = pieces[1]
+    else:
+        msg = f'Unknown function "{pieces[0]}"'
+        raise ValueError(msg)
+    # Now we normalize the name and make sure it is supported
+    name = name.lower()
+    name = FUNCTION_ALIASES.get(name, name)
+    if name not in FUNCTIONS and name not in CONSTANTS:
+        msg = f'Unknown function or constant "{name}"'
+        raise ValueError(msg)
+    return name
+
+
+def toast(ptnode: matching_tree.ptnode):
     match ptnode:
-        case matching_tree.ptnode(operator, (left, right)) if operator in BINARY_OP:
-            arguments = [toast(left, nxp), toast(right, nxp)]
+        case matching_tree.ptnode(operator, (left, right)) if (
+            operator in BINARY_OPERATORS
+        ):
+            left_exp, right_exp = toast(left), toast(right)
             return AST.BinaryOperator(
-                AST.Symbol(val_to_sign[operator], index=arguments[1].index),
-                arguments[0],
-                arguments[1],
-                index=arguments[0].index,
+                operator,
+                left_exp,
+                right_exp,
             )
 
-        case matching_tree.ptnode(operator, operand) if operator in UNARY_OP:
-            argument = toast(operand[0], nxp)
-            return AST.UnaryOperator(
-                AST.Symbol(val_to_sign[operator], index=argument.index), argument
-            )
+        case matching_tree.ptnode(operator, operand) if operator in UNARY_OPERATORS:
+            argument = toast(operand[0])
+            return AST.UnaryOperator(operator, argument)
 
+        # TODO: I didn't look at this carefully
         case matching_tree.ptnode("multi_out", (exp1, exp2)):
-            exp_node1 = toast(exp1, nxp)
-            exp_node2 = toast(exp2, nxp)
+            exp_node1 = toast(exp1)
+            exp_node2 = toast(exp2)
             exps = [exp_node1, exp_node2]
             if isinstance(exp_node2, AST.Call) and exp_node2.function == ":":
                 del exps[-1]
                 for elem in exp_node2.arguments:
                     exps.append(elem)
-            return AST.Call(val_to_sign["multi_out"], exps, index=exp_node1.index)
+            return AST.Call("multi_out", exps)
 
+        # TODO: I didn't look at this carefully
         case matching_tree.ptnode("matr", (array, *slice)):
-            var = toast(array, nxp)
-            paren = [toast(elem, nxp) for elem in slice]
-            return AST.Matrix(var, paren, index=var.index)
+            var = toast(array)
+            paren = [toast(elem) for elem in slice]
+            return AST.Matrix(var, paren)
 
+        # TODO: I didn't look at this carefully
         case matching_tree.ptnode("matpos", child):
             if child[0] is None:
                 return AST.Empty()
-            slice = toast(child[0], nxp)
-            return AST.Slice(slice, index=slice.index)
+            slice = toast(child[0])
+            return AST.Slice(slice)
 
         case matching_tree.ptnode("func", (func_name, trailer)):
-            func_names = _get_func_names(func_name)[::-1]
-            func_arguments = []
+            func_name = _get_function_name(func_name)
 
-            try:
-                fname = FUNC_MAPPING["::".join(func_names).upper()]
-            except KeyError:
-                fname = "::".join(func_names)
+            if func_name in CONSTANTS:
+                if (
+                    trailer.children[0] is not None
+                    and len(trailer.children[0].children) != 0
+                ):
+                    msg = f'The constant "{func_name}" should not have arguments.'
+                    raise SyntaxError(msg)
+                return AST.Symbol(func_name)
 
-            if trailer.children[0] is None:
-                return AST.Call(
-                    fname,
-                    func_arguments,
-                    index=func_names[0].start_pos,
-                )
-
-            func_arguments = [toast(elem, nxp) for elem in trailer.children[0].children]
-
-            funcs = root_to_common(func_names, func_names[0].start_pos)
-
-            return AST.Call(funcs, func_arguments, index=func_names[0].start_pos)
+            func_arguments = [toast(elem) for elem in trailer.children[0].children]
+            return AST.Call(func_name, func_arguments)
 
         case matching_tree.ptnode("symbol", children):
-            if not nxp:
-                var_name = _get_func_names(children[0])[0]
-            else:
-                var_name = children[0]
-            temp_symbol = AST.Symbol(str(var_name), index=var_name.start_pos)
-            # if temp_symbol.check_CNAME() is not None:
-            return temp_symbol
-            # else:
-            #     raise SyntaxError("The symbol " + str(children[0]) + " is not a valid symbol.")
+            var_name = _get_var_name(children[0])
+            if not var_name.isidentifier() or iskeyword(var_name):
+                msg = f'The symbol "{var_name}" is not a valid symbol.'
+                raise SyntaxError(msg)
+            return AST.Symbol(var_name)
 
         case matching_tree.ptnode("literal", children):
-            return AST.Literal(float(children[0]), index=children[0].start_pos)
+            return AST.Literal(literal_eval(children[0]))
 
         case matching_tree.ptnode(_, (child,)):
-            return toast(child, nxp)
+            return toast(child)
 
         case _:
-            raise TypeError(f"Unknown Node Type: {ptnode!r}.")
-
-
-def root_to_common(funcs: list, index: int):
-    str_funcs = [str(elem) for elem in funcs]
-
-    try:
-        string_rep = FUNC_MAPPING["::".join(str_funcs).upper()]
-    except KeyError:
-        string_rep = "::".join(str_funcs)
-
-    return AST.Symbol(string_rep, index=index)
+            msg = f'Unknown Node Type: "{ptnode!r}".'
+            raise TypeError(msg)
