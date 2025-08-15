@@ -9,7 +9,7 @@ from lark.tools.standalone import gen_standalone
 
 class CustomBuildHook(BuildHookInterface):
     def initialize(self, version, build_data):  # noqa: ARG002
-        parsers = ["numexpr", "ttreeformula"]
+        parsers = ["numexpr", "root"]
         for p in parsers:
             build_data["artifacts"].append(f"/src/formulate/{p}_parser.py")
             grammar_path = Path(self.root, f"src/formulate/{p}_grammar.lark")

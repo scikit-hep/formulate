@@ -1,11 +1,11 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 from __future__ import annotations
 
-from . import matching_tree, numexpr_parser, ttreeformula_parser
+from . import matching_tree, numexpr_parser, root_parser
 
 
 def convert_ptree(raw_ptree):
-    if isinstance(raw_ptree, numexpr_parser.Token | ttreeformula_parser.Token | None):
+    if isinstance(raw_ptree, numexpr_parser.Token | root_parser.Token | None):
         return
 
     raw_ptree.__class__ = matching_tree.ptnode

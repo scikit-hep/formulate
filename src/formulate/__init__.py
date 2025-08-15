@@ -6,8 +6,8 @@ from . import (
     AST,
     convert_ptree,
     numexpr_parser,
+    root_parser,
     toast,
-    ttreeformula_parser,
 )
 from ._version import __version__
 
@@ -15,8 +15,8 @@ __all__ = ["__version__", "from_numexpr", "from_root"]
 
 
 def from_root(exp: str, **kwargs) -> AST:
-    """Evaluate ttreeformula expressions."""
-    parser = ttreeformula_parser.Lark_StandAlone()
+    """Evaluate ROOT expressions."""
+    parser = root_parser.Lark_StandAlone()
     ptree = parser.parse(exp)
     convert_ptree.convert_ptree(ptree)
     return toast.toast(ptree)

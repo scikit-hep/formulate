@@ -420,7 +420,7 @@ def test_invalid_expressions(expr_map, op):
     if fail_plusminus or op not in ["+", "-"]:
         with pytest.raises(formulate.numexpr_parser.LarkError):
             formulate.from_numexpr(expr)
-        with pytest.raises(formulate.ttreeformula_parser.LarkError):
+        with pytest.raises(formulate.root_parser.LarkError):
             formulate.from_root(expr)
     else:  # check that they both work
         formulate.from_numexpr(expr)
