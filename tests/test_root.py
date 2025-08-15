@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import ast
 
+import pytest
+
 import formulate
 
 
@@ -65,22 +67,22 @@ def test_simple_neq():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a!=2.0)"))
 
 
-def test_simple_bor():
+def test_simple_or():
     a = formulate.from_numexpr("a|b")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b"))
+    assert out == "(a || b)"
 
 
-def test_simple_band():
+def test_simple_and():
     a = formulate.from_numexpr("a&c")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & c"))
+    assert out == "(a && c)"
 
 
-def test_simple_bxor():
+def test_simple_xor():
     a = formulate.from_numexpr("a^2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a^2.0)"))
+    with pytest.raises(ValueError):
+        a.to_root()
 
 
 def test_simple_pow():
@@ -92,7 +94,7 @@ def test_simple_pow():
 def test_simple_function():
     a = formulate.from_numexpr("sqrt(4)")
     out = a.to_root()
-    assert out == "TMath::Sqrt(4.0)"
+    assert out == "TMath::Sqrt(4)"
 
 
 def test_simple_unary_pos():
@@ -107,48 +109,34 @@ def test_simple_unary_neg():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(-5.0)"))
 
 
-def test_simple_unary_binv():
+def test_simple_unary_inv():
     a = formulate.from_numexpr("~bool")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("~bool"))
+    assert out == "(!bool)"
 
 
 def test_unary_binary_pos():
     a = formulate.from_numexpr("2.0 - -6")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(2.0-(-6.0))"))
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(2.0-(-6))"))
 
 
 def test_complex_exp():
     a = formulate.from_numexpr("(~a**b)*23/(var|45)")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(
-        ast.parse("(((~(a**b))*23.0)/(var|45.0))")
-    )
+    assert out == "(((!(a ** b)) * 23) / (var || 45))"
 
 
-def test_multiple_lor():
+def test_multiple_or():
     a = formulate.from_numexpr("a|b|c")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c"))
+    assert out == "((a || b) || c)"
 
 
-def test_multiple_land():
+def test_multiple_and():
     a = formulate.from_numexpr("a&b&c")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c"))
-
-
-def test_multiple_bor():
-    a = formulate.from_numexpr("a|b|c")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c"))
-
-
-def test_multiple_band():
-    a = formulate.from_numexpr("a&b&c")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c"))
+    assert out == "((a && b) && c)"
 
 
 def test_multiple_add():
@@ -175,37 +163,19 @@ def test_multiple_div():
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(((a/b)/c)/d)"))
 
 
-def test_multiple_lor_four():
+def test_multiple_or_four():
     a = formulate.from_numexpr("a|b|c|d")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c | d"))
+    assert out == "(((a || b) || c) || d)"
 
 
-def test_multiple_land_four():
+def test_multiple_and_four():
     a = formulate.from_numexpr("a&b&c&d")
     out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c & d"))
-
-
-def test_multiple_bor_four():
-    a = formulate.from_numexpr("a|b|c|d")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a | b | c | d"))
-
-
-def test_multiple_band_four():
-    a = formulate.from_numexpr("a&b&c&d")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a & b & c & d"))
+    assert out == "(((a && b) && c) && d)"
 
 
 def test_multiple_pow():
     a = formulate.from_numexpr("a**b**c**d")
     out = a.to_root()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a**b**c**d)"))
-
-
-def test_multiple_bxor():
-    a = formulate.from_numexpr("a^b^c^d")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a^b^c^d)"))

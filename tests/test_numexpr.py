@@ -92,7 +92,7 @@ def test_simple_pow():
 def test_simple_function():
     a = formulate.from_numexpr("sqrt(4)")
     out = a.to_numexpr()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("sqrt(4.0)"))
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("sqrt(4)"))
 
 
 def test_simple_unary_pos():
@@ -116,14 +116,14 @@ def test_simple_unary_binv():
 def test_unary_binary_pos():
     a = formulate.from_numexpr("2.0 - -6")
     out = a.to_numexpr()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(2.0-(-6.0))"))
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(2.0-(-6))"))
 
 
 def test_complex_exp():
     a = formulate.from_numexpr("(~a**b)*23/(var|45)")
     out = a.to_numexpr()
     assert ast.unparse(ast.parse(out)) == ast.unparse(
-        ast.parse("(((~(a**b))*23.0)/(var|45.0))")
+        ast.parse("(((~(a**b))*23)/(var|45))")
     )
 
 

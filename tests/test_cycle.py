@@ -234,6 +234,9 @@ def test_boolean_operators(expr, default_values):
 def test_multiple_conversions(all_expressions, default_values):
     """Test multiple conversions between formats."""
     for expr in all_expressions:
+        if "^" in expr:
+            # "^" is interpreted differently between ROOT and NumExpr
+            continue
         original_result = evaluate_expression(expr, default_values)
 
         # Start with numexpr

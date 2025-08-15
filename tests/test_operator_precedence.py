@@ -944,7 +944,7 @@ class TestRealWorldExpressions:
             # Quadratic formula-like: (-b + sqrt(b**2 - 4*a*c)) / (2*a)
             (
                 "(-b+sqrt(b**2-a*c*d))/(e*f)",
-                "(((-b)+sqrt(((b**2.)-((a*c)*d))))/(e*f))",
+                "(((-b)+sqrt(((b**2)-((a*c)*d))))/(e*f))",
             ),  # TODO: Check extra parentheses
             # Distance formula-like: sqrt((x2-x1)**2 + (y2-y1)**2)
             ("sqrt((a-b)**c+(d-e)**f)", "sqrt(((a-b)**c)+((d-e)**f))"),
