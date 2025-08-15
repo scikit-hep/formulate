@@ -36,13 +36,13 @@ shift_expr: sum
           | shift_expr ">>" sum -> rshift
 
 sum: term
-   | term "+" sum  -> add
-   | term "-" sum  -> sub
+   | sum "+" term  -> add
+   | sum "-" term  -> sub
 
 term: factor
-    | factor "*" term -> mul
-    | factor "/" term -> div
-    | factor "%" term -> mod
+    | term "*" factor -> mul
+    | term "/" factor -> div
+    | term "%" factor -> mod
 
 factor: pow
       | factor matpos+ -> matr
