@@ -17,13 +17,13 @@ comp_expr: or_expr
          | or_expr "==" or_expr -> eq
 
 or_expr: xor_expr
-       | or_expr "|" xor_expr -> bor
+       | or_expr "|" xor_expr -> or
 
 xor_expr: and_expr
-        | xor_expr "^" and_expr -> bxor
+        | xor_expr "^" and_expr -> xor
 
 and_expr: shift_expr
-        | and_expr "&" shift_expr -> band
+        | and_expr "&" shift_expr -> and
 
 shift_expr: sum
           | shift_expr "<<" sum -> lshift
@@ -42,7 +42,7 @@ term: factor
 factor: pow
       | "+" factor -> pos
       | "-" factor -> neg
-      | "~" factor -> binv
+      | "~" factor -> inv
 
 # Note that this is the only operation that groups from the right.
 pow: atom

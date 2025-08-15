@@ -71,20 +71,16 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return f"{self.operator}({self.operand})"
 
     def to_numexpr(self):
-        # logical operators need to be converted to bitwise operators
-        operator = "binv" if self.operator == "linv" else self.operator
-        symbol = NUMEXPR_OPERATOR_SYMBOLS.get(operator, None)
+        symbol = NUMEXPR_OPERATOR_SYMBOLS.get(self.operator, None)
         if symbol is None:
-            msg = f'Operator "{operator}" is not supported in NumExpr.'
+            msg = f'Operator "{self.operator}" is not supported in NumExpr.'
             raise ValueError(msg)
         return f"({symbol}{self.operand.to_numexpr()})"
 
     def to_root(self):
-        # bitwise operators need to be converted to logical operators
-        operator = "linv" if self.operator == "binv" else self.operator
-        symbol = ROOT_OPERATOR_SYMBOLS.get(operator, None)
+        symbol = ROOT_OPERATOR_SYMBOLS.get(self.operator, None)
         if symbol is None:
-            msg = f'Operator "{operator}" is not supported in ROOT.'
+            msg = f'Operator "{self.operator}" is not supported in ROOT.'
             raise ValueError(msg)
         return f"({symbol}{self.operand.to_root()})"
 
@@ -99,30 +95,18 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         return f"{self.operator}({self.left}, {self.right})"
 
     def to_numexpr(self):
-        # logical operators need to be converted to bitwise operators
-        operator = (
-            self.operator
-            if self.operator not in ("land", "lor")
-            else f"b{self.operator[1:]}"
-        )
-        symbol = NUMEXPR_OPERATOR_SYMBOLS.get(operator, None)
+        symbol = NUMEXPR_OPERATOR_SYMBOLS.get(self.operator, None)
         if symbol is None:
-            msg = f'Operator "{operator}" is not supported in NumExpr.'
+            msg = f'Operator "{self.operator}" is not supported in NumExpr.'
             raise ValueError(msg)
         return f"({self.left.to_numexpr()} {symbol} {self.right.to_numexpr()})"
 
     def to_root(self):
-        # bitwise operators need to be converted to logical operators
-        operator = (
-            self.operator
-            if self.operator not in ("band", "bor")
-            else f"l{self.operator[1:]}"
-        )
-        symbol = ROOT_OPERATOR_SYMBOLS.get(operator, None)
+        symbol = ROOT_OPERATOR_SYMBOLS.get(self.operator, None)
         if symbol is None:
-            msg = f'Operator "{operator}" is not supported in ROOT.'
+            msg = f'Operator "{self.operator}" is not supported in ROOT.'
             raise ValueError(msg)
-        return f"({self.left.to_numexpr()} {symbol} {self.right.to_numexpr()})"
+        return f"({self.left.to_root()} {symbol} {self.right.to_root()})"
 
 
 @dataclass

@@ -113,6 +113,9 @@ def toast(ptnode: matching_tree.ptnode):
 
         case matching_tree.ptnode("symbol", children):
             var_name = _get_var_name(children[0])
+            # Strip $ from ROOT keywords
+            if var_name.endswith("$"):
+                var_name = var_name[:-1]
             if not var_name.isidentifier() or iskeyword(var_name):
                 msg = f'The symbol "{var_name}" is not a valid symbol.'
                 raise SyntaxError(msg)

@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 from __future__ import annotations
 
-UNARY_OPERATORS = {"pos", "neg", "binv", "linv"}
+UNARY_OPERATORS = {"pos", "neg", "inv"}
 
 BINARY_OPERATORS = {
     "add",
@@ -15,11 +15,9 @@ BINARY_OPERATORS = {
     "gte",
     "eq",
     "neq",
-    "band",
-    "bor",
-    "bxor",
-    "land",
-    "lor",
+    "and",
+    "or",
+    "xor",
     "pow",
     "lshift",
     "rshift",
@@ -47,17 +45,17 @@ COMMON_OPERATOR_SYMBOLS = {
 
 NUMEXPR_OPERATOR_SYMBOLS = {
     **COMMON_OPERATOR_SYMBOLS,
-    "binv": "~",
-    "band": "&",
-    "bor": "|",
-    "bxor": "^",
+    "inv": "~",
+    "and": "&",
+    "or": "|",
+    "xor": "^",
 }
 
 ROOT_OPERATOR_SYMBOLS = {
     **COMMON_OPERATOR_SYMBOLS,
-    "linv": "!",
-    "land": "&&",
-    "lor": "||",
+    "inv": "!",
+    "and": "&&",
+    "or": "||",
     "multi_out": ":",
 }
 
@@ -112,6 +110,7 @@ CONSTANTS = {
     "stefan_boltzmann_err",
     "universal_gas",
     "universal_gas_err",
+    "iteration",  # ROOT keyword
 }
 
 NAMESPACES = {"math", "numpy", "np", "scipy", "tmath"}
@@ -198,6 +197,16 @@ FUNCTIONS = {
     # 4+ argument functions in ROOT
     "rootscubic",
     "quantiles",
+    # Array functions in ROOT
+    "sum$",
+    "min$",
+    "max$",
+    "length$",
+    "minif$",
+    "maxif$",
+    "alt$",
+    # Other array functions
+    "where",
 }
 
 FUNCTION_ALIASES = {
@@ -234,6 +243,8 @@ NUMEXPR_FUNCTIONS = {
     "asinh": "arcsinh",
     "acosh": "arccosh",
     "atanh": "arctanh",
+    # Array functions
+    "where": "where",
 }
 
 ROOT_FUNCTIONS = {
@@ -318,4 +329,12 @@ ROOT_FUNCTIONS = {
     # 4+ argument functions in ROOT
     "rootscubic": "TMath::RootsCubic",
     "quantiles": "TMath::Quantiles",
+    # Array functions in ROOT
+    "sum$": "Sum$",
+    "min$": "Min$",
+    "max$": "Max$",
+    "length$": "Length$",
+    "minif$": "MinIf$",
+    "maxif$": "MaxIf$",
+    "alt$": "Alt$",
 }
