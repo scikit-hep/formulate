@@ -13,9 +13,11 @@ __all__ = ["__version__", "from_numexpr", "from_root"]
 def _get_parser(parser_type: str) -> lark.lark.Lark:
     import importlib.resources
 
-    grammar = importlib.resources.read_text(
-        __package__, "resources", f"{parser_type}_grammar.lark", encoding="utf-8"
-    )
+    grammar = (
+        importlib.resources.files(__package__)
+        / "resources"
+        / f"{parser_type}_grammar.lark"
+    ).read_text()
     return lark.Lark(grammar, parser="lalr")
 
 

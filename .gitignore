@@ -113,6 +113,3 @@ venv.bak/
 
 # PyCharm
 /.idea
-
-# auto-generated parsers
-src/formulate/*_parser.py
