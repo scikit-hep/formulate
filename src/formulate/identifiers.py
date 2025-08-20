@@ -1,6 +1,11 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 from __future__ import annotations
 
+import math
+
+from hepunits import constants
+from hepunits.units import coulomb, e_SI, electronvolt, joule, kelvin, m, mole, s
+
 UNARY_OPERATORS = {"pos", "neg", "inv"}
 
 BINARY_OPERATORS = {
@@ -56,89 +61,44 @@ ROOT_OPERATOR_SYMBOLS = {
     "inv": "!",
     "and": "&&",
     "or": "||",
+    # xor is not supported since ^ is interpreted as a power operator
     "multi_out": ":",
-}
-
-CONSTANTS = {
-    "true",
-    "false",
-    "inf",
-    "neginf",
-    "nan",
-    "sqrt2",
-    "e",
-    "pi",
-    "invpi",
-    "piover2",
-    "piover4",
-    "tau",
-    "ln10",
-    "log10e",
-    "deg2rad",
-    "rad2deg",
-    # cgs => Use cm, g, s for units
-    # err => Uncertainty on quantity
-    "avogadro",
-    "avogadro_err",
-    "boltzmann",
-    "boltzmann_cgs",
-    "boltzmann_err",
-    "c",
-    "c_cgs",
-    "c_err",
-    "dry_air_gas",
-    "elementary_charge",
-    "elementary_charge_err",
-    "euler_mascheroni",
-    "g",
-    "g_cgs",
-    "g_err",
-    "g_over_hbarc",
-    "g_over_hbarc_err",
-    "grav_accel",
-    "grav_accel_err",
-    "h",
-    "h_cgs",
-    "h_err",
-    "hbar",
-    "hbar_cgs",
-    "hbar_err",
-    "hc",
-    "hc_cgs",
-    "mol_weight_dry_air",
-    "stefan_boltzmann",
-    "stefan_boltzmann_err",
-    "universal_gas",
-    "universal_gas_err",
-    "iteration",  # ROOT keyword
 }
 
 NAMESPACES = {"math", "numpy", "np", "scipy", "tmath"}
 
 FUNCTIONS = {
+    # Common functions
     "sqrt",
     "abs",
     "pow",
     "log",
-    "log2",
     "log10",
-    "log1p",
     "exp",
-    "expm1",
     "sin",
     "cos",
     "tan",
-    "asin",
-    "acos",
-    "atan",
-    "atan2",
+    "arcsin",
+    "arccos",
+    "arctan",
+    "arctan2",
     "sinh",
     "cosh",
     "tanh",
-    "asinh",
-    "acosh",
-    "atanh",
-    # One argument functions in ROOT
+    "arcsinh",
+    "arccosh",
+    "arctanh",
+    # Functions specific to NumExpr
+    "log1p",
+    "expm1",
+    "where",
+    "conj",
+    "real",
+    "imag",
+    "complex",
+    "contains",
+    # Functions specific to ROOT
+    # One argument
     "besseli0",
     "besseli1",
     "besselj0",
@@ -160,6 +120,7 @@ FUNCTIONS = {
     "kolmogorovprob",
     "landaui",
     "lngamma",
+    "log2",
     "nextprime",
     "normquantile",
     "odd",
@@ -167,7 +128,7 @@ FUNCTIONS = {
     "struveh1",
     "struvel0",
     "struvel1",
-    # Two argument functions in ROOT
+    # Two arguments
     "besseli",
     "besselk",
     "beta",
@@ -180,7 +141,7 @@ FUNCTIONS = {
     "prob",
     "student",
     "studenti",
-    # Three argument functions in ROOT
+    # Three arguments
     "areequalabs",
     "areequalrel",
     "betacf",
@@ -194,7 +155,7 @@ FUNCTIONS = {
     "fdisti",
     "vavilov",
     "vavilovi",
-    # 4+ argument functions in ROOT
+    # 4+ arguments
     "rootscubic",
     "quantiles",
     # Array functions in ROOT
@@ -205,27 +166,25 @@ FUNCTIONS = {
     "minif$",
     "maxif$",
     "alt$",
-    # Other array functions
-    "where",
 }
 
 FUNCTION_ALIASES = {
     "ln": "log",
-    "arcsin": "asin",
-    "arccos": "acos",
-    "arctan": "atan",
-    "arctan2": "atan2",
-    "arcsinh": "asinh",
-    "arccosh": "acosh",
-    "arctanh": "atanh",
+    "asin": "arcsin",
+    "acos": "arccos",
+    "atan": "arctan",
+    "atan2": "arctan2",
+    "asinh": "arcsinh",
+    "acosh": "arccosh",
+    "atanh": "arctanh",
 }
 
+# https://numexpr.readthedocs.io/en/latest/user_guide.html#supported-functions
 NUMEXPR_FUNCTIONS = {
     "sqrt": "sqrt",
     "abs": "abs",
-    # "pow": "pow",
+    "pow": "",  # This one is a special case since it needs to be written with **
     "log": "log",
-    # "log2",
     "log10": "log10",
     "log1p": "log1p",
     "exp": "exp",
@@ -233,20 +192,25 @@ NUMEXPR_FUNCTIONS = {
     "sin": "sin",
     "cos": "cos",
     "tan": "tan",
-    "asin": "arcsin",
-    "acos": "arccos",
-    "atan": "arctan",
-    "atan2": "arctan2",
+    "arcsin": "arcsin",
+    "arccos": "arccos",
+    "arctan": "arctan",
+    "arctan2": "arctan2",
     "sinh": "sinh",
     "cosh": "cosh",
     "tanh": "tanh",
-    "asinh": "arcsinh",
-    "acosh": "arccosh",
-    "atanh": "arctanh",
-    # Array functions
+    "arcsinh": "arcsinh",
+    "arccosh": "arccosh",
+    "arctanh": "arctanh",
     "where": "where",
+    "conj": "conj",
+    "real": "real",
+    "imag": "imag",
+    "complex": "complex",
+    "contains": "contains",
 }
 
+# https://root.cern.ch/doc/master/namespaceTMath.html
 ROOT_FUNCTIONS = {
     "sqrt": "TMath::Sqrt",
     "abs": "TMath::Abs",
@@ -254,23 +218,21 @@ ROOT_FUNCTIONS = {
     "log": "TMath::Log",
     "log2": "TMath::Log2",
     "log10": "TMath::Log10",
-    # "log1p": "TMath::Log1p",
     "exp": "TMath::Exp",
-    # "expm1": "TMath::ExpM1",
     "sin": "TMath::Sin",
     "cos": "TMath::Cos",
     "tan": "TMath::Tan",
-    "asin": "TMath::ASin",
-    "acos": "TMath::ACos",
-    "atan": "TMath::ATan",
-    "atan2": "TMath::ATan2",
+    "arcsin": "TMath::ASin",
+    "arccos": "TMath::ACos",
+    "arctan": "TMath::ATan",
+    "arctan2": "TMath::ATan2",
     "sinh": "TMath::SinH",
     "cosh": "TMath::CosH",
     "tanh": "TMath::TanH",
-    "asinh": "TMath::ASinH",
-    "acosh": "TMath::ACosH",
-    "atanh": "TMath::ATanH",
-    # One argument functions in ROOT
+    "arcsinh": "TMath::ASinH",
+    "arccosh": "TMath::ACosH",
+    "arctanh": "TMath::ATanH",
+    # One argument
     "besseli0": "TMath::BesselI0",
     "besseli1": "TMath::BesselI1",
     "besselj0": "TMath::BesselJ0",
@@ -299,7 +261,7 @@ ROOT_FUNCTIONS = {
     "struveh1": "TMath::StruveH",
     "struvel0": "TMath::StruveL",
     "struvel1": "TMath::StruveL",
-    # Two argument functions in ROOT
+    # Two arguments
     "besseli": "TMath::BesselI",
     "besselk": "TMath::BesselK",
     "beta": "TMath::Beta",
@@ -312,7 +274,7 @@ ROOT_FUNCTIONS = {
     "prob": "TMath::Prob",
     "student": "TMath::Student",
     "studenti": "TMath::StudentI",
-    # Three argument functions in ROOT
+    # Three arguments
     "areequalabs": "TMath::AreEqualAbs",
     "areequalrel": "TMath::AreEqualRel",
     "betacf": "TMath::BetaCf",
@@ -326,7 +288,7 @@ ROOT_FUNCTIONS = {
     "fdisti": "TMath::FDistI",
     "vavilov": "TMath::Vavilov",
     "vavilovi": "TMath::VavilovI",
-    # 4+ argument functions in ROOT
+    # 4+ arguments
     "rootscubic": "TMath::RootsCubic",
     "quantiles": "TMath::Quantiles",
     # Array functions in ROOT
@@ -337,4 +299,97 @@ ROOT_FUNCTIONS = {
     "minif$": "MinIf$",
     "maxif$": "MaxIf$",
     "alt$": "Alt$",
+}
+
+CONSTANTS = {
+    "true",
+    "false",
+    "inf",
+    "neginf",
+    "nan",
+    "sqrt2",
+    "e",
+    "pi",
+    "invpi",
+    "piover2",
+    "piover4",
+    "tau",
+    "ln10",
+    "log10e",
+    "deg2rad",
+    "rad2deg",
+    "avogadro",
+    "k_boltzmann",
+    "c_light",
+    "eminus",
+    "eplus",
+    "h_planck",
+    "hbar",
+    "hbarc",
+    "iteration",  # ROOT keyword
+}
+
+CONSTANTS_ALIASES = {
+    "oneoverpi": "invpi",
+    "twopi": "tau",
+    "e_plus": "eplus",
+    "e_minus": "eminus",
+    "kboltzmann": "k_boltzmann",
+    "clight": "c_light",
+    "hplanck": "h_planck",
+    "h_bar": "hbar",
+    "h_bar_c": "hbarc",
+}
+
+NUMEXPR_CONSTANTS = {
+    "true": True,
+    "false": False,
+    # inf, neginf, nan not supported
+    "sqrt2": math.sqrt(2),
+    "e": math.e,
+    "pi": math.pi,
+    "invpi": 1 / math.pi,
+    "piover2": math.pi / 2,
+    "piover4": math.pi / 4,
+    "tau": 2 * math.pi,
+    "ln10": math.log(10),
+    "log10e": math.log10(math.e),
+    "deg2rad": math.pi / 180,
+    "rad2deg": 180 / math.pi,
+    "avogadro": constants.Avogadro / (1 / mole),
+    "k_boltzmann": constants.k_Boltzmann / (joule / kelvin),
+    "c_light": constants.c_light / (m / s),
+    "eminus": constants.eminus / (coulomb),
+    "eplus": -constants.eminus / (coulomb),
+    "h_planck": constants.h_Planck / (electronvolt * s / e_SI),
+    "hbar": constants.hbar / (electronvolt * s / e_SI),
+    "hbarc": constants.hbarc / (electronvolt * m / e_SI),
+}
+
+ROOT_CONSTANTS = {
+    "true": "true",
+    "false": "false",
+    "inf": "TMath::Infinity()",
+    "neginf": "-TMath::Infinity()",
+    "nan": "TMath::QuietNaN()",
+    "sqrt2": "TMath::Sqrt2()",
+    "e": "TMath::E()",
+    "pi": "TMath::Pi()",
+    "invpi": "TMath::InvPi()",
+    "piover2": "TMath::PiOver2()",
+    "piover4": "TMath::PiOver4()",
+    "tau": "TMath::TwoPi()",
+    "ln10": "TMath::Ln10()",
+    "log10e": "TMath::LogE()",
+    "deg2rad": "TMath::DegToRad()",
+    "rad2deg": "TMath::RadToDeg()",
+    "avogadro": "TMath::Na()",
+    "k_boltzmann": "TMath::K()",
+    "c_light": "TMath::C()",
+    "eminus": "-TMath::Qe()",
+    "eplus": "TMath::Qe()",
+    "h_planck": "TMath::H()",
+    "hbar": "TMath::Hbar()",
+    "hbarc": "(TMath::Hbar() * TMath::C())",
+    "iteration": "iteration$",
 }
