@@ -2,29 +2,39 @@
 
 from __future__ import annotations
 
-from . import (
-    AST,
-    convert_ptree,
-    numexpr_parser,
-    root_parser,
-    toast,
-)
+import lark
+
+from . import AST, toast
 from ._version import __version__
 
 __all__ = ["__version__", "from_numexpr", "from_root"]
 
 
-def from_root(exp: str, **kwargs) -> AST:
+def _get_parser(parser_type: str) -> lark.lark.Lark:
+    import importlib.resources
+
+    grammar = importlib.resources.read_text(
+        __package__, "resources", f"{parser_type}_grammar.lark", encoding="utf-8"
+    )
+    return lark.Lark(grammar, parser="lalr")
+
+
+_numexpr_parser = _get_parser("numexpr")
+_root_parser = _get_parser("root")
+
+
+def from_root(exp: str, **kwargs) -> AST.AST:
     """Evaluate ROOT expressions."""
-    parser = root_parser.Lark_StandAlone()
-    ptree = parser.parse(exp)
-    convert_ptree.convert_ptree(ptree)
+    ptree = _root_parser.parse(exp)
     return toast.toast(ptree)
 
 
-def from_numexpr(exp: str, **kwargs) -> AST:
+def from_numexpr(exp: str, **kwargs) -> AST.AST:
     """Evaluate numexpr expressions."""
-    parser = numexpr_parser.Lark_StandAlone()
-    ptree = parser.parse(exp)
-    convert_ptree.convert_ptree(ptree)
+    ptree = _numexpr_parser.parse(exp)
     return toast.toast(ptree)
+
+
+# This was added to Lark in https://github.com/lark-parser/lark/pull/1521
+# Remove when there is a new release
+lark.Tree.__match_args__ = ("data", "children")

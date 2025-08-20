@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 
+import lark
 import numpy as np
 import pytest
 from hypothesis import given
@@ -418,9 +419,9 @@ def test_invalid_expressions(expr_map, op):
     expr_string, fail_plusminus = expr_map
     expr = expr_string.format(op=op)
     if fail_plusminus or op not in ["+", "-"]:
-        with pytest.raises(formulate.numexpr_parser.LarkError):
+        with pytest.raises(lark.LarkError):
             formulate.from_numexpr(expr)
-        with pytest.raises(formulate.root_parser.LarkError):
+        with pytest.raises(lark.LarkError):
             formulate.from_root(expr)
     else:  # check that they both work
         formulate.from_numexpr(expr)

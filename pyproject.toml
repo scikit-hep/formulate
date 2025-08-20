@@ -1,7 +1,6 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs", "lark"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
-[tool.hatch.build.targets.wheel.hooks.custom]
 
 [project]
 name = "formulate"
@@ -34,6 +33,7 @@ dynamic = ["version"]
 dependencies = [
     "typing_extensions >=3.10",
     "hepunits",
+    "lark",
 ]
 
 [project.optional-dependencies]

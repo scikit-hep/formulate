@@ -5,7 +5,9 @@ from __future__ import annotations
 from ast import literal_eval
 from keyword import iskeyword
 
-from . import AST, matching_tree
+import lark
+
+from . import AST
 from .identifiers import (
     BINARY_OPERATORS,
     CONSTANTS,
@@ -18,7 +20,7 @@ from .identifiers import (
 
 # TODO: This might drop important information
 def _get_var_name(node):
-    if isinstance(node, matching_tree.ptnode):
+    if isinstance(node, lark.Tree):
         return _get_var_name(node.children[0])
     return str(node)
 
@@ -56,11 +58,9 @@ def _get_function_name(node):
     return name
 
 
-def toast(ptnode: matching_tree.ptnode):
+def toast(ptnode: lark.Tree):
     match ptnode:
-        case matching_tree.ptnode(operator, (left, right)) if (
-            operator in BINARY_OPERATORS
-        ):
+        case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:
             left_exp, right_exp = toast(left), toast(right)
             return AST.BinaryOperator(
                 operator,
@@ -68,12 +68,12 @@ def toast(ptnode: matching_tree.ptnode):
                 right_exp,
             )
 
-        case matching_tree.ptnode(operator, operand) if operator in UNARY_OPERATORS:
+        case lark.Tree(operator, operand) if operator in UNARY_OPERATORS:
             argument = toast(operand[0])
             return AST.UnaryOperator(operator, argument)
 
         # TODO: I didn't look at this carefully
-        case matching_tree.ptnode("multi_out", (exp1, exp2)):
+        case lark.Tree("multi_out", (exp1, exp2)):
             exp_node1 = toast(exp1)
             exp_node2 = toast(exp2)
             exps = [exp_node1, exp_node2]
@@ -84,19 +84,19 @@ def toast(ptnode: matching_tree.ptnode):
             return AST.Call("multi_out", exps)
 
         # TODO: I didn't look at this carefully
-        case matching_tree.ptnode("matr", (array, *slice)):
+        case lark.Tree("matr", (array, *slice)):
             var = toast(array)
             paren = [toast(elem) for elem in slice]
             return AST.Matrix(var, paren)
 
         # TODO: I didn't look at this carefully
-        case matching_tree.ptnode("matpos", child):
+        case lark.Tree("matpos", child):
             if child[0] is None:
                 return AST.Empty()
             slice = toast(child[0])
             return AST.Slice(slice)
 
-        case matching_tree.ptnode("func", (func_name, trailer)):
+        case lark.Tree("func", (func_name, trailer)):
             func_name = _get_function_name(func_name)
 
             if func_name in CONSTANTS:
@@ -111,7 +111,7 @@ def toast(ptnode: matching_tree.ptnode):
             func_arguments = [toast(elem) for elem in trailer.children[0].children]
             return AST.Call(func_name, func_arguments)
 
-        case matching_tree.ptnode("symbol", children):
+        case lark.Tree("symbol", children):
             var_name = _get_var_name(children[0])
             # Strip $ from ROOT keywords
             if var_name.endswith("$"):
@@ -121,10 +121,10 @@ def toast(ptnode: matching_tree.ptnode):
                 raise SyntaxError(msg)
             return AST.Symbol(var_name)
 
-        case matching_tree.ptnode("literal", children):
+        case lark.Tree("literal", children):
             return AST.Literal(literal_eval(children[0]))
 
-        case matching_tree.ptnode(_, (child,)):
+        case lark.Tree(_, (child,)):
             return toast(child)
 
         case _:
