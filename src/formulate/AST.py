@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 
 from .identifiers import (
+    CONSTANTS,
     NUMEXPR_FUNCTIONS,
     NUMEXPR_OPERATOR_SYMBOLS,
     ROOT_FUNCTIONS,
@@ -33,6 +34,12 @@ class AST(metaclass=ABCMeta):
     def to_python(self):
         return self.to_numexpr()
 
+    @property
+    @abstractmethod
+    def variables(self):
+        msg = "variables() not implemented, subclass must implement it"
+        raise NotImplementedError(msg)
+
 
 @dataclass
 class Literal(AST):  # Literal: value that appears in the program text
@@ -46,6 +53,10 @@ class Literal(AST):  # Literal: value that appears in the program text
 
     def to_root(self):
         return repr(self.value)
+
+    @property
+    def variables(self):
+        return frozenset()
 
 
 @dataclass
@@ -61,11 +72,15 @@ class Symbol(AST):  # Symbol: value referenced by name
     def to_root(self):
         return self.name
 
+    @property
+    def variables(self):
+        return frozenset() if self.name in CONSTANTS else frozenset((self.name,))
+
 
 @dataclass
 class UnaryOperator(AST):  # Unary Operator: Operation with one operand
     operator: str
-    operand: Literal
+    operand: AST
 
     def __str__(self):
         return f"{self.operator}({self.operand})"
@@ -83,6 +98,10 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
             msg = f'Operator "{self.operator}" is not supported in ROOT.'
             raise ValueError(msg)
         return f"({symbol}{self.operand.to_root()})"
+
+    @property
+    def variables(self):
+        return self.operand.variables
 
 
 @dataclass
@@ -108,6 +127,10 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
             raise ValueError(msg)
         return f"({self.left.to_root()} {symbol} {self.right.to_root()})"
 
+    @property
+    def variables(self):
+        return self.left.variables | self.right.variables
+
 
 @dataclass
 class Matrix(AST):  # Matrix: A matrix call
@@ -127,6 +150,10 @@ class Matrix(AST):  # Matrix: A matrix call
             index += "[" + str(elem.to_root()) + "]"
         return self.var.to_root() + index
 
+    @property
+    def variables(self):
+        return frozenset()
+
 
 @dataclass
 class Slice(AST):  # Slice: The slice for matrix
@@ -142,6 +169,10 @@ class Slice(AST):  # Slice: The slice for matrix
     def to_root(self):
         return self.slices.to_root()
 
+    @property
+    def variables(self):
+        return frozenset()
+
 
 @dataclass
 class Empty(AST):  # Slice: The slice for matrix
@@ -153,6 +184,10 @@ class Empty(AST):  # Slice: The slice for matrix
 
     def to_root(self):
         return ""
+
+    @property
+    def variables(self):
+        return frozenset()
 
 
 @dataclass
@@ -178,3 +213,7 @@ class Call(AST):  # Call: evaluate a function on arguments
             raise ValueError(msg)
         arguments = ", ".join(arg.to_root() for arg in self.arguments)
         return f"{function_str}({arguments})"
+
+    @property
+    def variables(self):
+        return frozenset.union(*[arg.variables for arg in self.arguments])
