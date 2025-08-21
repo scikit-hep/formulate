@@ -95,7 +95,7 @@ enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = [ "hepunits", "lark" ]
+module = [ "hepunits.*", "lark" ]
 ignore_missing_imports = true
 
 [tool.ruff]

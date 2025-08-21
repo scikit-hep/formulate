@@ -47,7 +47,7 @@ pow: atom
    | atom "**" factor -> pow
    | atom "^" factor -> pow
 
-matpos: "[" [sum] "]"
+matpos: "[" sum "]"
 
 atom: "(" expression ")"
     | var_name -> symbol

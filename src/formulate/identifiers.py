@@ -65,6 +65,8 @@ ROOT_OPERATOR_SYMBOLS = {
     "multi_out": ":",
 }
 
+PYTHON_OPERATOR_SYMBOLS = {**NUMEXPR_OPERATOR_SYMBOLS}
+
 NAMESPACES = {"math", "numpy", "np", "scipy", "tmath"}
 
 FUNCTIONS = {
@@ -301,6 +303,36 @@ ROOT_FUNCTIONS = {
     "alt$": "Alt$",
 }
 
+PYTHON_FUNCTIONS = {
+    "sqrt": "sqrt",
+    "abs": "abs",
+    "pow": "",  # This one is a special case since it needs to be written with **
+    "log": "log",
+    "log10": "log10",
+    "log1p": "log1p",
+    "exp": "exp",
+    "expm1": "expm1",
+    "sin": "sin",
+    "cos": "cos",
+    "tan": "tan",
+    "arcsin": "arcsin",
+    "arccos": "arccos",
+    "arctan": "arctan",
+    "arctan2": "arctan2",
+    "sinh": "sinh",
+    "cosh": "cosh",
+    "tanh": "tanh",
+    "arcsinh": "arcsinh",
+    "arccosh": "arccosh",
+    "arctanh": "arctanh",
+    "where": "where",
+    "conj": "conj",
+    "real": "real",
+    "imag": "imag",
+    "complex": "complex",
+    "contains": "contains",
+}
+
 CONSTANTS = {
     "true",
     "false",
@@ -392,4 +424,11 @@ ROOT_CONSTANTS = {
     "hbar": "TMath::Hbar()",
     "hbarc": "(TMath::Hbar() * TMath::C())",
     "iteration": "iteration$",
+}
+
+PYTHON_CONSTANTS = {
+    **NUMEXPR_OPERATOR_SYMBOLS,
+    "inf": "float('inf')",
+    "neginf": "float('-inf')",
+    "nan": "float('nan')",
 }

@@ -85,18 +85,10 @@ def toast(ptnode: lark.Tree) -> AST.AST:
                     exps.append(elem)
             return AST.Call("multi_out", exps)
 
-        # TODO: I didn't look at this carefully
-        case lark.Tree("matr", (array, *slice)):
-            var = toast(array)
-            paren = [toast(elem) for elem in slice]
-            return AST.Matrix(var, paren)
-
-        # TODO: I didn't look at this carefully
-        case lark.Tree("matpos", child):
-            if child[0] is None:
-                return AST.Empty()
-            slice = toast(child[0])
-            return AST.Slice(slice)
+        case lark.Tree("matr", (array, *indices)):
+            mat = toast(array)
+            ind = [toast(elem.children[0]) for elem in indices]
+            return AST.Matrix(mat, ind)
 
         case lark.Tree("func", (func_name, trailer)):
             func_name = _get_function_name(func_name)

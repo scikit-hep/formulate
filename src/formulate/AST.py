@@ -9,6 +9,8 @@ from .identifiers import (
     CONSTANTS,
     NUMEXPR_FUNCTIONS,
     NUMEXPR_OPERATOR_SYMBOLS,
+    PYTHON_FUNCTIONS,
+    PYTHON_OPERATOR_SYMBOLS,
     ROOT_FUNCTIONS,
     ROOT_OPERATOR_SYMBOLS,
 )
@@ -30,9 +32,10 @@ class AST(metaclass=ABCMeta):
         msg = "to_root() not implemented, subclass must implement it"
         raise NotImplementedError(msg)
 
-    # TODO: is it worth having a to_python() method?
-    def to_python(self) -> str:
-        return self.to_numexpr()
+    @abstractmethod
+    def to_python(self, backend: str) -> str:
+        msg = "to_python() not implemented, subclass must implement it"
+        raise NotImplementedError(msg)
 
     @property
     @abstractmethod
@@ -54,6 +57,9 @@ class Literal(AST):  # Literal: value that appears in the program text
     def to_root(self) -> str:
         return repr(self.value)
 
+    def to_python(self, _: str = "ak") -> str:
+        return repr(self.value)
+
     @property
     def variables(self) -> frozenset[str]:
         return frozenset()
@@ -70,6 +76,9 @@ class Symbol(AST):  # Symbol: value referenced by name
         return self.name
 
     def to_root(self) -> str:
+        return self.name
+
+    def to_python(self, _: str = "ak") -> str:
         return self.name
 
     @property
@@ -99,6 +108,13 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
             raise ValueError(msg)
         return f"({symbol}{self.operand.to_root()})"
 
+    def to_python(self, backend: str = "ak") -> str:
+        symbol = PYTHON_OPERATOR_SYMBOLS.get(self.operator, None)
+        if symbol is None:
+            msg = f'Operator "{self.operator}" is not supported in Python.'
+            raise ValueError(msg)
+        return f"({symbol}{self.operand.to_python(backend)})"
+
     @property
     def variables(self) -> frozenset[str]:
         return self.operand.variables
@@ -127,6 +143,15 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
             raise ValueError(msg)
         return f"({self.left.to_root()} {symbol} {self.right.to_root()})"
 
+    def to_python(self, backend: str = "ak") -> str:
+        symbol = PYTHON_OPERATOR_SYMBOLS.get(self.operator, None)
+        if symbol is None:
+            msg = f'Operator "{self.operator}" is not supported in Python.'
+            raise ValueError(msg)
+        return (
+            f"({self.left.to_python(backend)} {symbol} {self.right.to_python(backend)})"
+        )
+
     @property
     def variables(self) -> frozenset[str]:
         return self.left.variables | self.right.variables
@@ -135,55 +160,22 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
 @dataclass
 class Matrix(AST):  # Matrix: A matrix call
     var: Symbol
-    paren: list[AST]
+    indices: list[AST]
 
     def __str__(self) -> str:
-        return "{}[{}]".format(str(self.var), ",".join(str(x) for x in self.paren))
+        return "{}[{}]".format(str(self.var), ", ".join(str(x) for x in self.indices))
 
     def to_numexpr(self) -> str:
         msg = "Matrix operations are forbidden in Numexpr."
         raise ValueError(msg)
 
     def to_root(self) -> str:
-        index = ""
-        for elem in self.paren:
-            index += "[" + str(elem.to_root()) + "]"
+        index = "".join(f"[{elem.to_root()}]" for elem in self.indices)
         return self.var.to_root() + index
 
-    @property
-    def variables(self) -> frozenset[str]:
-        return frozenset()
-
-
-@dataclass
-class Slice(AST):  # Slice: The slice for matrix
-    slices: AST
-
-    def __str__(self) -> str:
-        return f"{self.slices}"
-
-    def to_numexpr(self) -> str:
-        msg = "Matrix operations are forbidden in Numexpr."
-        raise ValueError(msg)
-
-    def to_root(self) -> str:
-        return self.slices.to_root()
-
-    @property
-    def variables(self) -> frozenset[str]:
-        return frozenset()
-
-
-@dataclass
-class Empty(AST):  # Slice: The slice for matrix
-    def __str__(self) -> str:
-        return ""
-
-    def to_numexpr(self) -> str:
-        return ""
-
-    def to_root(self) -> str:
-        return ""
+    def to_python(self, backend: str = "ak") -> str:
+        index = ", ".join(f"{elem.to_python(backend)}" for elem in self.indices)
+        return f"{self.var.to_python(backend)}[{index}]"
 
     @property
     def variables(self) -> frozenset[str]:
@@ -213,6 +205,14 @@ class Call(AST):  # Call: evaluate a function on arguments
             raise ValueError(msg)
         arguments = ", ".join(arg.to_root() for arg in self.arguments)
         return f"{function_str}({arguments})"
+
+    def to_python(self, backend: str = "ak") -> str:
+        function_str = PYTHON_FUNCTIONS.get(self.function, None)
+        if function_str is None:
+            msg = f'Function "{self.function}" is not supported in Python.'
+            raise ValueError(msg)
+        arguments = ", ".join(arg.to_python(backend) for arg in self.arguments)
+        return f"{backend}.{function_str}({arguments})"
 
     @property
     def variables(self) -> frozenset[str]:

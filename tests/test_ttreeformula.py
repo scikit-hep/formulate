@@ -92,7 +92,7 @@ def test_simple_pow2():
 def test_simple_matrix():
     a = formulate.from_root("a[45][1]")
     out = a.to_python()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a[:, 45.0, 1.0]"))
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a[45, 1]"))
 
 
 def test_simple_function():
@@ -129,7 +129,7 @@ def test_complex_matrix():
     a = formulate.from_root("mat1[a**23][mat2[45 - -34]]")
     out = a.to_python()
     assert ast.unparse(ast.parse(out)) == ast.unparse(
-        ast.parse("(mat1[:,a**23.0,mat2[:,45.0--34.0]])")
+        ast.parse("mat1[(a ** 23), mat2[(45 - -(34))]]")
     )
 
 
