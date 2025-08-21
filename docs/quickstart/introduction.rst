@@ -22,9 +22,8 @@ The most basic usage involves calling ``from_$BACKEND`` and then ``to_$BACKEND``
 
     import formulate
 
-    # TODO: why does this fail?
     # Create an expression object from a ROOT expression
-    momentum = formulate.from_root('TMath::Sqrt(X_PX**2 + X_PY**2 + X_PZ**2)')
+    momentum = formulate.from_root("TMath::Sqrt(X_PX**2 + X_PY**2 + X_PZ**2)")
     # Convert to numexpr format
     numexpr_expression = momentum.to_numexpr()
     print(numexpr_expression)

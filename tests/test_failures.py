@@ -1,14 +1,11 @@
 from __future__ import annotations
 
+import lark
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 import formulate
-import formulate.numexpr_parser
-
-# Import both ttreeformula_parser and numexpr_parser exceptions
-import formulate.ttreeformula_parser
 
 
 # Test for empty strings
@@ -119,10 +116,10 @@ def test_unbalanced_parentheses(open_parens, close_parens):
     expr = "a" + open_parens + "+b" + close_parens
 
     # The expression should be rejected
-    with pytest.raises(formulate.exceptions.ParseError):
+    with pytest.raises(lark.ParseError):
         formulate.from_root(expr)
 
-    with pytest.raises(formulate.exceptions.ParseError):
+    with pytest.raises(lark.ParseError):
         formulate.from_numexpr(expr)
 
 

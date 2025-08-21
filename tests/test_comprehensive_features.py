@@ -149,10 +149,7 @@ class TestComprehensiveFunctions:
     def test_function_parsing(self, func, args, systems):
         """Test that functions are parsed correctly."""
         # Create expression with function call
-        if args:
-            expr = f"{func}({','.join(args)})"
-        else:
-            expr = func
+        expr = f"{func}({','.join(args)})" if args else func
 
         for system in systems:
             if system == "numexpr":
@@ -228,10 +225,11 @@ class TestSpecialFeatures:
 
         for expr, desc, system in pi_function_expressions:
             try:
-                if system == "root":
-                    parsed = formulate.from_root(expr)
-                else:
-                    parsed = formulate.from_numexpr(expr)
+                parsed = (
+                    formulate.from_root(expr)
+                    if system == "root"
+                    else formulate.from_numexpr(expr)
+                )
                 assert parsed is not None, f"Failed to parse {desc}"
             except:
                 # Some constant notations might not be supported
@@ -245,18 +243,17 @@ class TestSpecialFeatures:
         """Test different power notations."""
         # Standard ** notation (both systems)
         parsed = formulate.from_numexpr("a**b")
-        assert parsed.to_numexpr() == "(a**b)"
+        assert parsed.to_numexpr() == "(a ** b)"
 
-        # ROOT ^ notation means XOR (same as numexpr)
+        # ROOT ^ notation means power
         parsed = formulate.from_root("a^b")
-        assert parsed.to_root() == "(a^b)"  # ROOT keeps ^ notation
-
-        # Test that ^ remains ^ when going to numexpr (both mean XOR)
-        assert parsed.to_numexpr() == "(a^b)"
+        assert parsed.to_root() == "(a ** b)"
+        assert parsed.to_numexpr() == "(a ** b)"
 
         # In numexpr, ^ is XOR, not power
         parsed_xor = formulate.from_numexpr("a^b")
-        # This should be bitwise XOR, not power
+        with pytest.raises(ValueError):
+            parsed_xor.to_root()
 
     def test_array_indexing(self):
         """Test array indexing features."""
@@ -288,10 +285,7 @@ class TestSpecialFeatures:
 
         for keyword, desc in special_keywords:
             try:
-                if keyword == "rndm":
-                    expr = f"sin(pi*{keyword})"
-                else:
-                    expr = keyword
+                expr = f"sin(pi*{keyword})" if keyword == "rndm" else keyword
 
                 parsed = formulate.from_root(expr)
                 assert parsed is not None, f"Failed to parse {desc}: {keyword}"
@@ -312,7 +306,7 @@ class TestSpecialFeatures:
 
         for expr in string_exprs:
             try:
-                parsed = formulate.from_numexpr(expr)
+                formulate.from_numexpr(expr)
                 # String operations might have limited support
             except:
                 pytest.skip("String operations have limited support")
@@ -358,7 +352,8 @@ class TestComplexExpressions:
                 if "TMath::" in expr or "$" in expr:
                     pass  # ROOT-specific syntax
                 else:
-                    raise Exception(f"Failed to parse {desc} in numexpr: {e}")
+                    msg = f"Failed to parse {desc} in numexpr: {e}"
+                    raise Exception(msg) from e
 
         if system in ["both", "root"]:
             try:
@@ -374,7 +369,8 @@ class TestComplexExpressions:
                 elif "TMath::Gaus" in expr:
                     pytest.skip("TMath::Gaus might need special handling")
                 else:
-                    raise Exception(f"Failed to parse {desc} in ROOT: {e}")
+                    msg = f"Failed to parse {desc} in ROOT: {e}"
+                    raise Exception(msg) from e
 
 
 class TestEdgeCasesAndCompatibility:
@@ -400,7 +396,7 @@ class TestEdgeCasesAndCompatibility:
             result_root = parsed_root.to_root()
 
             # Convert between formats
-            cross_check = parsed_root.to_numexpr()
+            parsed_root.to_numexpr()
 
             # The precedence should be preserved
             print(f"{expr} -> numexpr: {result_ne}, root: {result_root}")

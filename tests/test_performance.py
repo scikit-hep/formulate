@@ -133,14 +133,11 @@ def test_expression_performance(
 
     # Second pass: load the converted expression (if intermediate=True) or the original expr
     start_time = time.time()
-    if intermediate:
-        ast2 = loader2_func(converted_expr1)
-    else:
-        ast2 = loader2_func(expr)
+    ast2 = loader2_func(converted_expr1) if intermediate else loader2_func(expr)
     parse_time2 = time.time() - start_time
 
     start_time = time.time()
-    converted_expr2 = converter2_func(ast2)
+    converter2_func(ast2)
     convert_time2 = time.time() - start_time
 
     # Total time should be less than 1 second

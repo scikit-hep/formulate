@@ -19,7 +19,7 @@ Setting Up Your Development Environment
 
 3. **Set Up a Virtual Environment**
 
-   It's recommended to use a virtual environment for development (e.g., `venv`, `conda`, `uv` etc.):
+   It's recommended to use a virtual environment for development (e.g., ``venv``, ``conda``, ``uv`` etc.):
 
 4. **Install Development Dependencies**
 
