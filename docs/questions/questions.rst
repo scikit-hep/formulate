@@ -32,7 +32,7 @@ Stack Overflow
 For questions that might be relevant to a broader audience:
 
 * Ask on Stack Overflow with the `formulate <https://stackoverflow.com/questions/tagged/formulate>`_ tag
-* Also consider adding related tags like `python`, `root`, or `numexpr` depending on your question
+* Also consider adding related tags like ``python``, ``root``, or ``numexpr`` depending on your question
 * Follow Stack Overflow's guidelines for asking good questions:
   - Be specific
   - Include minimal, reproducible examples
