@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing
 from ast import literal_eval
 from keyword import iskeyword
 
@@ -19,13 +20,13 @@ from .identifiers import (
 
 
 # TODO: This might drop important information
-def _get_var_name(node):
+def _get_var_name(node: lark.Tree | lark.Token) -> str:
     if isinstance(node, lark.Tree):
         return _get_var_name(node.children[0])
     return str(node)
 
 
-def _get_raw_function_name(func_names, invert=True):
+def _get_raw_function_name(func_names: lark.Tree, invert: bool = True) -> list[str]:
     children = []
     if len(func_names.children) > 1:
         children.extend(_get_raw_function_name(func_names.children[1], False))
@@ -35,7 +36,7 @@ def _get_raw_function_name(func_names, invert=True):
     return children
 
 
-def _get_function_name(node):
+def _get_function_name(node: lark.Tree) -> str:
     raw_name = _get_raw_function_name(node)
     full_name = "::".join(raw_name)
     pieces = full_name.replace(".", "::").split("::")
@@ -58,7 +59,8 @@ def _get_function_name(node):
     return name
 
 
-def toast(ptnode: lark.Tree):
+@typing.no_type_check  # TODO: Figure out how to make mypy happy
+def toast(ptnode: lark.Tree) -> AST.AST:
     match ptnode:
         case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:
             left_exp, right_exp = toast(left), toast(right)

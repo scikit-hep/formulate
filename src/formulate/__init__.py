@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import lark
 
 from . import AST, toast
@@ -25,18 +27,18 @@ _numexpr_parser = _get_parser("numexpr")
 _root_parser = _get_parser("root")
 
 
-def from_root(exp: str, **kwargs) -> AST.AST:
+def from_root(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
     """Evaluate ROOT expressions."""
     ptree = _root_parser.parse(exp)
-    return toast.toast(ptree)
+    return toast.toast(ptree)  # type: ignore[no-any-return]
 
 
-def from_numexpr(exp: str, **kwargs) -> AST.AST:
+def from_numexpr(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
     """Evaluate numexpr expressions."""
     ptree = _numexpr_parser.parse(exp)
-    return toast.toast(ptree)
+    return toast.toast(ptree)  # type: ignore[no-any-return]
 
 
 # This was added to Lark in https://github.com/lark-parser/lark/pull/1521
 # Remove when there is a new release
-lark.Tree.__match_args__ = ("data", "children")
+lark.Tree.__match_args__ = ("data", "children")  # type: ignore[misc]
