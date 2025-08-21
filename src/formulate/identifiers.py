@@ -94,6 +94,8 @@ FUNCTIONS = {
     "arcsinh",
     "arccosh",
     "arctanh",
+    "ceil",
+    "floor",
     # Functions specific to NumExpr
     "log1p",
     "expm1",
@@ -111,7 +113,6 @@ FUNCTIONS = {
     "besselj1",
     "bessely0",
     "bessely1",
-    "ceil",
     "ceilnint",
     "dilog",
     "erf",
@@ -120,7 +121,6 @@ FUNCTIONS = {
     "erfcinverse",
     "even",
     "factorial",
-    "floor",
     "floornint",
     "freq",
     "kolmogorovprob",
@@ -214,6 +214,8 @@ NUMEXPR_FUNCTIONS = {
     "imag": "imag",
     "complex": "complex",
     "contains": "contains",
+    "ceil": "ceil",
+    "floor": "floor",
 }
 
 # https://root.cern.ch/doc/master/namespaceTMath.html
