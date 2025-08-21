@@ -74,17 +74,6 @@ def toast(ptnode: lark.Tree) -> AST.AST:
             argument = toast(operand[0])
             return AST.UnaryOperator(operator, argument)
 
-        # TODO: I didn't look at this carefully
-        case lark.Tree("multi_out", (exp1, exp2)):
-            exp_node1 = toast(exp1)
-            exp_node2 = toast(exp2)
-            exps = [exp_node1, exp_node2]
-            if isinstance(exp_node2, AST.Call) and exp_node2.function == ":":
-                del exps[-1]
-                for elem in exp_node2.arguments:
-                    exps.append(elem)
-            return AST.Call("multi_out", exps)
-
         case lark.Tree("matr", (array, *indices)):
             mat = toast(array)
             ind = [toast(elem.children[0]) for elem in indices]

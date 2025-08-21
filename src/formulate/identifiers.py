@@ -65,7 +65,10 @@ ROOT_OPERATOR_SYMBOLS = {
     "multi_out": ":",
 }
 
-PYTHON_OPERATOR_SYMBOLS = {**NUMEXPR_OPERATOR_SYMBOLS}
+PYTHON_OPERATOR_SYMBOLS = {
+    **NUMEXPR_OPERATOR_SYMBOLS,
+    "multi_out": ",",
+}
 
 # Later on we could add Python libraries as "namespaces" here
 NAMESPACES = {"tmath"}

@@ -162,14 +162,20 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in ROOT.'
             raise ValueError(msg)
-        return f"({self.left.to_root()} {symbol} {self.right.to_root()})"
+        out = f"{self.left.to_root()} {symbol} {self.right.to_root()}"
+        if symbol != ":":
+            out = f"({out})"
+        return out
 
     def to_python(self) -> str:
         symbol = PYTHON_OPERATOR_SYMBOLS.get(self.operator, None)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in Python.'
             raise ValueError(msg)
-        return f"({self.left.to_python()} {symbol} {self.right.to_python()})"
+        out = f"{self.left.to_python()} {symbol} {self.right.to_python()}"
+        if symbol != ",":
+            out = f"({out})"
+        return out
 
     @property
     def variables(self) -> frozenset[str]:
