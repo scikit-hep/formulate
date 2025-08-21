@@ -67,7 +67,8 @@ ROOT_OPERATOR_SYMBOLS = {
 
 PYTHON_OPERATOR_SYMBOLS = {**NUMEXPR_OPERATOR_SYMBOLS}
 
-NAMESPACES = {"math", "numpy", "np", "scipy", "tmath"}
+# Later on we could add Python libraries as "namespaces" here
+NAMESPACES = {"tmath"}
 
 FUNCTIONS = {
     # Common functions
@@ -340,7 +341,7 @@ CONSTANTS = {
     "neginf",
     "nan",
     "sqrt2",
-    "e",
+    "exp1",
     "pi",
     "invpi",
     "piover2",
@@ -364,6 +365,8 @@ CONSTANTS = {
 CONSTANTS_ALIASES = {
     "oneoverpi": "invpi",
     "twopi": "tau",
+    "e_number": "exp1",
+    "e_num": "exp1",
     "e_plus": "eplus",
     "e_minus": "eminus",
     "kboltzmann": "k_boltzmann",

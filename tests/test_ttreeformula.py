@@ -96,9 +96,9 @@ def test_simple_matrix():
 
 
 def test_simple_function():
-    a = formulate.from_root("Math::sqrt(4)")
+    a = formulate.from_root("TMath::sqrt(4)")
     out = a.to_python()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("sqrt(4)"))
+    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("np.sqrt(4)"))
 
 
 def test_simple_unary_pos():
