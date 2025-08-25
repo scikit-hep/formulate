@@ -5,6 +5,7 @@ This ensures formulate supports all features from both systems.
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 import formulate
@@ -420,3 +421,93 @@ class TestEdgeCasesAndCompatibility:
             # Both should parse successfully
             assert parsed_ne is not None
             assert parsed_root is not None
+
+
+def test_function_translations():
+    """Test that function translations are handled."""
+    test_cases = [
+        ("sin(x)", "TMath::Sin(x)"),
+        ("cos(x)", "TMath::Cos(x)"),
+        ("tan(x)", "TMath::Tan(x)"),
+        ("sqrt(x)", "TMath::Sqrt(x)"),
+        ("abs(x)", "TMath::Abs(x)"),
+        ("exp(x)", "TMath::Exp(x)"),
+        ("log(x)", "TMath::Log(x)"),
+        ("log10(x)", "TMath::Log10(x)"),
+        ("arcsin(x)", "TMath::ASin(x)"),
+        ("arccos(x)", "TMath::ACos(x)"),
+        ("arctan(x)", "TMath::ATan(x)"),
+        ("arctan2(x, y)", "TMath::ATan2(x, y)"),
+        ("arcsinh(x)", "TMath::ASinH(x)"),
+        ("arccosh(x)", "TMath::ACosH(x)"),
+        ("arctanh(x)", "TMath::ATanH(x)"),
+        ("sinh(x)", "TMath::SinH(x)"),
+        ("cosh(x)", "TMath::CosH(x)"),
+        ("tanh(x)", "TMath::TanH(x)"),
+        ("ceil(x)", "TMath::Ceil(x)"),
+        ("floor(x)", "TMath::Floor(x)"),
+        ("sum(x)", "Sum$(x)"),
+        ("min(x)", "Min$(x)"),
+        ("max(x)", "Max$(x)"),
+    ]
+
+    for numexpr_func, root_func in test_cases:
+        translated_root = formulate.from_numexpr(numexpr_func).to_root()
+        assert translated_root == root_func
+
+        translated_ne = formulate.from_root(root_func).to_numexpr()
+        assert translated_ne == numexpr_func
+
+
+def test_constant_translations():
+    """Test that constant translations are handled."""
+    test_cases = [
+        ("pi", "3.141592653589793", "TMath::Pi()"),
+        ("exp1", "2.718281828459045", "TMath::E()"),
+        ("sqrt2", "1.4142135623730951", "TMath::Sqrt2()"),
+        ("invpi", "0.3183098861837907", "TMath::InvPi()"),
+        ("piover2", "1.5707963267948966", "TMath::PiOver2()"),
+        ("piover4", "0.7853981633974483", "TMath::PiOver4()"),
+        ("tau", "6.283185307179586", "TMath::TwoPi()"),
+        ("ln10", "2.302585092994046", "TMath::Ln10()"),
+        ("avogadro", "6.02214076e+23", "TMath::Na()"),
+        ("k_boltzmann", "1.380649e-23", "TMath::K()"),
+        ("c_light", "299792458.0", "TMath::C()"),
+        ("eminus", "-1.602176634e-19", "-TMath::Qe()"),
+        ("eplus", "1.602176634e-19", "TMath::Qe()"),
+        ("h_planck", "6.62607015e-34", "TMath::H()"),
+        ("hbar", "6.62607015e-34", "TMath::Hbar()"),
+        ("hbarc", "1.97326968e-16", "(TMath::Hbar() * TMath::C())"),
+    ]
+
+    for const, numexpr_const, root_const in test_cases:
+        translated_numexpr1 = (
+            formulate.from_numexpr(const).to_numexpr().replace("(", "").replace(")", "")
+        )
+        translated_numexpr2 = (
+            formulate.from_root(root_const)
+            .to_numexpr()
+            .replace("(", "")
+            .replace(")", "")
+        )
+        assert np.isclose(eval(translated_numexpr1), eval(numexpr_const))
+        assert np.isclose(eval(translated_numexpr2), eval(numexpr_const))
+
+        translated_root = formulate.from_numexpr(const).to_root()
+        assert translated_root == root_const
+
+
+def test_variables_property():
+    """Test that variables are identified correctly."""
+    test_cases = [
+        ("a + b * c", ["a", "b", "c"]),
+        (
+            "var1 + pi * var2 / var_with_underscore",
+            ["var1", "var2", "var_with_underscore"],
+        ),
+        ("sin(x) * exp(y) * (z * 21 - exp1 - w - 1.0)", ["x", "y", "z", "w"]),
+    ]
+
+    for expr, variables in test_cases:
+        ast = formulate.from_numexpr(expr)
+        assert frozenset(variables) == ast.variables
