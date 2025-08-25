@@ -138,16 +138,13 @@ def evaluate_expression(expr, values=None):
         return eval(modified_expr, {"__builtins__": {}}, local_vars)
     except Exception as e:
         print(f"Error evaluating {expr} (as {modified_expr}): {e}")
-        return None
+        raise e
 
 
 def assert_equivalent_expressions(expr1, expr2, values=None):
     """Assert that two expressions evaluate to the same result."""
     result1 = evaluate_expression(expr1, values)
     result2 = evaluate_expression(expr2, values)
-
-    if result1 is None or result2 is None:
-        pytest.fail(f"One of the expressions failed to evaluate: {expr1} or {expr2}")
 
     if isinstance(result1, (bool, np.bool_)):
         assert bool(result1) == bool(result2), (
@@ -298,34 +295,29 @@ def test_hypothesis_three_variable_expression(
     var1, var2, var3, op1, op2, default_values
 ):
     """Test three-variable expressions with hypothesis."""
-    # Skip incompatible operator combinations
-    if (op1 in ["&", "|"] and op2 not in ["&", "|"]) or (
-        op2 in ["&", "|"] and op1 not in ["&", "|"]
-    ):
-        return
-
     expr = f"{var1}{op1}{var2}{op2}{var3}"
+    # We need to add parentheses when there are bitwise operators
+    if any(op in expr for op in ["&", "|"]):
+        expr = f"({var1}{op1}{var2}){op2}{var3}"
 
     # Test with extra spaces
     expr_with_spaces = f"{var1} {op1} {var2} {op2} {var3}"
-    try:
-        assert_equivalent_expressions(expr, expr_with_spaces, default_values)
-    except:
-        pass  # Skip if evaluation fails
+    if any(op in expr for op in ["&", "|"]):
+        expr_with_spaces = f"({var1} {op1} {var2} ) {op2} {var3}"
+    assert_equivalent_expressions(expr, expr_with_spaces, default_values)
 
     # Test with various bracket patterns
     bracket_patterns = [
-        f"({var1}{op1}{var2}){op2}{var3}",
-        f"{var1}{op1}({var2}{op2}{var3})",
+        f"({var1}){op1}{var2}{op2}{var3}",
+        f"{var1}{op1}({var2}){op2}{var3}",
         f"({var1}){op1}{var2}{op2}({var3})",
-        f"(({var1}{op1}{var2}){op2}{var3})",
+        f"(({var1}){op1}({var2}){op2}({var3}))",
     ]
 
     for pattern in bracket_patterns:
-        try:
-            assert_equivalent_expressions(expr, pattern, default_values)
-        except:
-            pass  # Skip if evaluation fails
+        if any(op in expr for op in ["&", "|"]):
+            break
+        assert_equivalent_expressions(expr, pattern, default_values)
 
 
 @given(
@@ -342,16 +334,12 @@ def test_hypothesis_whitespace_insensitive(var_name, spaces, value):
 
     values = {var_name: 1.0}  # Define the variable
 
-    try:
-        # Test that all variations produce the same result
-        result1 = evaluate_expression(expr1, values)
-        result2 = evaluate_expression(expr2, values)
-        result3 = evaluate_expression(expr3, values)
+    # Test that all variations produce the same result
+    result1 = evaluate_expression(expr1, values)
+    result2 = evaluate_expression(expr2, values)
+    result3 = evaluate_expression(expr3, values)
 
-        if result1 is not None and result2 is not None and result3 is not None:
-            assert np.isclose(result1, result2) and np.isclose(result2, result3)
-    except:
-        pass  # Skip if parsing fails
+    assert np.isclose(result1, result2) and np.isclose(result2, result3)
 
 
 @given(
@@ -376,10 +364,7 @@ def test_hypothesis_function_whitespace(func_name, var_name, spaces, default_val
     reference = patterns[0]
 
     for pattern in patterns[1:]:
-        try:
-            assert_equivalent_expressions(reference, pattern, default_values)
-        except:
-            pass  # Skip if evaluation fails
+        assert_equivalent_expressions(reference, pattern, default_values)
 
 
 operators = [
@@ -426,24 +411,6 @@ def test_invalid_expressions(expr_map, op):
     else:  # check that they both work
         formulate.from_numexpr(expr)
         formulate.from_root(expr)
-
-
-@given(
-    expr=st.text(
-        alphabet="()[]{}+-*/=<>&|~!abcdef0123456789. ", min_size=1, max_size=20
-    )
-)
-def test_hypothesis_parsing_robustness(expr):
-    """Test that the parser handles various inputs robustly."""
-    try:
-        # Try to parse the expression
-        parsed = formulate.from_numexpr(expr)
-        # If parsing succeeds, the expression should be valid
-        assert parsed is not None
-    except:
-        # If parsing fails, it should raise an exception
-        # This is expected behavior for invalid expressions
-        pass
 
 
 @pytest.mark.parametrize(

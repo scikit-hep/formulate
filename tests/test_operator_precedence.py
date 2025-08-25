@@ -10,71 +10,20 @@ import formulate
 
 def normalize_expression(expr):
     """Normalize expression by parsing and unparsing to remove formatting differences."""
-    try:
-        # Also normalize np.func to func for comparison
-        expr_normalized = (
-            expr.replace("np.exp", "exp")
-            .replace("np.log", "log")
-            .replace("np.sqrt", "sqrt")
-        )
-        expr_normalized = (
-            expr_normalized.replace("np.sin", "sin")
-            .replace("np.cos", "cos")
-            .replace("np.tan", "tan")
-        )
-        expr_normalized = expr_normalized.replace("np.abs", "abs")
+    # Also normalize np.func to func for comparison
+    expr_normalized = (
+        expr.replace("np.exp", "exp")
+        .replace("np.log", "log")
+        .replace("np.sqrt", "sqrt")
+    )
+    expr_normalized = (
+        expr_normalized.replace("np.sin", "sin")
+        .replace("np.cos", "cos")
+        .replace("np.tan", "tan")
+    )
+    expr_normalized = expr_normalized.replace("np.abs", "abs")
 
-        # Handle prefix notation like +(a,b) -> (a+b), *(b,c) -> (b*c)
-        import re
-
-        # Keep applying replacements until no more changes
-        max_iterations = 10
-        for _ in range(max_iterations):
-            old_expr = expr_normalized
-
-            # Replace **(a,b) with (a**b) - must come first to avoid conflicting with *
-            expr_normalized = re.sub(
-                r"\*\*\(([^,()]+|\([^)]+\)),([^,()]+|\([^)]+\))\)",
-                r"(\1**\2)",
-                expr_normalized,
-            )
-            # Replace +(a,b) with (a+b)
-            expr_normalized = re.sub(
-                r"\+\(([^,()]+|\([^)]+\)),([^,()]+|\([^)]+\))\)",
-                r"(\1+\2)",
-                expr_normalized,
-            )
-            # Replace -(a,b) with (a-b)
-            expr_normalized = re.sub(
-                r"-\(([^,()]+|\([^)]+\)),([^,()]+|\([^)]+\))\)",
-                r"(\1-\2)",
-                expr_normalized,
-            )
-            # Replace *(a,b) with (a*b)
-            expr_normalized = re.sub(
-                r"\*\(([^,()]+|\([^)]+\)),([^,()]+|\([^)]+\))\)",
-                r"(\1*\2)",
-                expr_normalized,
-            )
-            # Replace /(a,b) with (a/b)
-            expr_normalized = re.sub(
-                r"/\(([^,()]+|\([^)]+\)),([^,()]+|\([^)]+\))\)",
-                r"(\1/\2)",
-                expr_normalized,
-            )
-            # Replace %(a,b) with (a%b)
-            expr_normalized = re.sub(
-                r"%\(([^,()]+|\([^)]+\)),([^,()]+|\([^)]+\))\)",
-                r"(\1%\2)",
-                expr_normalized,
-            )
-
-            if old_expr == expr_normalized:
-                break
-
-        return ast.unparse(ast.parse(expr_normalized))
-    except:
-        return expr
+    return ast.unparse(ast.parse(expr_normalized))
 
 
 def assert_precedence_correct(input_expr, expected_expr, test_both_parsers=True):
@@ -84,32 +33,18 @@ def assert_precedence_correct(input_expr, expected_expr, test_both_parsers=True)
     parsed_numexpr = formulate.from_numexpr(input_expr)
     result_numexpr = parsed_numexpr.to_numexpr()
 
-    # Handle special case where function arguments show as prefix notation
-    if (
-        input_expr == expected_expr
-        and "(" in input_expr
-        and any(op in input_expr for op in ["+", "-", "*", "/"])
-    ):
-        # For cases like sin(a+b) where we expect the same output, just check that parsing works
-        assert result_numexpr is not None, f"Failed to parse: '{input_expr}'"
-        return
-
     assert normalize_expression(result_numexpr) == normalize_expression(
         expected_expr
     ), f"Numexpr: '{input_expr}' -> '{result_numexpr}', expected '{expected_expr}'"
 
     if test_both_parsers:
         # Test ROOT parser if expression is compatible
-        try:
-            parsed_root = formulate.from_root(input_expr)
-            result_root = parsed_root.to_numexpr()
+        parsed_root = formulate.from_root(input_expr)
+        result_root = parsed_root.to_numexpr()
 
-            assert normalize_expression(result_root) == normalize_expression(
-                expected_expr
-            ), f"ROOT: '{input_expr}' -> '{result_root}', expected '{expected_expr}'"
-        except:
-            # Some expressions may not be valid ROOT syntax
-            pass
+        assert normalize_expression(result_root) == normalize_expression(
+            expected_expr
+        ), f"ROOT: '{input_expr}' -> '{result_root}', expected '{expected_expr}'"
 
 
 class TestBasicOperatorPrecedence:
@@ -302,15 +237,29 @@ class TestLogicalOperators:
         for input_expr, expected in test_cases:
             assert_precedence_correct(input_expr, expected, test_both_parsers=False)
 
-    def test_comparison_higher_than_bitwise_and(self):
-        """Test that comparison operators have higher precedence than bitwise AND."""
-        # Skip complex logical operator tests - focus on arithmetic precedence
-        pytest.skip("Complex logical operator precedence not fully supported")
+    def test_comparison_lower_than_bitwise_and(self):
+        """Test that comparison operators have lower precedence than bitwise AND."""
+        test_cases = [
+            ("a&b<c", "(a&b)<c"),
+            ("a>b&c", "a>(b&c)"),
+            ("a&b>c&d", "(a&b)>(c&d)"),
+            ("a&b==c&d", "(a&b)==(c&d)"),
+        ]
 
-    def test_comparison_higher_than_bitwise_or(self):
-        """Test that comparison operators have higher precedence than bitwise OR."""
-        # Skip complex logical operator tests - focus on arithmetic precedence
-        pytest.skip("Complex logical operator precedence not fully supported")
+        for input_expr, expected in test_cases:
+            assert_precedence_correct(input_expr, expected, test_both_parsers=False)
+
+    def test_comparison_lower_than_bitwise_or(self):
+        """Test that comparison operators have lower precedence than bitwise OR."""
+        test_cases = [
+            ("a|b<c", "(a|b)<c"),
+            ("a>b|c", "a>(b|c)"),
+            ("a|b>c|d", "(a|b)>(c|d)"),
+            ("a|b==c|d", "(a|b)==(c|d)"),
+        ]
+
+        for input_expr, expected in test_cases:
+            assert_precedence_correct(input_expr, expected, test_both_parsers=False)
 
 
 class TestComplexExpressions:
@@ -445,7 +394,7 @@ class TestNestedFunctions:
             ("sin(cos(a+b))", "sin(cos(a+b))"),
             ("sqrt(abs(a*b))", "sqrt(abs(a*b))"),
             ("log(exp(a**b))", "log(exp(a**b))"),
-            ("tan(asin(a/b))", "tan(asin(a/b))"),
+            ("tan(arcsin(a/b))", "tan(arcsin(a/b))"),
             # Arithmetic with nested functions
             ("sin(cos(a))+b", "sin(cos(a))+b"),
             ("a*sqrt(abs(b))", "a*sqrt(abs(b))"),
@@ -521,17 +470,13 @@ class TestPrecedenceWithEvaluation:
             python_expr = parsed.to_python()
 
             # Evaluate both original Python expression and formulate result
-            try:
-                python_result = eval(expr.replace("**", "**"), test_values)
-                formulate_result = eval(python_expr, {"np": np, **test_values})
+            python_result = eval(expr.replace("**", "**"), test_values)
+            formulate_result = eval(python_expr, {"np": np, **test_values})
 
-                assert abs(python_result - formulate_result) < 1e-10, (
-                    f"Expression '{expr}': Python={python_result}, "
-                    f"Formulate={formulate_result}, Converted='{python_expr}'"
-                )
-            except:
-                # Skip if evaluation fails (e.g., division by zero)
-                pass
+            assert abs(python_result - formulate_result) < 1e-10, (
+                f"Expression '{expr}': Python={python_result}, "
+                f"Formulate={formulate_result}, Converted='{python_expr}'"
+            )
 
 
 # Parametrized tests for comprehensive coverage
@@ -870,7 +815,7 @@ class TestComparisonOperatorComprehensive:
             ("sin(a)<cos(b)", "sin(a)<cos(b)"),
             ("sqrt(a*b)>log(c+d)", "sqrt(a*b)>log(c+d)"),
             ("abs(a**b)<=exp(c/d)", "abs(a**b)<=exp(c/d)"),
-            ("tan(a+b)==asin(c-d)", "tan(a+b)==asin(c-d)"),
+            ("tan(a+b)==arcsin(c-d)", "tan(a+b)==arcsin(c-d)"),
         ]
 
         for input_expr, expected in test_cases:
@@ -1020,34 +965,3 @@ class TestEdgeCasesAndCornerCases:
 
         for input_expr, expected in test_cases:
             assert_precedence_correct(input_expr, expected)
-
-
-if __name__ == "__main__":
-    # Run a quick verification
-    print("Running operator precedence tests...")
-
-    # Test basic cases
-    basic_cases = [
-        ("a/b/c", "((a/b)/c)"),
-        ("a*b/c", "((a*b)/c)"),
-        ("a+b*c", "a+(b*c)"),
-        ("a**b**c", "a**(b**c)"),
-    ]
-
-    for expr, expected in basic_cases:
-        try:
-            parsed = formulate.from_numexpr(expr)
-            result = parsed.to_numexpr()
-            normalized_result = normalize_expression(result)
-            normalized_expected = normalize_expression(expected)
-
-            if normalized_result == normalized_expected:
-                print(f"✓ {expr} -> {result}")
-            else:
-                print(f"✗ {expr} -> {result} (expected {expected})")
-        except Exception as e:
-            print(f"✗ {expr} -> ERROR: {e}")
-
-    print(
-        "\nRun 'python -m pytest tests/test_operator_precedence.py -v' for full test suite"
-    )
