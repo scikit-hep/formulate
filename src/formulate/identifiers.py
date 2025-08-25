@@ -162,16 +162,15 @@ FUNCTIONS = {
     "vavilov",
     "vavilovi",
     # 4+ arguments
+    "gaus",
     "rootscubic",
     "quantiles",
-    # Array functions in ROOT
-    "sum$",
-    "min$",
-    "max$",
-    "length$",
-    "minif$",
-    "maxif$",
-    "alt$",
+    # Array to scalar functions
+    "sum",
+    "prod",
+    "min",
+    "max",
+    "length",
 }
 
 FUNCTION_ALIASES = {
@@ -183,6 +182,7 @@ FUNCTION_ALIASES = {
     "asinh": "arcsinh",
     "acosh": "arccosh",
     "atanh": "arctanh",
+    "power": "pow",
 }
 
 # https://numexpr.readthedocs.io/en/latest/user_guide.html#supported-functions
@@ -216,6 +216,10 @@ NUMEXPR_FUNCTIONS = {
     "contains": "contains",
     "ceil": "ceil",
     "floor": "floor",
+    "sum": "sum",
+    "prod": "prod",
+    "min": "min",
+    "max": "max",
 }
 
 # https://root.cern.ch/doc/master/namespaceTMath.html
@@ -265,10 +269,10 @@ ROOT_FUNCTIONS = {
     "nextprime": "TMath::NextPrime",
     "normquantile": "TMath::NormQuantile",
     "odd": "TMath::Odd",
-    "struveh0": "TMath::StruveH",
-    "struveh1": "TMath::StruveH",
-    "struvel0": "TMath::StruveL",
-    "struvel1": "TMath::StruveL",
+    "struveh0": "TMath::StruveH0",
+    "struveh1": "TMath::StruveH1",
+    "struvel0": "TMath::StruveL0",
+    "struvel1": "TMath::StruveL1",
     # Two arguments
     "besseli": "TMath::BesselI",
     "besselk": "TMath::BesselK",
@@ -297,16 +301,14 @@ ROOT_FUNCTIONS = {
     "vavilov": "TMath::Vavilov",
     "vavilovi": "TMath::VavilovI",
     # 4+ arguments
+    "gaus": "TMath::Gaus",
     "rootscubic": "TMath::RootsCubic",
     "quantiles": "TMath::Quantiles",
     # Array functions in ROOT
-    "sum$": "Sum$",
-    "min$": "Min$",
-    "max$": "Max$",
-    "length$": "Length$",
-    "minif$": "MinIf$",
-    "maxif$": "MaxIf$",
-    "alt$": "Alt$",
+    "sum": "Sum$",
+    "min": "Min$",
+    "max": "Max$",
+    "length": "Length$",
 }
 
 PYTHON_FUNCTIONS = {
@@ -340,7 +342,6 @@ CONSTANTS = {
     "h_planck",
     "hbar",
     "hbarc",
-    "iteration",  # ROOT keyword
 }
 
 CONSTANTS_ALIASES = {
@@ -362,7 +363,7 @@ NUMEXPR_CONSTANTS = {
     "false": False,
     # inf, neginf, nan not supported
     "sqrt2": math.sqrt(2),
-    "e": math.e,
+    "exp1": math.e,
     "pi": math.pi,
     "invpi": 1 / math.pi,
     "piover2": math.pi / 2,
@@ -389,7 +390,7 @@ ROOT_CONSTANTS = {
     "neginf": "-TMath::Infinity()",
     "nan": "TMath::QuietNaN()",
     "sqrt2": "TMath::Sqrt2()",
-    "e": "TMath::E()",
+    "exp1": "TMath::E()",
     "pi": "TMath::Pi()",
     "invpi": "TMath::InvPi()",
     "piover2": "TMath::PiOver2()",
@@ -407,7 +408,6 @@ ROOT_CONSTANTS = {
     "h_planck": "TMath::H()",
     "hbar": "TMath::Hbar()",
     "hbarc": "(TMath::Hbar() * TMath::C())",
-    "iteration": "iteration$",
 }
 
 PYTHON_CONSTANTS = {

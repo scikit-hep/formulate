@@ -12,6 +12,7 @@ from . import AST
 from .identifiers import (
     BINARY_OPERATORS,
     CONSTANTS,
+    CONSTANTS_ALIASES,
     FUNCTION_ALIASES,
     FUNCTIONS,
     NAMESPACES,
@@ -19,11 +20,11 @@ from .identifiers import (
 )
 
 
-# TODO: This might drop important information
 def _get_var_name(node: lark.Tree | lark.Token) -> str:
     if isinstance(node, lark.Tree):
         return _get_var_name(node.children[0])
-    return str(node)
+    var_name = str(node)
+    return CONSTANTS_ALIASES.get(var_name, var_name)
 
 
 def _get_raw_function_name(func_names: lark.Tree, invert: bool = True) -> list[str]:
@@ -52,6 +53,9 @@ def _get_function_name(node: lark.Tree) -> str:
         raise ValueError(msg)
     # Now we normalize the name and make sure it is supported
     name = name.lower()
+    # strip $ from ROOT keywords
+    if name.endswith("$"):
+        name = name[:-1]
     name = FUNCTION_ALIASES.get(name, name)
     if name not in FUNCTIONS and name not in CONSTANTS:
         msg = f'Unknown function or constant "{name}"'
@@ -82,7 +86,9 @@ def toast(ptnode: lark.Tree) -> AST.AST:
         case lark.Tree("func", (func_name, trailer)):
             func_name = _get_function_name(func_name)
 
-            if func_name in CONSTANTS:
+            # In case the function is actually a constant
+            const_name = CONSTANTS_ALIASES.get(func_name, func_name)
+            if const_name in CONSTANTS:
                 if (
                     trailer.children[0] is not None
                     and len(trailer.children[0].children) != 0
@@ -96,9 +102,6 @@ def toast(ptnode: lark.Tree) -> AST.AST:
 
         case lark.Tree("symbol", children):
             var_name = _get_var_name(children[0])
-            # Strip $ from ROOT keywords
-            if var_name.endswith("$"):
-                var_name = var_name[:-1]
             if not var_name.isidentifier() or iskeyword(var_name):
                 msg = f'The symbol "{var_name}" is not a valid symbol.'
                 raise SyntaxError(msg)
