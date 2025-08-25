@@ -13,6 +13,7 @@ from .identifiers import (
     BINARY_OPERATORS,
     CONSTANTS,
     CONSTANTS_ALIASES,
+    CONSTANTS_FUNCTION_ALIASES,
     FUNCTION_ALIASES,
     FUNCTIONS,
     NAMESPACES,
@@ -57,6 +58,8 @@ def _get_function_name(node: lark.Tree) -> str:
     if name.endswith("$"):
         name = name[:-1]
     name = FUNCTION_ALIASES.get(name, name)
+    name = CONSTANTS_FUNCTION_ALIASES.get(name, name)
+    name = CONSTANTS_ALIASES.get(name, name)
     if name not in FUNCTIONS and name not in CONSTANTS:
         msg = f'Unknown function or constant "{name}"'
         raise ValueError(msg)
@@ -87,8 +90,7 @@ def toast(ptnode: lark.Tree) -> AST.AST:
             func_name = _get_function_name(func_name)
 
             # In case the function is actually a constant
-            const_name = CONSTANTS_ALIASES.get(func_name, func_name)
-            if const_name in CONSTANTS:
+            if func_name in CONSTANTS:
                 if (
                     trailer.children[0] is not None
                     and len(trailer.children[0].children) != 0

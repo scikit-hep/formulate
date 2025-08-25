@@ -358,6 +358,15 @@ CONSTANTS_ALIASES = {
     "h_bar_c": "hbarc",
 }
 
+CONSTANTS_FUNCTION_ALIASES = {
+    "e": "exp1",
+    "c": "c_light",
+    "h": "h_planck",
+    "k": "k_boltzmann",
+    "na": "avogadro",
+    "qe": "eplus",
+}
+
 NUMEXPR_CONSTANTS = {
     "true": True,
     "false": False,
