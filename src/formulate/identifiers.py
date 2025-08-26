@@ -24,8 +24,6 @@ BINARY_OPERATORS = {
     "or",
     "xor",
     "pow",
-    "lshift",
-    "rshift",
     "multi_out",
 }
 
@@ -44,8 +42,6 @@ COMMON_OPERATOR_SYMBOLS = {
     "eq": "==",
     "neq": "!=",
     "pow": "**",
-    "lshift": "<<",
-    "rshift": ">>",
 }
 
 NUMEXPR_OPERATOR_SYMBOLS = {

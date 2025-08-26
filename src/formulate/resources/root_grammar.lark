@@ -1,6 +1,7 @@
 # Operator precedence is taken from https://en.cppreference.com/w/cpp/language/operator_precedence.html
 # TTreeFormula/TFormula does not explicitly list precedence, so we assume it follows C++ precedence rules.
 # The bitwise operators &, |, ~ are not supported, and the bitwise operator ^ is interpreted as exponentiation.
+# Shift operators are also not supported.
 
 start: expression
 
@@ -17,15 +18,11 @@ equality: comparison
         | equality "==" comparison -> eq
         | equality ("!=" ) comparison -> neq
 
-comparison: shift_expr
-          | comparison ">" shift_expr -> gt
-          | comparison ">=" shift_expr -> gte
-          | comparison "<" shift_expr -> lt
-          | comparison "<=" shift_expr -> lte
-
-shift_expr: sum
-          | shift_expr "<<" sum -> lshift
-          | shift_expr ">>" sum -> rshift
+comparison: sum
+          | comparison ">" sum -> gt
+          | comparison ">=" sum -> gte
+          | comparison "<" sum -> lt
+          | comparison "<=" sum -> lte
 
 sum: term
    | sum "+" term  -> add

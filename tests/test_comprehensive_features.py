@@ -39,9 +39,6 @@ class TestComprehensiveOperators:
             ("a & b", "logical AND"),  # only for numexpr
             ("a | b", "logical OR"),  # only for numexpr
             ("~a", "logical NOT"),  # only for numexpr
-            # Shift operators (numexpr)
-            ("a<<b", "left shift"),
-            ("a>>b", "right shift"),
             # Unary operators
             ("-a", "unary minus"),
             ("+a", "unary plus"),
