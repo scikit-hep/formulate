@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from ordered_set import OrderedSet
 
 import formulate
+from formulate import from_numexpr, from_root
 
 
 class TestComprehensiveOperators:
@@ -508,3 +510,48 @@ def test_variables_property():
     for expr, variables in test_cases:
         ast = formulate.from_numexpr(expr)
         assert frozenset(variables) == ast.variables
+
+
+def test_get_variables():
+    assert from_root("pi").variables == OrderedSet()
+    assert from_numexpr("2").variables == OrderedSet()
+    assert from_numexpr("2e-3").variables == OrderedSet()
+    assert from_numexpr("A").variables == OrderedSet(["A"])
+    assert from_numexpr("A + A").variables == OrderedSet(["A"])
+    assert from_numexpr("A + B").variables == OrderedSet(["A", "B"])
+    assert from_numexpr("A + A*A - 3e7").variables == OrderedSet(["A"])
+    assert from_numexpr("arctan2(A, A)").variables == OrderedSet(["A"])
+    assert from_numexpr("arctan2(A, B)").variables == OrderedSet(["A", "B"])
+    assert from_root("arctan2(A, pi)").variables == OrderedSet(["A"])
+    assert from_numexpr("arctan2(arctan2(A, B), C)").variables == OrderedSet(
+        ["A", "B", "C"]
+    )
+    assert from_root("mat[1][a]").variables == OrderedSet(["mat", "a"])
+
+
+def test_named_constants():
+    assert from_root("pi").named_constants == OrderedSet(["pi"])
+    assert from_numexpr("2").named_constants == OrderedSet()
+    assert from_numexpr("2e-3").named_constants == OrderedSet()
+    assert from_numexpr("A").named_constants == OrderedSet()
+    assert from_numexpr("A + A").named_constants == OrderedSet()
+    assert from_numexpr("A + B").named_constants == OrderedSet()
+    assert from_numexpr("A + A*A - 3e7").named_constants == OrderedSet()
+    assert from_numexpr("arctan2(A, A)").named_constants == OrderedSet()
+    assert from_numexpr("arctan2(A, B)").named_constants == OrderedSet()
+    assert from_root("arctan2(A, pi)").named_constants == OrderedSet(["pi"])
+    assert from_numexpr("arctan2(arctan2(A, B), C)").named_constants == OrderedSet()
+
+
+def test_unnamed_constants():
+    assert from_root("pi").unnamed_constants == OrderedSet()
+    assert from_numexpr("2").unnamed_constants == OrderedSet([2])
+    assert from_numexpr("2e-3").unnamed_constants == OrderedSet([2e-3])
+    assert from_numexpr("A").unnamed_constants == OrderedSet()
+    assert from_numexpr("A + A").unnamed_constants == OrderedSet()
+    assert from_numexpr("A + B").unnamed_constants == OrderedSet()
+    assert from_numexpr("A + A*A - 3e7").unnamed_constants == OrderedSet([3e7])
+    assert from_numexpr("arctan2(A, A)").unnamed_constants == OrderedSet()
+    assert from_numexpr("arctan2(A, B)").unnamed_constants == OrderedSet()
+    assert from_root("arctan2(A, pi)").unnamed_constants == OrderedSet()
+    assert from_numexpr("arctan2(arctan2(A, B), C)").unnamed_constants == OrderedSet()

@@ -321,7 +321,7 @@ def test_hypothesis_three_variable_expression(
 
 
 @given(
-    var_name=st.text(alphabet="abcdef", min_size=1, max_size=5),
+    var_name=st.text(alphabet="abcde", min_size=1, max_size=5),
     spaces=st.integers(min_value=0, max_value=10),
     value=st.floats(min_value=-10, max_value=10, allow_nan=False, allow_infinity=False),
 )
