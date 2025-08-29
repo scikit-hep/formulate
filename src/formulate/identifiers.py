@@ -356,6 +356,9 @@ CONSTANTS_ALIASES = {
     "negative_infinity": "neginf",
     "quietnan": "nan",
     "signalingnan": "nan",
+    "loge": "log10e",
+    "degtorad": "deg2rad",
+    "radtodeg": "rad2deg",
 }
 
 CONSTANTS_FUNCTION_ALIASES = {

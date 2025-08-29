@@ -5,6 +5,8 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 
+from ordered_set import OrderedSet
+
 from .identifiers import (
     CONSTANTS,
     NUMEXPR_CONSTANTS,
@@ -42,8 +44,20 @@ class AST(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def variables(self) -> frozenset[str]:
+    def variables(self) -> OrderedSet[str]:
         msg = "variables() not implemented, subclass must implement it"
+        raise NotImplementedError(msg)
+
+    @property
+    @abstractmethod
+    def named_constants(self) -> OrderedSet[str]:
+        msg = "named_constants() not implemented, subclass must implement it"
+        raise NotImplementedError(msg)
+
+    @property
+    @abstractmethod
+    def unnamed_constants(self) -> OrderedSet[str]:
+        msg = "unnamed_constants() not implemented, subclass must implement it"
         raise NotImplementedError(msg)
 
 
@@ -64,8 +78,16 @@ class Literal(AST):  # Literal: value that appears in the program text
         return repr(self.value)
 
     @property
-    def variables(self) -> frozenset[str]:
-        return frozenset()
+    def variables(self) -> OrderedSet[str]:
+        return OrderedSet()
+
+    @property
+    def named_constants(self) -> OrderedSet[str]:
+        return OrderedSet()
+
+    @property
+    def unnamed_constants(self) -> OrderedSet[str]:
+        return OrderedSet([self.value])
 
 
 @dataclass
@@ -103,8 +125,16 @@ class Symbol(AST):  # Symbol: value referenced by name
         return self.name
 
     @property
-    def variables(self) -> frozenset[str]:
-        return frozenset() if self.name in CONSTANTS else frozenset((self.name,))
+    def variables(self) -> OrderedSet[str]:
+        return OrderedSet() if self.name in CONSTANTS else OrderedSet([self.name])
+
+    @property
+    def named_constants(self) -> OrderedSet[str]:
+        return OrderedSet() if self.name not in CONSTANTS else OrderedSet([self.name])
+
+    @property
+    def unnamed_constants(self) -> OrderedSet[str]:
+        return OrderedSet()
 
 
 @dataclass
@@ -137,8 +167,16 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return f"({symbol}{self.operand.to_python()})"
 
     @property
-    def variables(self) -> frozenset[str]:
+    def variables(self) -> OrderedSet[str]:
         return self.operand.variables
+
+    @property
+    def named_constants(self) -> OrderedSet[str]:
+        return self.operand.named_constants
+
+    @property
+    def unnamed_constants(self) -> OrderedSet[str]:
+        return self.operand.unnamed_constants
 
 
 @dataclass
@@ -178,8 +216,16 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         return out
 
     @property
-    def variables(self) -> frozenset[str]:
+    def variables(self) -> OrderedSet[str]:
         return self.left.variables | self.right.variables
+
+    @property
+    def named_constants(self) -> OrderedSet[str]:
+        return self.left.named_constants | self.right.named_constants
+
+    @property
+    def unnamed_constants(self) -> OrderedSet[str]:
+        return self.left.unnamed_constants | self.right.unnamed_constants
 
 
 @dataclass
@@ -203,8 +249,18 @@ class Matrix(AST):  # Matrix: A matrix call
         return f"{self.var.to_python()}[{index}]"
 
     @property
-    def variables(self) -> frozenset[str]:
-        return frozenset()
+    def variables(self) -> OrderedSet[str]:
+        return OrderedSet.union(
+            self.var.variables, *[ind.variables for ind in self.indices]
+        )
+
+    @property
+    def named_constants(self) -> OrderedSet[str]:
+        return OrderedSet.union(*[ind.named_constants for ind in self.indices])
+
+    @property
+    def unnamed_constants(self) -> OrderedSet[str]:
+        return OrderedSet.union(*[ind.unnamed_constants for ind in self.indices])
 
 
 @dataclass
@@ -243,5 +299,13 @@ class Call(AST):  # Call: evaluate a function on arguments
         return f"np.{function_str}({arguments})"
 
     @property
-    def variables(self) -> frozenset[str]:
-        return frozenset.union(*[arg.variables for arg in self.arguments])
+    def variables(self) -> OrderedSet[str]:
+        return OrderedSet.union(*[arg.variables for arg in self.arguments])
+
+    @property
+    def named_constants(self) -> OrderedSet[str]:
+        return OrderedSet.union(*[arg.named_constants for arg in self.arguments])
+
+    @property
+    def unnamed_constants(self) -> OrderedSet[str]:
+        return OrderedSet.union(*[arg.unnamed_constants for arg in self.arguments])
