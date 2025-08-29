@@ -27,21 +27,16 @@ jobs:
     name: Tests for Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: mamba-org/setup-micromamba@v2
         with:
-          mamba-version: "*"
-          channels: conda-forge,defaults
-          channel-priority: true
-          python-version: ${{ matrix.python-version }}
-          activate-environment: formulate-env
-
-      # - name: Install ROOT
-      #   run: |
-      #     mamba install root -y
+          init-shell: bash
+          environment-name: formulate-env
+          create-args: >-
+            python=${{ matrix.python-version }}
 
       - name: Install test dependencies
         run: |
-          mamba install coveralls uv pytest-cov root -y
+          conda install coveralls uv pytest-cov root -y
           uv pip install --system .[dev,test]
 
       - name: Test with pytest
