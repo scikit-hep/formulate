@@ -352,6 +352,10 @@ CONSTANTS_ALIASES = {
     "hplanck": "h_planck",
     "h_bar": "hbar",
     "h_bar_c": "hbarc",
+    "infinity": "inf",
+    "negative_infinity": "neginf",
+    "quietnan": "nan",
+    "signalingnan": "nan",
 }
 
 CONSTANTS_FUNCTION_ALIASES = {

@@ -104,6 +104,8 @@ def toast(ptnode: lark.Tree) -> AST.AST:
 
         case lark.Tree("symbol", children):
             var_name = _get_var_name(children[0])
+            if var_name in ("True", "False"):
+                var_name = var_name.lower()  # This makes it not a keyword
             if not var_name.isidentifier() or iskeyword(var_name):
                 msg = f'The symbol "{var_name}" is not a valid symbol.'
                 raise SyntaxError(msg)
