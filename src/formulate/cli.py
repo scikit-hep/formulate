@@ -40,11 +40,11 @@ def parse_args(args: list[str]) -> str:
     elif parsed_args.to_python:
         result = expression.to_python()
     elif parsed_args.variables:
-        result = "\n".join(sorted(expression.variables))
+        result = "\n".join(expression.variables)
     elif parsed_args.named_constants:
-        result = "\n".join(sorted(expression.named_constants))
+        result = "\n".join(expression.named_constants)
     elif parsed_args.unnamed_constants:
-        result = "\n".join(sorted(expression.unnamed_constants))
+        result = "\n".join(map(str, expression.unnamed_constants))
     else:
         msg = "This should never happen. Please report this issue to the Formulate developers."
         raise NotImplementedError(msg)
