@@ -75,3 +75,28 @@ Similarly, when starting with a `numexpr` style expression:
 >>> my_selection.to_numexpr()
 '((X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10)))'
 ```
+
+### CLI
+
+The package also provides a command-line interface for converting expressions between different styles. To use it, simply run the `formulate` command followed by the input expression and the desired output.
+
+```bash
+$ formulate --from-root '(A && B) || TMath::Sqrt(A)' --to-numexpr
+((A & B) | sqrt(A))
+
+$ formulate --from-numexpr '(A & B) | sqrt(A)' --to-root
+((A && B) || TMath::Sqrt(A))
+
+$ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --variables
+A
+B
+
+$ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --named-constants
+exp1
+pi
+
+$ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --unnamed-constants
+1.23
+1.2
+5
+```

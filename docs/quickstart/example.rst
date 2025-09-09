@@ -92,3 +92,29 @@ With ROOT (pseudo-code, as actual implementation depends on your ROOT setup):
 
     # Now you can use the eventList to process selected events
     # ...
+
+CLI Usage
+--------------------------------------------------------------
+
+The package also provides a command-line interface for converting expressions between different styles. To use it, simply run the ``formulate`` command followed by the input expression and the desired output.
+
+.. code-block:: bash
+
+    $ formulate --from-root '(A && B) || TMath::Sqrt(A)' --to-numexpr
+    ((A & B) | sqrt(A))
+
+    $ formulate --from-numexpr '(A & B) | sqrt(A)' --to-root
+    ((A && B) || TMath::Sqrt(A))
+
+    $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --variables
+    A
+    B
+
+    $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --named-constants
+    exp1
+    pi
+
+    $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --unnamed-constants
+    1.23
+    1.2
+    5
