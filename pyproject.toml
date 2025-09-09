@@ -66,6 +66,9 @@ Homepage = "https://github.com/Scikit-HEP/formulate"
 Discussions = "https://github.com/Scikit-HEP/formulate/discussions"
 Changelog = "https://github.com/Scikit-HEP/formulate/releases"
 
+[project.scripts]
+formulate = "formulate.cli:main"
+
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/formulate/_version.py"
