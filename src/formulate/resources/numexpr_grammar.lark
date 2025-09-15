@@ -53,7 +53,7 @@ atom: "(" expr ")"
 func_name: NAME
 trailer: "(" [arglist] ")"
 arglist: expr ("," expr)* [","]
-NAME: /[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*/
+NAME: /(?!\d)\w+(\.\w+)*/
 %import common.NUMBER
 %import common.WS
 %ignore WS

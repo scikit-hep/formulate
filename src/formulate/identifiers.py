@@ -341,17 +341,25 @@ CONSTANTS = {
 }
 
 CONSTANTS_ALIASES = {
+    "π": "pi",
     "oneoverpi": "invpi",
     "twopi": "tau",
+    "τ": "tau",
+    # This is U+212F, not e.
+    "ℯ": "exp1",  # noqa: RUF001
     "e_number": "exp1",
+    "e_euler": "exp1",
     "e_num": "exp1",
     "e_plus": "eplus",
     "e_minus": "eminus",
     "kboltzmann": "k_boltzmann",
     "clight": "c_light",
     "hplanck": "h_planck",
+    "ℏ": "hbar",
     "h_bar": "hbar",
+    "ℏc": "hbarc",
     "h_bar_c": "hbarc",
+    # ∞ is not a valid identifier, so it was not included here
     "infinity": "inf",
     "negative_infinity": "neginf",
     "quietnan": "nan",

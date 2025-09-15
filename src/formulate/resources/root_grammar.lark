@@ -55,7 +55,7 @@ func_name: NAME | NAME "::" func_name
 var_name: NAME
 trailer: "(" [arglist] ")"
 arglist: expression ("," expression)* [","]
-NAME: /[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*\$?/
+NAME: /(?!\d)\w+(\.\w+)*\$?/
 %import common.NUMBER
 %import common.WS
 %ignore WS
