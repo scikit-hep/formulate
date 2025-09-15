@@ -50,7 +50,7 @@ def _get_function_name(node: lark.Tree) -> str:
             raise ValueError(msg)
         name = pieces[1]
     else:
-        msg = f'Unknown function "{pieces[0]}"'
+        msg = f'Unknown function or constant "{full_name}"'
         raise ValueError(msg)
     # Now we normalize the name and make sure it is supported
     name = name.lower()
