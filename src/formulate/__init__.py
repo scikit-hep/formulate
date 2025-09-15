@@ -6,10 +6,11 @@ from typing import Any
 
 import lark
 
-from . import AST, toast
+from . import AST, exceptions, toast
 from ._version import __version__
+from .exceptions import ParseError
 
-__all__ = ["__version__", "from_numexpr", "from_root"]
+__all__ = ["ParseError", "__version__", "from_numexpr", "from_root"]
 
 
 def _get_parser(parser_type: str) -> lark.lark.Lark:
@@ -29,13 +30,21 @@ _root_parser = _get_parser("root")
 
 def from_root(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
     """Evaluate ROOT expressions."""
-    ptree = _root_parser.parse(exp)
+    try:
+        ptree = _root_parser.parse(exp)
+    except lark.LarkError as e:
+        new_e = exceptions.debug_root(exp, e)
+        raise new_e from e
     return toast.toast(ptree)  # type: ignore[no-any-return]
 
 
 def from_numexpr(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
     """Evaluate numexpr expressions."""
-    ptree = _numexpr_parser.parse(exp)
+    try:
+        ptree = _numexpr_parser.parse(exp)
+    except lark.LarkError as e:
+        new_e = exceptions.debug_numexpr(exp, e)
+        raise new_e from e
     return toast.toast(ptree)  # type: ignore[no-any-return]
 
 

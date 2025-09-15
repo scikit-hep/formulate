@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import lark
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
@@ -116,10 +115,10 @@ def test_unbalanced_parentheses(open_parens, close_parens):
     expr = "a" + open_parens + "+b" + close_parens
 
     # The expression should be rejected
-    with pytest.raises(lark.ParseError):
+    with pytest.raises(formulate.ParseError):
         formulate.from_root(expr)
 
-    with pytest.raises(lark.ParseError):
+    with pytest.raises(formulate.ParseError):
         formulate.from_numexpr(expr)
 
 
