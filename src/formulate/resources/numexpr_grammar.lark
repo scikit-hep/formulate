@@ -46,14 +46,14 @@ pow: atom
    | atom "**" factor -> pow
 
 atom: "(" expr ")"
-    | CNAME -> symbol
+    | NAME -> symbol
     | NUMBER -> literal
     | func_name trailer  -> func
 
-func_name: CNAME
+func_name: NAME
 trailer: "(" [arglist] ")"
 arglist: expr ("," expr)* [","]
-%import common.CNAME
+NAME: /[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*/
 %import common.NUMBER
 %import common.WS
 %ignore WS

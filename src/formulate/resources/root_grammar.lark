@@ -52,10 +52,10 @@ atom: "(" expression ")"
     | func_name trailer  -> func
 
 func_name: NAME | NAME "::" func_name
-var_name: NAME | NAME "." var_name
+var_name: NAME
 trailer: "(" [arglist] ")"
 arglist: expression ("," expression)* [","]
-NAME: /[A-Za-z_][A-Za-z0-9_]*\$?/
+NAME: /[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*\$?/
 %import common.NUMBER
 %import common.WS
 %ignore WS

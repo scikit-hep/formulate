@@ -505,6 +505,7 @@ def test_variables_property():
             ["var1", "var2", "var_with_underscore"],
         ),
         ("sin(x) * exp(y) * (z * 21 - exp1 - w - 1.0)", ["x", "y", "z", "w"]),
+        ("tree.branch + other_variable", ["tree.branch", "other_variable"]),
     ]
 
     for expr, variables in test_cases:
@@ -527,6 +528,8 @@ def test_get_variables():
         ["A", "B", "C"]
     )
     assert from_root("mat[1][a]").variables == OrderedSet(["mat", "a"])
+    assert from_numexpr("A.B * A.C").variables == OrderedSet(["A.B", "A.C"])
+    assert from_root("A.B * A.C").variables == OrderedSet(["A.B", "A.C"])
 
 
 def test_named_constants():
