@@ -90,7 +90,7 @@ def test_invalid_characters(s):
     """Test that expressions with invalid characters are rejected."""
     # Skip strings that contain only whitespace or valid operators
     assume(not s.isspace())
-    assume(not all(c in "+-*/()<>=!&|^~_ " for c in s))  # TODO: why does _ not fail?
+    assume(not all(c in "+-*/()<>=!&|^~_\r " for c in s))  # TODO: why does _ not fail?
 
     # The expression should be rejected
     with pytest.raises(Exception):

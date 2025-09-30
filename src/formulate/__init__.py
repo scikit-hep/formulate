@@ -46,8 +46,3 @@ def from_numexpr(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
         new_e = exceptions.debug_numexpr(exp, e)
         raise new_e from e
     return toast.toast(ptree)  # type: ignore[no-any-return]
-
-
-# This was added to Lark in https://github.com/lark-parser/lark/pull/1521
-# Remove when there is a new release
-lark.Tree.__match_args__ = ("data", "children")  # type: ignore[misc]
