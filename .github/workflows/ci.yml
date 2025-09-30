@@ -39,7 +39,8 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          conda install coveralls uv pytest-cov root -y
+          # Fix when root is available for Python 3.14
+          conda install coveralls uv pytest-cov ${{ matrix.python-version == '3.14' && ' ' || 'root' }} -y
           uv pip install --system .[dev,test]
 
       - name: Test with pytest
