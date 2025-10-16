@@ -121,6 +121,7 @@ repos:
       - id: codespell
         additional_dependencies:
           - tomli; python_version<'3.11'
+        args: ["-L", "gaus"]
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: "v3.6.2"

@@ -54,4 +54,5 @@ To verify that Formulate is installed correctly, you can run:
 .. jupyter-execute::
 
     import formulate
+
     print(formulate.__version__)

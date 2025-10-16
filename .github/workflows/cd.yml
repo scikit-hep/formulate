@@ -24,11 +24,9 @@ jobs:
 
       - uses: hynek/build-and-inspect-python-package@v2
 
-
-
   deploy:
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: [ dist ]
+    needs: [dist]
     runs-on: ubuntu-latest
     environment:
       name: pypi
