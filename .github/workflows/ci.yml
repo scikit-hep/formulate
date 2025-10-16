@@ -12,7 +12,8 @@ on:
 
 jobs:
   unittests:
-    runs-on: ubuntu-latest
+    name: Tests for Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
     defaults:
       run:
         shell: "bash -l {0}"
@@ -25,9 +26,17 @@ jobs:
           - '3.12'
           - '3.13'
           - '3.14'
-    name: Tests for Python ${{ matrix.python-version }}
+        runs-on:
+          - ubuntu-latest
+        include:
+          - python-version: '3.10'
+            runs-on: macOS-13
+          - python-version: '3.10'
+            runs-on: macOS-14
+          - python-version: '3.10'
+            runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: mamba-org/setup-micromamba@v2
         with:
           init-shell: bash
@@ -37,12 +46,19 @@ jobs:
             conda-forge/label/python_rc::_python_rc
             python=${{ matrix.python-version }}
 
+      - name: Install user dependencies
+        run: |
+          uv pip install .
+
+      - name: Test import to check for dependencies
+        run: python -c "import formulate; from formulate import *"
+
       - name: Install test dependencies
         run: |
           # Fix when root is available for Python 3.14
           conda install coveralls uv pytest-cov ${{ matrix.python-version == '3.14' && ' ' || 'root' }} -y
-          uv pip install --system .[dev,test]
+          uv pip install -U .[dev,test] pytest-xdist
 
       - name: Test with pytest
         run: |
-          pytest --cov=formulate --verbose
+          pytest -n auto --cov=formulate --verbose
