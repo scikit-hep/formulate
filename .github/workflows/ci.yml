@@ -44,7 +44,7 @@ jobs:
           create-args: >-
             --strict-channel-priority
             conda-forge/label/python_rc::_python_rc
-            python=${{ matrix.python-version }} uv
+            python=${{ matrix.python-version }} uv root
 
       - name: Install user dependencies
         run: |
@@ -57,8 +57,8 @@ jobs:
         run: |
           # Fix when root is available for Python 3.14
           conda install coveralls uv pytest-cov ${{ matrix.python-version == '3.14' && ' ' || 'root' }} -y
-          uv pip install -U .[dev,test] pytest-xdist
+          uv pip install -U .[dev,test]
 
       - name: Test with pytest
         run: |
-          pytest -n auto --cov=formulate --verbose
+          pytest --cov=formulate --verbose
