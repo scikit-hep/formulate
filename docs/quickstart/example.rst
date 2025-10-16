@@ -22,19 +22,18 @@ Here's an example of converting a ROOT expression to numexpr:
 
     import formulate
 
-    # TODO: this fails?
     # Create an expression object from a ROOT expression
-    momentum = formulate.from_root('TMath::Sqrt(X_PX**2 + X_PY**2 + X_PZ**2)')
+    momentum = formulate.from_root("TMath::Sqrt(X_PX**2 + X_PY**2 + X_PZ**2)")
 
     # Convert to numexpr format
     numexpr_expression = momentum.to_numexpr()
     print(numexpr_expression)
-    # Output: 'sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2)))'
+    # Output: "sqrt((((X_PX ** 2) + (X_PY ** 2)) + (X_PZ ** 2)))"
 
     # You can also convert back to ROOT format
     root_expression = momentum.to_root()
     print(root_expression)
-    # Output: 'TMath::Sqrt(((X_PX ** 2) + (X_PY ** 2) + (X_PZ ** 2)))'
+    # Output: "TMath::Sqrt((((X_PX ** 2) + (X_PY ** 2)) + (X_PZ ** 2)))"
 
 Converting from numexpr to ROOT
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -43,21 +42,20 @@ Similarly, you can convert from numexpr to ROOT:
 
 .. code-block:: python
 
+    import formulate
 
-
-    # TODO: this fails?
     # Create an expression object from a numexpr expression
-    selection = formulate.from_numexpr('X_PT > 5 & (Mu_NHits > 3 | Mu_PT > 10)')
+    selection = formulate.from_numexpr("(X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10))")
 
     # Convert to ROOT format
     root_expression = selection.to_root()
     print(root_expression)
-    # Output: '(X_PT > 5) && ((Mu_NHits > 3) || (Mu_PT > 10))'
+    # Output: "(X_PT > 5) && ((Mu_NHits > 3) || (Mu_PT > 10)))"
 
     # You can also convert back to numexpr format
     numexpr_expression = selection.to_numexpr()
     print(numexpr_expression)
-    # Output: '(X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10))'
+    # Output: "((X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10)))"
 
 Using the Converted Expressions
 -------------------------------------------------------------------------------------------------------------------------------------------
@@ -70,6 +68,7 @@ With numexpr:
 
     import numpy as np
     import numexpr as ne
+    import formulate
 
     # Create some sample data
     data = {
@@ -79,7 +78,7 @@ With numexpr:
     }
 
     # Use the converted numexpr expression
-    selection = formulate.from_numexpr('X_PT > 5')  # TODO: remove, take from above
+    selection = formulate.from_numexpr("(X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10))")
     result = ne.evaluate(selection.to_numexpr(), local_dict=data)
     print(result)
     # Output: [False  True  True  True]
@@ -93,3 +92,29 @@ With ROOT (pseudo-code, as actual implementation depends on your ROOT setup):
 
     # Now you can use the eventList to process selected events
     # ...
+
+CLI Usage
+--------------------------------------------------------------
+
+The package also provides a command-line interface for converting expressions between different styles. To use it, simply run the ``formulate`` command followed by the input expression and the desired output.
+
+.. code-block:: bash
+
+    $ formulate --from-root '(A && B) || TMath::Sqrt(A)' --to-numexpr
+    ((A & B) | sqrt(A))
+
+    $ formulate --from-numexpr '(A & B) | sqrt(A)' --to-root
+    ((A && B) || TMath::Sqrt(A))
+
+    $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --variables
+    A
+    B
+
+    $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --named-constants
+    exp1
+    pi
+
+    $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --unnamed-constants
+    1.23
+    1.2
+    5

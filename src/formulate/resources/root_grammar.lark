@@ -1,0 +1,61 @@
+# Operator precedence is taken from https://en.cppreference.com/w/cpp/language/operator_precedence.html
+# TTreeFormula/TFormula does not explicitly list precedence, so we assume it follows C++ precedence rules.
+# The bitwise operators &, |, ~ are not supported, and the bitwise operator ^ is interpreted as exponentiation.
+# Shift operators are also not supported.
+
+start: expression
+
+expression: disjunction
+          | expression ":" disjunction -> multi_out
+
+disjunction: conjunction
+           | disjunction "||" conjunction -> or
+
+conjunction: equality
+           | conjunction "&&" equality -> and
+
+equality: comparison
+        | equality "==" comparison -> eq
+        | equality ("!=" ) comparison -> neq
+
+comparison: sum
+          | comparison ">" sum -> gt
+          | comparison ">=" sum -> gte
+          | comparison "<" sum -> lt
+          | comparison "<=" sum -> lte
+
+sum: term
+   | sum "+" term  -> add
+   | sum "-" term  -> sub
+
+term: factor
+    | term "*" factor -> mul
+    | term "/" factor -> div
+    | term "%" factor -> mod
+
+factor: pow
+      | factor matpos+ -> matr
+      | "+" factor -> pos
+      | "-" factor -> neg
+      | "!" factor -> inv
+
+# Note that this is the only operation that groups from the right.
+pow: atom
+   | atom "**" factor -> pow
+   | atom "^" factor -> pow
+
+matpos: "[" sum "]"
+
+atom: "(" expression ")"
+    | var_name -> symbol
+    | NUMBER -> literal
+    | func_name trailer  -> func
+
+func_name: NAME | NAME "::" func_name
+var_name: NAME
+trailer: "(" [arglist] ")"
+arglist: expression ("," expression)* [","]
+NAME: /(?!\d)\w+(\.\w+)*\$?/
+%import common.NUMBER
+%import common.WS
+%ignore WS

@@ -1,6 +1,7 @@
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
 [project]
 name = "formulate"
 authors = [
@@ -25,20 +26,23 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
     "Typing :: Typed",
 ]
 dynamic = ["version"]
 dependencies = [
-    "typing_extensions >=3.10",
+    "hepunits",
+    "lark>=1.3",
+    "ordered-set",
 ]
 
 [project.optional-dependencies]
 test = [
-    "pytest >=6",
-    "pytest-cov >=3",
-    "lark",
+    "pytest>=6",
+    "pytest-cov>=3",
     "hypothesis",
+    "numpy",
 ]
 
 docs = [
@@ -62,6 +66,9 @@ Homepage = "https://github.com/Scikit-HEP/formulate"
 "Bug Tracker" = "https://github.com/Scikit-HEP/formulate/issues"
 Discussions = "https://github.com/Scikit-HEP/formulate/discussions"
 Changelog = "https://github.com/Scikit-HEP/formulate/releases"
+
+[project.scripts]
+formulate = "formulate.cli:main"
 
 [tool.hatch]
 version.source = "vcs"
@@ -92,8 +99,15 @@ show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 
+[[tool.mypy.overrides]]
+module = [ "hepunits.*", "lark" , "ordered_set"]
+ignore_missing_imports = true
 
 [tool.ruff]
+target-version = "py310"
+src = ["src"]
+
+[tool.ruff.lint]
 select = [
     "E", "F", "W", # flake8
     "B", "B904", # flake8-bugbear
@@ -122,11 +136,8 @@ select = [
 extend-ignore = [
     "PLR", # Design related pylint codes
     "E501", # Line too long
-    "PT004", # Use underscore for non-returning fixture (use usefixture instead)
 ]
-target-version = "py310"
 typing-modules = ["formulate._compat.typing"]
-src = ["src"]
 unfixable = [
     "T20", # Removes print statements
     "F841", # Removes unused variables
@@ -135,8 +146,8 @@ exclude = []
 flake8-unused-arguments.ignore-variadic-names = true
 isort.required-imports = ["from __future__ import annotations"]
 
-[tool.ruff.per-file-ignores]
-"tests/**" = ["T20"]
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["T20", "B017", "PT011", "E722", "SIM105", "UP038", "PT006", "PT018"] #TODO: some of these should be fixed
 "noxfile.py" = ["T20"]
 
 

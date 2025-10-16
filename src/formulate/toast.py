@@ -2,207 +2,124 @@
 
 from __future__ import annotations
 
-from . import AST, matching_tree
+import typing
+from ast import literal_eval
+from keyword import iskeyword
 
-UNARY_OP = {"pos", "neg", "binv", "linv"}
+import lark
 
-BINARY_OP = {
-    "add",
-    "sub",
-    "div",
-    "mul",
-    "lt",
-    "gt",
-    "lte",
-    "gte",
-    "eq",
-    "neq",
-    "band",
-    "bor",
-    "bxor",
-    "linv",
-    "land",
-    "lor",
-    "pow",
-    "mod",
-}
-val_to_sign = {
-    "add": "+",
-    "sub": "-",
-    "div": "/",
-    "mul": "*",
-    "lt": "<",
-    "gt": ">",
-    "lte": "<=",
-    "gte": ">=",
-    "eq": "==",
-    "neq": "!=",
-    "band": "&",
-    "bor": "|",
-    "bxor": "^",
-    "linv": "!",
-    "land": "&&",
-    "lor": "||",
-    "neg": "-",
-    "pos": "+",
-    "binv": "~",
-    "linv": "!",
-    "pow": "**",
-    "mod": "%",
-    "multi_out": ":",
-}
-
-FUNC_MAPPING = {
-    "MATH::PI": "pi",  # np.pi
-    "PI": "pi",
-    "TMATH::E": "e",
-    "TMATH::INFINITY": "inf",
-    "TMATH::QUIETNAN": "nan",
-    "TMATH::SQRT2": "sqrt2",
-    "SQRT2": "sqrt2",
-    "SQRT": "sqrt",
-    "TMATH::PIOVER2": "piby2",
-    "TMATH::PIOVER4": "piby4",
-    "TMATH::TWOPI": "2pi",
-    "LN10": "ln10",
-    "TMATH::LN10": "ln10",
-    "TMATH::LOGE": "loge",
-    "TMATH::LOG": "log",
-    "LOG": "log",
-    "TMATH::LOG2": "log2",
-    "EXP": "exp",
-    "TMATH::EXP": "exp",
-    "TMATH::DEGTORAD": "degtorad",
-    "SIN": "sin",
-    "TMATH::SIN": "sin",
-    "ARCSIN": "asin",
-    "TMATH::ASIN": "asin",
-    "COS": "cos",
-    "TMATH::COS": "cos",
-    "ARCCOS": "acos",
-    "TMATH::ACOS": "acos",
-    "TAN": "tan",
-    "TMATH::TAN": "tan",
-    "TMATH::ATAN": "atan",
-    "ARCTAN2": "atan2",
-    "TMATH::ATAN2": "atan2",
-    "TMATH::COSH": "cosh",
-    "TMATH::ACOSH": "acosh",
-    "TMATH::SINH": "sinh",
-    "TMATH::ASINH": "asinh",
-    "TMATH::TANH": "tanh",
-    "TMATH::ATANH": "atanh",
-    "TMATH::CEIL": "ceil",
-    "TMATH::ABS": "abs",
-    "TMATH::EVEN": "even",
-    "TMATH::FACTORIAL": "factorial",
-    "TMATH::FLOOR": "floor",
-    "LENGTH$": "no_of_entries",  # ak.num, axis = 1
-    "ITERATION$": "current_iteration",
-    "SUM$": "sum",
-    "MIN$": "min",
-    "MAX$": "max",
-    "MINIF$": "min_if",
-    "MAXIF$": "max_if",
-    "ALT$": "alternate",
-}
+from . import AST
+from .identifiers import (
+    BINARY_OPERATORS,
+    CONSTANTS,
+    CONSTANTS_ALIASES,
+    CONSTANTS_FUNCTION_ALIASES,
+    FUNCTION_ALIASES,
+    FUNCTIONS,
+    NAMESPACES,
+    UNARY_OPERATORS,
+)
 
 
-def _get_func_names(func_names):
+def _get_var_name(node: lark.Tree | lark.Token) -> str:
+    if isinstance(node, lark.Tree):
+        return _get_var_name(node.children[0])
+    var_name = str(node)
+    return CONSTANTS_ALIASES.get(var_name, var_name)
+
+
+def _get_raw_function_name(func_names: lark.Tree, invert: bool = True) -> list[str]:
     children = []
     if len(func_names.children) > 1:
-        children.extend(_get_func_names(func_names.children[1]))
+        children.extend(_get_raw_function_name(func_names.children[1], False))
     children.append(func_names.children[0])
+    if invert:
+        children.reverse()
     return children
 
 
-def toast(ptnode: matching_tree.ptnode, nxp: bool):
+def _get_function_name(node: lark.Tree) -> str:
+    raw_name = _get_raw_function_name(node)
+    full_name = "::".join(raw_name)
+    pieces = full_name.replace(".", "::").split("::")
+    if len(pieces) == 1:
+        name = pieces[0]
+    elif len(pieces) == 2:
+        if pieces[0].lower() not in NAMESPACES:
+            msg = f'Unknown namespace "{pieces[0]}"'
+            raise ValueError(msg)
+        name = pieces[1]
+    else:
+        msg = f'Unknown function or constant "{full_name}"'
+        raise ValueError(msg)
+    # Now we normalize the name and make sure it is supported
+    name = name.lower()
+    # strip $ from ROOT keywords
+    if name.endswith("$"):
+        name = name[:-1]
+    name = FUNCTION_ALIASES.get(name, name)
+    name = CONSTANTS_FUNCTION_ALIASES.get(name, name)
+    name = CONSTANTS_ALIASES.get(name, name)
+    if name not in FUNCTIONS and name not in CONSTANTS:
+        msg = f'Unknown function or constant "{name}"'
+        raise ValueError(msg)
+    return name
+
+
+@typing.no_type_check  # TODO: Figure out how to make mypy happy
+def toast(ptnode: lark.Tree) -> AST.AST:
     match ptnode:
-        case matching_tree.ptnode(operator, (left, right)) if operator in BINARY_OP:
-            arguments = [toast(left, nxp), toast(right, nxp)]
+        case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:
+            left_exp, right_exp = toast(left), toast(right)
             return AST.BinaryOperator(
-                AST.Symbol(val_to_sign[operator], index=arguments[1].index),
-                arguments[0],
-                arguments[1],
-                index=arguments[0].index,
+                operator,
+                left_exp,
+                right_exp,
             )
 
-        case matching_tree.ptnode(operator, operand) if operator in UNARY_OP:
-            argument = toast(operand[0], nxp)
-            return AST.UnaryOperator(
-                AST.Symbol(val_to_sign[operator], index=argument.index), argument
-            )
+        case lark.Tree(operator, operand) if operator in UNARY_OPERATORS:
+            argument = toast(operand[0])
+            return AST.UnaryOperator(operator, argument)
 
-        case matching_tree.ptnode("multi_out", (exp1, exp2)):
-            exp_node1 = toast(exp1, nxp)
-            exp_node2 = toast(exp2, nxp)
-            exps = [exp_node1, exp_node2]
-            if isinstance(exp_node2, AST.Call) and exp_node2.function == ":":
-                del exps[-1]
-                for elem in exp_node2.arguments:
-                    exps.append(elem)
-            return AST.Call(val_to_sign["multi_out"], exps, index=exp_node1.index)
+        case lark.Tree("matr", (array, *indices)):
+            mat = toast(array)
+            ind = [toast(elem.children[0]) for elem in indices]
+            return AST.Matrix(mat, ind)
 
-        case matching_tree.ptnode("matr", (array, *slice)):
-            var = toast(array, nxp)
-            paren = [toast(elem, nxp) for elem in slice]
-            return AST.Matrix(var, paren, index=var.index)
+        case lark.Tree("func", (func_name, trailer)):
+            func_name = _get_function_name(func_name)
 
-        case matching_tree.ptnode("matpos", child):
-            if child[0] is None:
-                return AST.Empty()
-            slice = toast(child[0], nxp)
-            return AST.Slice(slice, index=slice.index)
+            # In case the function is actually a constant
+            if func_name in CONSTANTS:
+                if (
+                    trailer.children[0] is not None
+                    and len(trailer.children[0].children) != 0
+                ):
+                    msg = f'The constant "{func_name}" should not have arguments.'
+                    raise SyntaxError(msg)
+                return AST.Symbol(func_name)
 
-        case matching_tree.ptnode("func", (func_name, trailer)):
-            func_names = _get_func_names(func_name)[::-1]
-            func_arguments = []
+            func_arguments = [toast(elem) for elem in trailer.children[0].children]
+            return AST.Call(func_name, func_arguments)
 
-            try:
-                fname = FUNC_MAPPING["::".join(func_names).upper()]
-            except KeyError:
-                fname = "::".join(func_names)
+        case lark.Tree("symbol", children):
+            var_name = _get_var_name(children[0])
+            if var_name in ("True", "False"):
+                var_name = var_name.lower()  # This makes it not a keyword
+            if any(
+                not part.isidentifier() or iskeyword(part)
+                for part in var_name.split(".")
+            ):
+                msg = f'The symbol "{var_name}" is not a valid symbol.'
+                raise SyntaxError(msg)
+            return AST.Symbol(var_name)
 
-            if trailer.children[0] is None:
-                return AST.Call(
-                    fname,
-                    func_arguments,
-                    index=func_names[0].start_pos,
-                )
+        case lark.Tree("literal", children):
+            return AST.Literal(literal_eval(children[0]))
 
-            func_arguments = [toast(elem, nxp) for elem in trailer.children[0].children]
-
-            funcs = root_to_common(func_names, func_names[0].start_pos)
-
-            return AST.Call(funcs, func_arguments, index=func_names[0].start_pos)
-
-        case matching_tree.ptnode("symbol", children):
-            if not nxp:
-                var_name = _get_func_names(children[0])[0]
-            else:
-                var_name = children[0]
-            temp_symbol = AST.Symbol(str(var_name), index=var_name.start_pos)
-            # if temp_symbol.check_CNAME() is not None:
-            return temp_symbol
-            # else:
-            #     raise SyntaxError("The symbol " + str(children[0]) + " is not a valid symbol.")
-
-        case matching_tree.ptnode("literal", children):
-            return AST.Literal(float(children[0]), index=children[0].start_pos)
-
-        case matching_tree.ptnode(_, (child,)):
-            return toast(child, nxp)
+        case lark.Tree(_, (child,)):
+            return toast(child)
 
         case _:
-            raise TypeError(f"Unknown Node Type: {ptnode!r}.")
-
-
-def root_to_common(funcs: list, index: int):
-    str_funcs = [str(elem) for elem in funcs]
-
-    try:
-        string_rep = FUNC_MAPPING["::".join(str_funcs).upper()]
-    except KeyError:
-        string_rep = "::".join(str_funcs)
-
-    return AST.Symbol(string_rep, index=index)
+            msg = f'Unknown Node Type: "{ptnode!r}".'
+            raise TypeError(msg)

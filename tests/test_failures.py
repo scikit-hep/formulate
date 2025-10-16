@@ -5,10 +5,6 @@ from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 import formulate
-import formulate.numexpr_parser
-
-# Import both ttreeformula_parser and numexpr_parser exceptions
-import formulate.ttreeformula_parser
 
 
 # Test for empty strings
@@ -94,7 +90,7 @@ def test_invalid_characters(s):
     """Test that expressions with invalid characters are rejected."""
     # Skip strings that contain only whitespace or valid operators
     assume(not s.isspace())
-    assume(not all(c in "+-*/()<>=!&|^~_" for c in s))  # TODO: why does _ not fail?
+    assume(not all(c in "+-*/()<>=!&|^~_\r " for c in s))  # TODO: why does _ not fail?
 
     # The expression should be rejected
     with pytest.raises(Exception):
@@ -119,10 +115,10 @@ def test_unbalanced_parentheses(open_parens, close_parens):
     expr = "a" + open_parens + "+b" + close_parens
 
     # The expression should be rejected
-    with pytest.raises(formulate.exceptions.ParseError):
+    with pytest.raises(formulate.ParseError):
         formulate.from_root(expr)
 
-    with pytest.raises(formulate.exceptions.ParseError):
+    with pytest.raises(formulate.ParseError):
         formulate.from_numexpr(expr)
 
 

@@ -31,11 +31,17 @@ Both ROOT and numexpr support the following arithmetic operators:
      - ``x / y``
      - ``x / y``
    * - Power (**)
-     - ``x**2`` or ``TMath::Power(x, 2)``
-     - ``x**2``
+     - ``x**y``, ``x^y``, ``TMath::Power(x, y)``
+     - ``x**y``
    * - Modulo (%)
      - ``x % y``
      - ``x % y``
+   * - Left shift (<<)
+     - ``x << y``
+     - ``x << y``
+   * - Right shift (>>)
+     - ``x >> y``
+     - ``x >> y``
 
 Comparison Operators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -153,28 +159,6 @@ Mathematical Functions
      - ``TMath::Ceil(x)``
      - ``ceil(x)``
 
-Statistical Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. list-table::
-   :header-rows: 1
-   :widths: 30 35 35
-
-   * - Function
-     - ROOT Syntax
-     - numexpr Syntax
-   * - Error Function
-     - ``TMath::Erf(x)``
-     - ``erf(x)``
-   * - Complementary Error Function
-     - ``TMath::Erfc(x)``
-     - ``erfc(x)``
-   * - Gamma Function
-     - ``TMath::Gamma(x)``
-     - Not directly supported
-   * - Log Gamma Function
-     - ``TMath::LnGamma(x)``
-     - Not directly supported
 
 Complex Expressions
 -------------------------------
@@ -189,11 +173,10 @@ Formulate can handle complex expressions combining multiple operators and functi
 .. code-block:: python
 
     # ROOT expression
-    # TODO: doesn't work yet?
     root_expr = "TMath::Sqrt(px**2 + py**2 + pz**2) > 10 && TMath::Abs(eta) < 2.5"
 
     # Equivalent numexpr expression
-    numexpr_expr = "sqrt(px**2 + py**2 + pz**2) > 10 & abs(eta) < 2.5"
+    numexpr_expr = "(sqrt(px**2 + py**2 + pz**2) > 10) & (abs(eta) < 2.5)"
 
     # Convert between them
     from_root = formulate.from_root(root_expr)

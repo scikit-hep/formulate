@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import formulate as m
+import formulate
 
 
 def test_version():
-    assert m.__version__
+    assert formulate.__version__

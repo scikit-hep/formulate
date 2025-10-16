@@ -1,0 +1,59 @@
+# Operator precedence is taken from https://docs.python.org/3/reference/expressions.html#operator-precedence
+# Bitwise operators are interpreted as logical elementwise operators. E.g. "&" is elementwise AND.
+# Shift operators are not supported since they are not supported for floats.
+# Chained comparisons are not supported since they are expanded with `and`, which is not supported in NumExpr.
+# E.g. "a < b < c" becomes "a < b and b < c".
+# See https://docs.python.org/3/reference/expressions.html#comparisons for more details.
+
+start: expr
+
+expr: comp_expr
+
+# Note that chained comparisons are disallowed. See note above.
+comp_expr: or_expr
+         | or_expr ">" or_expr -> gt
+         | or_expr ">=" or_expr -> gte
+         | or_expr "<" or_expr -> lt
+         | or_expr "<=" or_expr -> lte
+         | or_expr "!=" or_expr -> neq
+         | or_expr "==" or_expr -> eq
+
+or_expr: xor_expr
+       | or_expr "|" xor_expr -> or
+
+xor_expr: and_expr
+        | xor_expr "^" and_expr -> xor
+
+and_expr: sum
+        | and_expr "&" sum -> and
+
+sum: term
+   | sum "+" term  -> add
+   | sum "-" term  -> sub
+
+term: factor
+    | term "*" factor -> mul
+    | term "/" factor -> div
+    | term "%" factor -> mod
+
+factor: pow
+      | "+" factor -> pos
+      | "-" factor -> neg
+      | "~" factor -> inv
+
+# Note that this is the only operation that groups from the right.
+pow: atom
+   | atom "**" factor -> pow
+
+atom: "(" expr ")"
+    | NAME -> symbol
+    | NUMBER -> literal
+    | func_name trailer  -> func
+
+func_name: NAME
+trailer: "(" [arglist] ")"
+arglist: expr ("," expr)* [","]
+NAME: /(?!\d)\w+(\.\w+)*/
+%import common.NUMBER
+%import common.WS
+%ignore WS

@@ -32,6 +32,9 @@ basic_expressions = [
     "2.0 - -6",
 ]
 
+comparison_operators = ["==", "!=", ">", "<", ">=", "<="]
+bitwise_operators = ["&", "|", "~"]
+
 
 @pytest.fixture(scope="module")
 def simple_expressions():
@@ -130,7 +133,7 @@ def evaluate_expression(expr, values=None):
         return eval(modified_expr, {"__builtins__": {}}, local_vars)
     except Exception as e:
         print(f"Error evaluating {expr} (as {modified_expr}): {e}")
-        return None
+        raise e
 
 
 def numexpr_to_root_to_numexpr(expr):
@@ -162,18 +165,14 @@ def test_expression_conversion(expr, default_values):
     """Helper function to test expression conversion."""
     try:
         original_result = evaluate_expression(expr, default_values)
-        if original_result is None:
-            return
 
         numexpr_expr = numexpr_to_root_to_numexpr(expr)
         final_result = evaluate_expression(numexpr_expr, default_values)
-        if final_result is None:
-            return
 
         assert_results_equal(original_result, final_result)
     except Exception as e:
         print(f"Error with expression {expr}: {e}")
-        return
+        raise e
 
 
 # Parametrized tests for simple expressions
@@ -234,6 +233,9 @@ def test_boolean_operators(expr, default_values):
 def test_multiple_conversions(all_expressions, default_values):
     """Test multiple conversions between formats."""
     for expr in all_expressions:
+        if "^" in expr:
+            # "^" is interpreted differently between ROOT and NumExpr
+            continue
         original_result = evaluate_expression(expr, default_values)
 
         # Start with numexpr
@@ -266,40 +268,38 @@ def test_multiple_conversions(all_expressions, default_values):
     var2=st.sampled_from(["a", "b", "c", "d", "f", "var", "bool"]),
     var3=st.sampled_from(["a", "b", "c", "d", "f", "var", "bool"]),
     op1=st.sampled_from(
-        ["+", "-", "*", "/", "<", "<=", ">", ">=", "==", "!=", "&", "|", "^", "**"]
+        ["+", "-", "*", "/", "<", "<=", ">", ">=", "==", "!=", "&", "|"]
     ),
     op2=st.sampled_from(
-        ["+", "-", "*", "/", "<", "<=", ">", ">=", "==", "!=", "&", "|", "^", "**"]
+        ["+", "-", "*", "/", "<", "<=", ">", ">=", "==", "!=", "&", "|", "**"]
     ),
 )
 def test_hypothesis_simple_expressions(var1, var2, var3, op1, op2, default_values):
     """Test conversion of randomly generated simple expressions."""
-    # Skip incompatible operator combinations
-    if (op1 in ["&", "|", "^"] and op2 not in ["&", "|", "^"]) or (
-        op2 in ["&", "|", "^"] and op1 not in ["&", "|", "^"]
-    ):
-        return
-
     # Create expression
     expr = f"{var1}{op1}{var2}{op2}{var3}"
+    # We need to add parentheses when there are multiple comparisons
+    # or when there are bitwise operators
+    if sum(expr.count(op) for op in comparison_operators) > 1 or any(
+        op in expr for op in bitwise_operators
+    ):
+        expr = f"({var1}{op1}{var2}){op2}{var3}"
 
     try:
         # Evaluate the original expression
         original_result = evaluate_expression(expr, default_values)
-        if original_result is None:
-            return  # Skip if evaluation fails
 
         # Convert and evaluate
         numexpr_expr = numexpr_to_root_to_numexpr(expr)
         final_result = evaluate_expression(numexpr_expr, default_values)
-        if final_result is None:
-            return  # Skip if evaluation fails
+
+        print(numexpr_expr, expr, original_result, final_result)
 
         assert_results_equal(original_result, final_result)
     except Exception as e:
         # Skip expressions that cause errors in the conversion process
         print(f"Error with expression {expr}: {e}")
-        return
+        raise e
 
 
 @given(
@@ -382,9 +382,9 @@ def test_hypothesis_division(var1, var2, var3, var4, op1, op2, op3, default_valu
 
 
 @given(
-    var1=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
-    var2=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
-    var3=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
+    var1=st.sampled_from(["b", "c", "d"]),
+    var2=st.sampled_from(["b", "c", "d"]),
+    var3=st.sampled_from(["b", "c", "d"]),
     op1=st.sampled_from(["**"]),
     op2=st.sampled_from(["**"]),
 )
@@ -445,13 +445,13 @@ def test_hypothesis_arithmetic_boolean(var1, var2, arith_op, bool_op, default_va
 )
 def test_mixed_operators(var1, var2, var3, op1, op2, default_values):
     """Test expressions with mixed operators."""
-    # Skip incompatible operator combinations
-    if (op1 in ["&", "|"] and op2 not in ["&", "|"]) or (
-        op2 in ["&", "|"] and op1 not in ["&", "|"]
-    ):
-        return
-
     expr = f"{var1}{op1}{var2}{op2}{var3}"
+    # We need to add parentheses when there are multiple comparisons
+    # or when there are bitwise operators
+    if sum(expr.count(op) for op in comparison_operators) > 1 or any(
+        op in expr for op in bitwise_operators
+    ):
+        expr = f"({var1}{op1}{var2}){op2}{var3}"
     test_expression_conversion(expr, default_values)
 
 

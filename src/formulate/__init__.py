@@ -2,76 +2,47 @@
 
 from __future__ import annotations
 
-from . import (
-    AST,
-    convert_ptree,
-    exceptions,
-    numexpr_parser,
-    toast,
-    ttreeformula_parser,
-)
+from typing import Any
+
+import lark
+
+from . import AST, exceptions, toast
 from ._version import __version__
+from .exceptions import ParseError
 
-__all__ = ["exceptions", "from_numexpr", "from_root"]
-
-
-def from_root(exp: str, **kwargs) -> AST:
-    """Evaluate ttreformula expressions."""
-    # Preprocess the expression to handle multiple occurrences of the same binary operator
-    # This should be fixed in the actual parser, generated from Lark. Somehow, this only fails for
-    # root parsing
-    exp = _preprocess_expression(exp)
-    parser = ttreeformula_parser.Lark_StandAlone()
-    ptree = parser.parse(exp)
-    convert_ptree.convert_ptree(ptree)
-    return toast.toast(ptree, nxp=False)
+__all__ = ["ParseError", "__version__", "from_numexpr", "from_root"]
 
 
-def _preprocess_expression(exp: str) -> str:
-    """Preprocess the expression to handle multiple occurrences of the same operator.
+def _get_parser(parser_type: str) -> lark.lark.Lark:
+    import importlib.resources
 
-    This function adds parentheses to group operators correctly.
-    For example, "a||b||c" becomes "((a||b)||c)".
-    """
-    import re
-
-    def _add_parentheses_for_operator(exp: str, operator: str) -> str:
-        """Add parentheses for a specific operator to ensure correct precedence.
-
-        Args:
-            exp: The expression to process
-            operator: The operator to handle ('||', '&&', '|', or '&')
-        """
-        # Escape special regex characters in the operator
-        escaped_op = re.escape(operator)
-        # Create the regex pattern for this operator
-        pattern = (
-            rf"([a-zA-Z0-9_]+{escaped_op}[a-zA-Z0-9_]+)({escaped_op}[a-zA-Z0-9_]+)+"
-        )
-
-        def replace_match(match):
-            original = match.group(0)
-            parts = original.split(operator)
-            # Create a new expression with parentheses
-            new_expr = parts[0]
-            for part in parts[1:]:
-                new_expr = f"({new_expr}{operator}{part})"
-            return new_expr
-
-        # Use re.sub with the callback function
-        exp = re.sub(pattern, replace_match, exp)
-        return exp
-
-    # Process each operator
-    for operator in ["||", "&&", "|", "&"]:
-        exp = _add_parentheses_for_operator(exp, operator)
-
-    return exp
+    grammar = (
+        importlib.resources.files(__package__)
+        / "resources"
+        / f"{parser_type}_grammar.lark"
+    ).read_text()
+    return lark.Lark(grammar, parser="lalr")
 
 
-def from_numexpr(exp: str, **kwargs) -> AST:
+_numexpr_parser = _get_parser("numexpr")
+_root_parser = _get_parser("root")
+
+
+def from_root(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
+    """Evaluate ROOT expressions."""
+    try:
+        ptree = _root_parser.parse(exp)
+    except lark.LarkError as e:
+        new_e = exceptions.debug_root(exp, e)
+        raise new_e from e
+    return toast.toast(ptree)  # type: ignore[no-any-return]
+
+
+def from_numexpr(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
     """Evaluate numexpr expressions."""
-    parser = numexpr_parser.Lark_StandAlone()
-    ptree = parser.parse(exp)
-    convert_ptree.convert_ptree(ptree)
-    return toast.toast(ptree, nxp=True)
+    try:
+        ptree = _numexpr_parser.parse(exp)
+    except lark.LarkError as e:
+        new_e = exceptions.debug_numexpr(exp, e)
+        raise new_e from e
+    return toast.toast(ptree)  # type: ignore[no-any-return]
