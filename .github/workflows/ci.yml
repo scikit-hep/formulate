@@ -37,6 +37,7 @@ jobs:
             runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
+
       - uses: mamba-org/setup-micromamba@v2
         with:
           init-shell: bash
@@ -44,8 +45,12 @@ jobs:
           create-args: >-
             --strict-channel-priority
             conda-forge/label/python_rc::_python_rc
-            python=${{ matrix.python-version }} uv root
+            python=${{ matrix.python-version }} uv
 
+      - name: Add ROOT installation
+        if: runner.os == 'Linux' && matrix.python-version != '3.14'
+        run: |
+          mamba install root -y
       - name: Install user dependencies
         run: |
           uv pip install .
