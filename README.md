@@ -26,8 +26,7 @@
 
 <!-- prettier-ignore-end -->
 
-Formulate
-=========
+# Formulate
 
 Easy conversions between different styles of expressions. Formulate
 currently supports converting between
@@ -35,10 +34,7 @@ currently supports converting between
 [numexpr](https://numexpr.readthedocs.io/en/latest/user_guide.html)
 style expressions.
 
-
-
-Installation
-------------
+## Installation
 
 Install formulate like any other Python package, ideally inside a virtual environment:
 
@@ -54,22 +50,19 @@ conda install -c conda-forge formulate
 
 (`-c conda-forge` is only needed if you don't have the `conda-forge` channel already configured)
 
-Roadmap and releases
-----------------------
+## Roadmap and releases
 
 For the roadmap, planned features, breaking changes and versioning please see the [roadmap](https://github.com/scikit-hep/formulate/discussions/61).
 
-Usage
------
+## Usage
 
 ### API
 
-
 The most basic usage involves calling `from_$BACKEND` and then `to_$BACKEND`, for example when starting with a ROOT style expression:
 
-```python
+```pycon
 >>> import formulate
->>> momentum = formulate.from_root('TMath::Sqrt(X_PX**2 + X_PY**2 + X_PZ**2)')
+>>> momentum = formulate.from_root("TMath::Sqrt(X_PX**2 + X_PY**2 + X_PZ**2)")
 >>> momentum
 Call(function='sqrt', arguments=[BinaryOperator(operator='add', left=BinaryOperator(operator='add', left=BinaryOperator(operator='pow', left=Symbol(name='X_PX'), right=Literal(value=2)), right=BinaryOperator(operator='pow', left=Symbol(name='X_PY'), right=Literal(value=2))), right=BinaryOperator(operator='pow', left=Symbol(name='X_PZ'), right=Literal(value=2)))])
 >>> momentum.to_numexpr()
@@ -77,10 +70,11 @@ Call(function='sqrt', arguments=[BinaryOperator(operator='add', left=BinaryOpera
 >>> momentum.to_root()
 'TMath::Sqrt((((X_PX ** 2) + (X_PY ** 2)) + (X_PZ ** 2)))'
 ```
+
 Similarly, when starting with a `numexpr` style expression:
 
-```python
->>> my_selection = formulate.from_numexpr('(X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10))')
+```pycon
+>>> my_selection = formulate.from_numexpr("(X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10))")
 >>> my_selection.to_root()
 '((X_PT > 5) && ((Mu_NHits > 3) || (Mu_PT > 10)))'
 >>> my_selection.to_numexpr()

@@ -72,9 +72,9 @@ With numexpr:
 
     # Create some sample data
     data = {
-        'X_PT': np.array([3, 6, 9, 12]),
-        'Mu_NHits': np.array([2, 4, 1, 5]),
-        'Mu_PT': np.array([8, 5, 12, 7])
+        "X_PT": np.array([3, 6, 9, 12]),
+        "Mu_NHits": np.array([2, 4, 1, 5]),
+        "Mu_PT": np.array([8, 5, 12, 7]),
     }
 
     # Use the converted numexpr expression

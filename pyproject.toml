@@ -96,17 +96,13 @@ files = "src"
 python_version = "3.10"
 warn_unused_configs = true
 strict = true
-show_error_codes = true
+hide_error_codes = false
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = ["hepunits.*", "lark", "ordered_set"]
+module = ["hepunits.*", "lark", "ordered_set", "formulate._version"]
 ignore_missing_imports = true
-
-[tool.ruff]
-target-version = "py310"
-src = ["src"]
 
 [tool.ruff.lint]
 select = [
@@ -134,7 +130,7 @@ select = [
     "NPY", # NumPy specific rules
     "PD", # pandas-vet
 ]
-extend-ignore = [
+ignore = [
     "PLR", # Design related pylint codes
     "E501", # Line too long
 ]
