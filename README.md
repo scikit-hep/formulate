@@ -40,13 +40,24 @@ style expressions.
 Installation
 ------------
 
-Install formulate like any other Python package:
+Install formulate like any other Python package, ideally inside a virtual environment:
 
 ```bash
-pip install --user formulate
+pip install formulate
 ```
-or similar (use `sudo`, `virtualenv`, or `conda` if you wish).
 
+or using conda:
+
+```bash
+conda install -c conda-forge formulate
+```
+
+(`-c conda-forge` is only needed if you don't have the `conda-forge` channel already configured)
+
+Roadmap and releases
+----------------------
+
+For the roadmap, planned features, breaking changes and versioning please see the [roadmap](https://github.com/scikit-hep/formulate/discussions/61).
 
 Usage
 -----
