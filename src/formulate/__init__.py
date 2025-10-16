@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.resources
 from typing import Any
 
 import lark
@@ -14,8 +15,6 @@ __all__ = ["ParseError", "__version__", "from_numexpr", "from_root"]
 
 
 def _get_parser(parser_type: str) -> lark.lark.Lark:
-    import importlib.resources
-
     grammar = (
         importlib.resources.files(__package__)
         / "resources"
