@@ -60,6 +60,7 @@ dev = [
     "formulate[test]",
     "pre-commit",
 ]
+all = ["formulate[docs]", "formulate[test]", "formulate[dev]"]
 
 [project.urls]
 Homepage = "https://github.com/Scikit-HEP/formulate"
@@ -100,7 +101,7 @@ enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = [ "hepunits.*", "lark" , "ordered_set"]
+module = ["hepunits.*", "lark", "ordered_set"]
 ignore_missing_imports = true
 
 [tool.ruff]

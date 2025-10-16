@@ -11,3 +11,4 @@ This section provides detailed documentation for Formulate's API.
    modules/ast
    modules/identifiers
    modules/toast
+   modules/exceptions
