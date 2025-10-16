@@ -1,4 +1,4 @@
 What's New
 =====================
 
-TODO: include changelog
+.. include:: ../../CHANGELOG.md
