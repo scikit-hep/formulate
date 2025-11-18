@@ -30,9 +30,7 @@ jobs:
           - ubuntu-latest
         include:
           - python-version: "3.10"
-            runs-on: macOS-13
-          - python-version: "3.10"
-            runs-on: macOS-14
+            runs-on: macOS-latest
           - python-version: "3.10"
             runs-on: windows-latest
     steps:
