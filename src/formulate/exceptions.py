@@ -19,9 +19,9 @@ def debug_root(exp: str, error: lark.LarkError) -> ParseError:
         msg += "There was an error parsing the expression at or near this location\n"
         msg += error.get_context(exp)
     suggestions = []
-    if "&" in exp and "&&" not in exp:
+    if re.search(r"(?<!&)&(?!&)", exp):
         suggestions.append("- Use '&&' instead of '&'.")
-    if "|" in exp and "||" not in exp:
+    if re.search(r"(?<!\|)\|(?!\|)", exp):
         suggestions.append("- Use '||' instead of '|'.")
     if "~" in exp:
         suggestions.append("- Use '!' instead of '~'.")

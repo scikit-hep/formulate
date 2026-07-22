@@ -24,9 +24,21 @@ def test_debug_root_suggests_for_bare_ampersand():
         formulate.from_root("a&b")
 
 
+def test_debug_root_suggests_for_bare_ampersand_mixed():
+    # expression already contains && elsewhere but also has a bare &
+    with pytest.raises(formulate.ParseError, match="'&&'"):
+        formulate.from_root("a&&b&c")
+
+
 def test_debug_root_suggests_for_bare_pipe():
     with pytest.raises(formulate.ParseError, match=r"'\|\|'"):
         formulate.from_root("a|b")
+
+
+def test_debug_root_suggests_for_bare_pipe_mixed():
+    # expression already contains || elsewhere but also has a bare |
+    with pytest.raises(formulate.ParseError, match=r"'\|\|'"):
+        formulate.from_root("a||b|c")
 
 
 # Test for empty strings
