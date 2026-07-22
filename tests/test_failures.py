@@ -1,10 +1,32 @@
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 import formulate
+
+
+def test_from_root_no_kwargs():
+    sig = inspect.signature(formulate.from_root)
+    assert "kwargs" not in sig.parameters, "from_root must not accept **kwargs"
+
+
+def test_from_numexpr_no_kwargs():
+    sig = inspect.signature(formulate.from_numexpr)
+    assert "kwargs" not in sig.parameters, "from_numexpr must not accept **kwargs"
+
+
+def test_debug_root_suggests_for_bare_ampersand():
+    with pytest.raises(formulate.ParseError, match="'&&'"):
+        formulate.from_root("a&b")
+
+
+def test_debug_root_suggests_for_bare_pipe():
+    with pytest.raises(formulate.ParseError, match=r"'\|\|'"):
+        formulate.from_root("a|b")
 
 
 # Test for empty strings

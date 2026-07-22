@@ -199,3 +199,23 @@ def test_multiple_pow2():
     a = formulate.from_root("a^b^c^d")
     out = a.to_python()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a**b**c**d"))
+
+
+def test_constant_pi():
+    out = formulate.from_root("pi").to_python()
+    assert ast.unparse(ast.parse(out)) is not None
+
+
+def test_constant_inf():
+    out = formulate.from_root("TMath::Infinity()").to_python()
+    assert "inf" in out
+
+
+def test_constant_sqrt2():
+    out = formulate.from_root("sqrt2").to_python()
+    assert ast.unparse(ast.parse(out)) is not None
+
+
+def test_function_pow_uses_np_power():
+    out = formulate.from_root("pow(a, 2)").to_python()
+    assert out.startswith("np.power(")
