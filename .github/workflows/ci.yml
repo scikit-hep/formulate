@@ -29,17 +29,12 @@ jobs:
       matrix:
         python-version:
           - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
           - "3.14"
+          - "3.14t"
         runs-on:
           - ubuntu-latest
-        include:
-          - python-version: "3.10"
-            runs-on: macOS-latest
-          - python-version: "3.10"
-            runs-on: windows-latest
+          - macOS-latest
+          - windows-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -54,28 +49,19 @@ jobs:
             conda-forge/label/python_rc::_python_rc
             python=${{ matrix.python-version }} uv
 
-      - name: Add ROOT installation
-        if: runner.os == 'Linux' && matrix.python-version != '3.14'
+      - name: Install ROOT
+        if: runner.os == 'Linux' && matrix.python-version == '3.10'
         run: |
           micromamba install root -y
-      - name: Install user dependencies
-        run: |
-          uv pip install .
 
-      - name: Test import to check for dependencies
-        run: python -c "import formulate; from formulate import *"
-
-      - name: Install test dependencies
-        env:
-          ROOT_PACKAGE: ${{ matrix.python-version == '3.14' && ' ' || 'root' }}
+      - name: Install package
         run: |
-          # Fix when root is available for Python 3.14
-          conda install coveralls uv pytest-cov $ROOT_PACKAGE -y
+          uv pip install pytest-cov
           uv pip install -U .[dev,test]
 
       - name: Test with pytest
         run: |
-          pytest --cov=formulate --verbose
+          pytest --cov=formulate -vv
 
   pass:
     name: Check required tests
