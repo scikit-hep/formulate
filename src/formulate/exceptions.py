@@ -13,19 +13,14 @@ class ParseError(Exception):
         self.lark_error = lark_error
 
 
-def debug_root(exp: str, error: lark.LarkError) -> ParseError:
+def _build_parse_error(
+    exp: str, error: lark.LarkError, suggestions: list[str]
+) -> ParseError:
     msg = ""
     if isinstance(error, lark.UnexpectedInput):
         msg += "There was an error parsing the expression at or near this location\n"
         msg += error.get_context(exp)
-    suggestions = []
-    if re.search(r"(?<!&)&(?!&)", exp):
-        suggestions.append("- Use '&&' instead of '&'.")
-    if re.search(r"(?<!\|)\|(?!\|)", exp):
-        suggestions.append("- Use '||' instead of '|'.")
-    if "~" in exp:
-        suggestions.append("- Use '!' instead of '~'.")
-    if len(suggestions) > 0:
+    if suggestions:
         msg += "\nHere are some suggestions for how to fix the error:\n"
         msg += "\n".join(suggestions)
         msg += "\n"
@@ -36,11 +31,18 @@ def debug_root(exp: str, error: lark.LarkError) -> ParseError:
     return ParseError(msg, error)
 
 
+def debug_root(exp: str, error: lark.LarkError) -> ParseError:
+    suggestions = []
+    if re.search(r"(?<!&)&(?!&)", exp):
+        suggestions.append("- Use '&&' instead of '&'.")
+    if re.search(r"(?<!\|)\|(?!\|)", exp):
+        suggestions.append("- Use '||' instead of '|'.")
+    if "~" in exp:
+        suggestions.append("- Use '!' instead of '~'.")
+    return _build_parse_error(exp, error, suggestions)
+
+
 def debug_numexpr(exp: str, error: lark.LarkError) -> ParseError:
-    msg = ""
-    if isinstance(error, lark.UnexpectedInput):
-        msg += "There was an error parsing the expression at or near this location\n"
-        msg += error.get_context(exp)
     suggestions = []
     if "&&" in exp or " and " in exp:
         suggestions.append("- Use '&' instead of '&&' or 'and'.")
@@ -52,12 +54,4 @@ def debug_numexpr(exp: str, error: lark.LarkError) -> ParseError:
         suggestions.append(
             "- Make sure you don't have chained comparisons (e.g., 'a < b < c'), as these are not supported."
         )
-    if len(suggestions) > 0:
-        msg += "\nHere are some suggestions for how to fix the error:\n"
-        msg += "\n".join(suggestions)
-        msg += "\n"
-    else:
-        msg += "\nNo suggestions available.\n"
-    msg += "\nHere is the Lark error message:\n"
-    msg += str(error)
-    return ParseError(msg, error)
+    return _build_parse_error(exp, error, suggestions)

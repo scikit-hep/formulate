@@ -188,7 +188,6 @@ FUNCTION_ALIASES = {
 NUMEXPR_FUNCTIONS = {
     "sqrt": "sqrt",
     "abs": "abs",
-    "pow": "",  # This one is a special case since it needs to be written with **
     "log": "log",
     "log10": "log10",
     "log1p": "log1p",
