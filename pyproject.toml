@@ -134,10 +134,6 @@ ignore = [
     "PLR", # Design related pylint codes
     "E501", # Line too long
 ]
-unfixable = [
-    "T20", # Removes print statements
-    "F841", # Removes unused variables
-]
 exclude = []
 flake8-unused-arguments.ignore-variadic-names = true
 isort.required-imports = ["from __future__ import annotations"]
