@@ -72,9 +72,6 @@ def _get_function_name(node: lark.Tree) -> str:
 
 
 def toast(ptnode: lark.Tree | lark.Token) -> AST.AST:
-    if not isinstance(ptnode, lark.Tree):
-        msg = f'Unknown Node Type: "{ptnode!r}".'
-        raise TypeError(msg)
     match ptnode:
         case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:
             left_exp, right_exp = toast(left), toast(right)
