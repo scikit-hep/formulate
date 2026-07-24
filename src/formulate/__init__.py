@@ -2,7 +2,6 @@
 
 import functools
 import importlib.resources
-from typing import Any
 
 import lark
 
@@ -23,8 +22,8 @@ def _get_parser(parser_type: str) -> lark.lark.Lark:
     return lark.Lark(grammar, parser="lalr")
 
 
-def from_root(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
-    """Evaluate ROOT expressions."""
+def from_root(exp: str) -> AST.AST:
+    """Parse a ROOT expression and return an AST."""
     try:
         ptree = _get_parser("root").parse(exp)
     except lark.LarkError as e:
@@ -33,8 +32,8 @@ def from_root(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
     return toast.toast(ptree)
 
 
-def from_numexpr(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
-    """Evaluate numexpr expressions."""
+def from_numexpr(exp: str) -> AST.AST:
+    """Parse a numexpr expression and return an AST."""
     try:
         ptree = _get_parser("numexpr").parse(exp)
     except lark.LarkError as e:

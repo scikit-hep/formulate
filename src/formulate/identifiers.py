@@ -165,6 +165,9 @@ FUNCTIONS = {
     "min",
     "max",
     "length",
+    # TMath scalar functions that collide with array-reduction names
+    "tmath_min",
+    "tmath_max",
 }
 
 FUNCTION_ALIASES = {
@@ -183,7 +186,6 @@ FUNCTION_ALIASES = {
 NUMEXPR_FUNCTIONS = {
     "sqrt": "sqrt",
     "abs": "abs",
-    "pow": "",  # This one is a special case since it needs to be written with **
     "log": "log",
     "log10": "log10",
     "log1p": "log1p",
@@ -214,6 +216,8 @@ NUMEXPR_FUNCTIONS = {
     "prod": "prod",
     "min": "min",
     "max": "max",
+    "tmath_min": "min",
+    "tmath_max": "max",
 }
 
 # https://root.cern.ch/doc/master/namespaceTMath.html
@@ -303,12 +307,18 @@ ROOT_FUNCTIONS = {
     "min": "Min$",
     "max": "Max$",
     "length": "Length$",
+    # Scalar two-argument functions (distinct from array reductions above)
+    "tmath_min": "TMath::Min",
+    "tmath_max": "TMath::Max",
 }
 
 PYTHON_FUNCTIONS = {
     **NUMEXPR_FUNCTIONS,
-    "pow": "pow",
+    "pow": "power",
     "complex": "complex128",
+    # np.minimum/maximum are the element-wise equivalents of TMath::Min/Max
+    "tmath_min": "minimum",
+    "tmath_max": "maximum",
 }
 
 CONSTANTS = {
@@ -429,7 +439,7 @@ ROOT_CONSTANTS = {
 }
 
 PYTHON_CONSTANTS = {
-    **NUMEXPR_OPERATOR_SYMBOLS,
+    **NUMEXPR_CONSTANTS,
     "inf": "float('inf')",
     "neginf": "float('-inf')",
     "nan": "float('nan')",
