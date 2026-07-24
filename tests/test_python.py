@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import ast
 
+import pytest
+
 import formulate
 
 
@@ -199,3 +201,18 @@ def test_multiple_pow2():
     a = formulate.from_root("a^b^c^d")
     out = a.to_python()
     assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("a**b**c**d"))
+
+
+@pytest.mark.parametrize(
+    "expr",
+    ["pi", "sqrt2", "exp1", "true", "false", "TMath::Infinity()"],
+)
+def test_constant_to_python(expr):
+    out = formulate.from_root(expr).to_python()
+    assert out
+    ast.parse(out)
+
+
+def test_function_pow_uses_np_power():
+    out = formulate.from_root("pow(a, 2)").to_python()
+    assert out.startswith("np.power(")
