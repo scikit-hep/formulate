@@ -236,11 +236,15 @@ class Matrix(AST):  # Matrix: A matrix call
 
     @property
     def named_constants(self) -> OrderedSet[str]:
-        return OrderedSet.union(*[ind.named_constants for ind in self.indices])
+        return OrderedSet.union(
+            self.var.named_constants, *[ind.named_constants for ind in self.indices]
+        )
 
     @property
     def unnamed_constants(self) -> OrderedSet[str]:
-        return OrderedSet.union(*[ind.unnamed_constants for ind in self.indices])
+        return OrderedSet.union(
+            self.var.unnamed_constants, *[ind.unnamed_constants for ind in self.indices]
+        )
 
 
 @dataclass
@@ -263,12 +267,18 @@ class Call(AST):  # Call: evaluate a function on arguments
 
     @property
     def variables(self) -> OrderedSet[str]:
-        return OrderedSet.union(*[arg.variables for arg in self.arguments])
+        return OrderedSet.union(
+            OrderedSet(), *[arg.variables for arg in self.arguments]
+        )
 
     @property
     def named_constants(self) -> OrderedSet[str]:
-        return OrderedSet.union(*[arg.named_constants for arg in self.arguments])
+        return OrderedSet.union(
+            OrderedSet(), *[arg.named_constants for arg in self.arguments]
+        )
 
     @property
     def unnamed_constants(self) -> OrderedSet[str]:
-        return OrderedSet.union(*[arg.unnamed_constants for arg in self.arguments])
+        return OrderedSet.union(
+            OrderedSet(), *[arg.unnamed_constants for arg in self.arguments]
+        )

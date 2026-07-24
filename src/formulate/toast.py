@@ -45,9 +45,16 @@ def _get_function_name(node: lark.Tree) -> str:
     if len(pieces) == 1:
         name = pieces[0]
     elif len(pieces) == 2:
-        if pieces[0].lower() not in NAMESPACES:
+        namespace = pieces[0].lower()
+        if namespace not in NAMESPACES:
             msg = f'Unknown namespace "{pieces[0]}"'
             raise ValueError(msg)
+        # Build a namespace-qualified identifier for functions that have both
+        # a namespaced scalar form (TMath::Min) and a bare array form (Min$).
+        func_lower = pieces[1].lower().rstrip("$")
+        qualified = f"{namespace}_{func_lower}"
+        if qualified in FUNCTIONS:
+            return qualified
         name = pieces[1]
     else:
         full_name = "::".join(pieces)
@@ -100,13 +107,21 @@ def toast(ptnode: lark.Tree) -> AST.AST:
                     raise SyntaxError(msg)
                 return AST.Symbol(func_name)
 
-            func_arguments = [toast(elem) for elem in trailer.children[0].children]
+            arg_list = trailer.children[0]
+            func_arguments = (
+                [] if arg_list is None else [toast(elem) for elem in arg_list.children]
+            )
             return AST.Call(func_name, func_arguments)
 
         case lark.Tree("symbol", children):
             var_name = _get_var_name(children[0])
             if var_name in ("True", "False"):
                 var_name = var_name.lower()  # This makes it not a keyword
+            # Bare ROOT $ functions (e.g. Length$, Sum$) used without parens
+            if var_name.endswith("$"):
+                func_name = var_name[:-1].lower()
+                if func_name in FUNCTIONS:
+                    return AST.Call(func_name, [])
             if any(
                 not part.isidentifier() or iskeyword(part)
                 for part in var_name.split(".")

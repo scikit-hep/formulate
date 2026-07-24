@@ -33,9 +33,9 @@ def _build_parse_error(
 
 def debug_root(exp: str, error: lark.LarkError) -> ParseError:
     suggestions = []
-    if " & " in exp:
+    if re.search(r"(?<!&)&(?!&)", exp):
         suggestions.append("- Use '&&' instead of '&'.")
-    if " | " in exp:
+    if re.search(r"(?<!\|)\|(?!\|)", exp):
         suggestions.append("- Use '||' instead of '|'.")
     if "~" in exp:
         suggestions.append("- Use '!' instead of '~'.")
