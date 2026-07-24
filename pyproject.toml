@@ -132,9 +132,7 @@ select = [
 ]
 ignore = [
     "PLR", # Design related pylint codes
-    "E501", # Line too long
 ]
-exclude = []
 flake8-unused-arguments.ignore-variadic-names = true
 isort.required-imports = ["from __future__ import annotations"]
 

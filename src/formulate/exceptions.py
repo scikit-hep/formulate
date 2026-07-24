@@ -50,7 +50,8 @@ def debug_numexpr(exp: str, error: lark.LarkError) -> ParseError:
         suggestions.append("- Use '~' instead of '!'.")
     if any(comp in exp for comp in ["<", ">", "<=", ">=", "==", "!="]):
         suggestions.append(
-            "- Make sure you don't have chained comparisons (e.g., 'a < b < c'), as these are not supported."
+            "- Make sure you don't have chained comparisons "
+            "(e.g., 'a < b < c'), as these are not supported."
         )
     if len(suggestions) > 0:
         msg += "\nHere are some suggestions for how to fix the error:\n"

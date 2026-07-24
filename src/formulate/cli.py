@@ -30,7 +30,10 @@ def parse_args(args: list[str]) -> str:
     elif parsed_args.from_numexpr is not None:
         expression = from_numexpr(parsed_args.from_numexpr)
     else:
-        msg = "This should never happen. Please report this issue to the Formulate developers."
+        msg = (
+            "This should never happen. "
+            "Please report this issue to the Formulate developers."
+        )
         raise NotImplementedError(msg)
 
     if parsed_args.to_root:
@@ -46,7 +49,10 @@ def parse_args(args: list[str]) -> str:
     elif parsed_args.unnamed_constants:
         result = "\n".join(map(str, expression.unnamed_constants))
     else:
-        msg = "This should never happen. Please report this issue to the Formulate developers."
+        msg = (
+            "This should never happen. "
+            "Please report this issue to the Formulate developers."
+        )
         raise NotImplementedError(msg)
 
     return result

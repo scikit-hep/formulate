@@ -275,7 +275,9 @@ class Call(AST):  # Call: evaluate a function on arguments
         function_str = NUMEXPR_FUNCTIONS.get(self.function)
         if self.function == "pow":
             # pow needs to be written with this notation in NumExpr
-            return f"({self.arguments[0].to_numexpr()} ** {self.arguments[1].to_numexpr()})"
+            lhs = self.arguments[0].to_numexpr()
+            rhs = self.arguments[1].to_numexpr()
+            return f"({lhs} ** {rhs})"
         if function_str is None:
             msg = f'Function "{self.function}" is not supported in NumExpr.'
             raise ValueError(msg)
