@@ -10,6 +10,13 @@ on:
       - "ci/*"
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   unittests:
     name: Tests for Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
@@ -34,9 +41,11 @@ jobs:
           - python-version: "3.10"
             runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: mamba-org/setup-micromamba@v3
+      - uses: mamba-org/setup-micromamba@ce51e99f4bb8a82ab7158c4dc59ef4634c59c4f9 # v3.1.0
         with:
           init-shell: bash
           environment-name: formulate-env
@@ -57,9 +66,11 @@ jobs:
         run: python -c "import formulate; from formulate import *"
 
       - name: Install test dependencies
+        env:
+          ROOT_PACKAGE: ${{ matrix.python-version == '3.14' && ' ' || 'root' }}
         run: |
           # Fix when root is available for Python 3.14
-          conda install coveralls uv pytest-cov ${{ matrix.python-version == '3.14' && ' ' || 'root' }} -y
+          conda install coveralls uv pytest-cov $ROOT_PACKAGE -y
           uv pip install -U .[dev,test]
 
       - name: Test with pytest
