@@ -106,7 +106,11 @@ def toast(ptnode: lark.Tree) -> AST.AST:
                     raise SyntaxError(msg)
                 return AST.Symbol(func_name)
 
-            func_arguments = [toast(elem) for elem in trailer.children[0].children]
+            arglist = trailer.children[0]
+            func_arguments = [
+                toast(elem)
+                for elem in (arglist.children if arglist is not None else [])
+            ]
             return AST.Call(func_name, func_arguments)
 
         case lark.Tree("symbol", children):

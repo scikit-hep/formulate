@@ -69,6 +69,11 @@ def test_bare_length_to_root():
     assert formulate.from_root("Length$").to_root() == "Length$()"
 
 
+def test_bare_length_dollar_roundtrip():
+    serialized = formulate.from_root("Length$").to_root()
+    assert formulate.from_root(serialized).to_root() == serialized
+
+
 # --- Indexing before power: a[0]**2 ---
 
 
