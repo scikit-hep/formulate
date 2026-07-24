@@ -20,7 +20,7 @@ from .identifiers import (
 )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class _Backend:
     name: str
     operator_symbols: dict[str, str]
@@ -91,7 +91,7 @@ class AST(metaclass=ABCMeta):
     def unnamed_constants(self) -> OrderedSet[int | float]: ...
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Literal(AST):  # Literal: value that appears in the program text
     value: int | float
 
@@ -114,7 +114,7 @@ class Literal(AST):  # Literal: value that appears in the program text
         return OrderedSet([self.value])
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Symbol(AST):  # Symbol: value referenced by name
     name: str
 
@@ -143,7 +143,7 @@ class Symbol(AST):  # Symbol: value referenced by name
         return OrderedSet()
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class UnaryOperator(AST):  # Unary Operator: Operation with one operand
     operator: str
     operand: AST
@@ -171,7 +171,7 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return self.operand.unnamed_constants
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     operator: str
     left: AST
@@ -203,7 +203,7 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         return self.left.unnamed_constants | self.right.unnamed_constants
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Matrix(AST):  # Matrix: A matrix call
     var: AST
     indices: list[AST]
@@ -245,7 +245,7 @@ class Matrix(AST):  # Matrix: A matrix call
         )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Call(AST):  # Call: evaluate a function on arguments
     function: str
     arguments: list[AST]
