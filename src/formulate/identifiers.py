@@ -309,7 +309,7 @@ ROOT_FUNCTIONS = {
 
 PYTHON_FUNCTIONS = {
     **NUMEXPR_FUNCTIONS,
-    "pow": "pow",
+    "pow": "power",
     "complex": "complex128",
 }
 
@@ -431,7 +431,7 @@ ROOT_CONSTANTS = {
 }
 
 PYTHON_CONSTANTS = {
-    **NUMEXPR_OPERATOR_SYMBOLS,
+    **NUMEXPR_CONSTANTS,
     "inf": "float('inf')",
     "neginf": "float('-inf')",
     "nan": "float('nan')",
