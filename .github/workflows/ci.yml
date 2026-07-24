@@ -65,3 +65,15 @@ jobs:
       - name: Test with pytest
         run: |
           pytest --cov=formulate --verbose
+
+  pass:
+    name: Check required tests
+    if: always()
+    needs: [unittests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        with:
+          jobs: ${{ toJSON(needs) }}
