@@ -1,7 +1,5 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
-from __future__ import annotations
-
 import functools
 import importlib.resources
 from typing import Any

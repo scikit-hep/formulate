@@ -134,7 +134,6 @@ ignore = [
     "PLR", # Design related pylint codes
 ]
 flake8-unused-arguments.ignore-variadic-names = true
-isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["T20", "B017", "PT011", "E722", "SIM105", "UP038", "PT006", "PT018"] #TODO: some of these should be fixed
