@@ -71,7 +71,7 @@ def _get_function_name(node: lark.Tree) -> str:
     return name
 
 
-def toast(ptnode: lark.Tree | lark.Token) -> AST.AST:
+def toast(ptnode: lark.Tree) -> AST.AST:
     match ptnode:
         case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:
             left_exp, right_exp = toast(left), toast(right)
