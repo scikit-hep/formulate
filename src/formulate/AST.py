@@ -20,7 +20,7 @@ from .identifiers import (
 )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class _Backend:
     name: str
     operator_symbols: dict[str, str]
@@ -88,10 +88,10 @@ class AST(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def unnamed_constants(self) -> OrderedSet[str]: ...
+    def unnamed_constants(self) -> OrderedSet[int | float]: ...
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Literal(AST):  # Literal: value that appears in the program text
     value: int | float
 
@@ -110,11 +110,11 @@ class Literal(AST):  # Literal: value that appears in the program text
         return OrderedSet()
 
     @property
-    def unnamed_constants(self) -> OrderedSet[str]:
+    def unnamed_constants(self) -> OrderedSet[int | float]:
         return OrderedSet([self.value])
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Symbol(AST):  # Symbol: value referenced by name
     name: str
 
@@ -139,11 +139,11 @@ class Symbol(AST):  # Symbol: value referenced by name
         return OrderedSet() if self.name not in CONSTANTS else OrderedSet([self.name])
 
     @property
-    def unnamed_constants(self) -> OrderedSet[str]:
+    def unnamed_constants(self) -> OrderedSet[int | float]:
         return OrderedSet()
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class UnaryOperator(AST):  # Unary Operator: Operation with one operand
     operator: str
     operand: AST
@@ -167,11 +167,11 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return self.operand.named_constants
 
     @property
-    def unnamed_constants(self) -> OrderedSet[str]:
+    def unnamed_constants(self) -> OrderedSet[int | float]:
         return self.operand.unnamed_constants
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     operator: str
     left: AST
@@ -199,11 +199,11 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         return self.left.named_constants | self.right.named_constants
 
     @property
-    def unnamed_constants(self) -> OrderedSet[str]:
+    def unnamed_constants(self) -> OrderedSet[int | float]:
         return self.left.unnamed_constants | self.right.unnamed_constants
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Matrix(AST):  # Matrix: A matrix call
     var: AST
     indices: list[AST]
@@ -239,13 +239,13 @@ class Matrix(AST):  # Matrix: A matrix call
         )
 
     @property
-    def unnamed_constants(self) -> OrderedSet[str]:
+    def unnamed_constants(self) -> OrderedSet[int | float]:
         return OrderedSet.union(
             self.var.unnamed_constants, *[ind.unnamed_constants for ind in self.indices]
         )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Call(AST):  # Call: evaluate a function on arguments
     function: str
     arguments: list[AST]
@@ -276,7 +276,7 @@ class Call(AST):  # Call: evaluate a function on arguments
         )
 
     @property
-    def unnamed_constants(self) -> OrderedSet[str]:
+    def unnamed_constants(self) -> OrderedSet[int | float]:
         return OrderedSet.union(
             OrderedSet(), *[arg.unnamed_constants for arg in self.arguments]
         )

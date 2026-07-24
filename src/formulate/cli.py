@@ -3,11 +3,15 @@ import argparse
 import sys
 
 from . import from_numexpr, from_root
+from ._version import __version__
 
 
 def parse_args(args: list[str]) -> str:
     parser = argparse.ArgumentParser(
         description="Convert between different types of formulae"
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
     from_group = parser.add_mutually_exclusive_group(required=True)
