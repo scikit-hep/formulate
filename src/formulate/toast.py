@@ -1,8 +1,5 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
-from __future__ import annotations
-
-import typing
 from ast import literal_eval
 from keyword import iskeyword
 
@@ -74,7 +71,6 @@ def _get_function_name(node: lark.Tree) -> str:
     return name
 
 
-@typing.no_type_check  # TODO: Figure out how to make mypy happy
 def toast(ptnode: lark.Tree) -> AST.AST:
     match ptnode:
         case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:

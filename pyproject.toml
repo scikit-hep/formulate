@@ -16,7 +16,7 @@ description = " Easy conversions between different styles of expressions"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
@@ -132,16 +132,8 @@ select = [
 ]
 ignore = [
     "PLR", # Design related pylint codes
-    "E501", # Line too long
 ]
-typing-modules = ["formulate._compat.typing"]
-unfixable = [
-    "T20", # Removes print statements
-    "F841", # Removes unused variables
-]
-exclude = []
 flake8-unused-arguments.ignore-variadic-names = true
-isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["T20", "B017", "PT011", "E722", "SIM105", "UP038", "PT006", "PT018"] #TODO: some of these should be fixed
@@ -149,7 +141,7 @@ isort.required-imports = ["from __future__ import annotations"]
 
 
 [tool.pylint]
-py-version = "3.7"
+py-version = "3.10"
 ignore-paths = ["src/formulate/_version.py"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"

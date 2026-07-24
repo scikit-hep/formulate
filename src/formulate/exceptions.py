@@ -1,7 +1,5 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
-from __future__ import annotations
-
 import re
 
 import lark
@@ -52,6 +50,7 @@ def debug_numexpr(exp: str, error: lark.LarkError) -> ParseError:
         suggestions.append("- Use '~' instead of '!'.")
     if any(comp in exp for comp in ["<", ">", "<=", ">=", "==", "!="]):
         suggestions.append(
-            "- Make sure you don't have chained comparisons (e.g., 'a < b < c'), as these are not supported."
+            "- Make sure you don't have chained comparisons "
+            "(e.g., 'a < b < c'), as these are not supported."
         )
     return _build_parse_error(exp, error, suggestions)
