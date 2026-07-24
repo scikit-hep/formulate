@@ -99,7 +99,7 @@ class Symbol(AST):  # Symbol: value referenced by name
 
     def to_numexpr(self) -> str:
         if self.name in CONSTANTS:
-            const = NUMEXPR_CONSTANTS.get(self.name, None)
+            const = NUMEXPR_CONSTANTS.get(self.name)
             if const is None:
                 msg = f'Constant "{self.name}" is not supported in NumExpr.'
                 raise ValueError(msg)
@@ -108,7 +108,7 @@ class Symbol(AST):  # Symbol: value referenced by name
 
     def to_root(self) -> str:
         if self.name in CONSTANTS:
-            const = ROOT_CONSTANTS.get(self.name, None)
+            const = ROOT_CONSTANTS.get(self.name)
             if const is None:
                 msg = f'Constant "{self.name}" is not supported in ROOT.'
                 raise ValueError(msg)
@@ -117,7 +117,7 @@ class Symbol(AST):  # Symbol: value referenced by name
 
     def to_python(self) -> str:
         if self.name in CONSTANTS:
-            const = PYTHON_CONSTANTS.get(self.name, None)
+            const = PYTHON_CONSTANTS.get(self.name)
             if const is None:
                 msg = f'Constant "{self.name}" is not supported in Python.'
                 raise ValueError(msg)
@@ -146,21 +146,21 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return f"{self.operator}({self.operand})"
 
     def to_numexpr(self) -> str:
-        symbol = NUMEXPR_OPERATOR_SYMBOLS.get(self.operator, None)
+        symbol = NUMEXPR_OPERATOR_SYMBOLS.get(self.operator)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in NumExpr.'
             raise ValueError(msg)
         return f"({symbol}{self.operand.to_numexpr()})"
 
     def to_root(self) -> str:
-        symbol = ROOT_OPERATOR_SYMBOLS.get(self.operator, None)
+        symbol = ROOT_OPERATOR_SYMBOLS.get(self.operator)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in ROOT.'
             raise ValueError(msg)
         return f"({symbol}{self.operand.to_root()})"
 
     def to_python(self) -> str:
-        symbol = PYTHON_OPERATOR_SYMBOLS.get(self.operator, None)
+        symbol = PYTHON_OPERATOR_SYMBOLS.get(self.operator)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in Python.'
             raise ValueError(msg)
@@ -189,14 +189,14 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         return f"{self.operator}({self.left}, {self.right})"
 
     def to_numexpr(self) -> str:
-        symbol = NUMEXPR_OPERATOR_SYMBOLS.get(self.operator, None)
+        symbol = NUMEXPR_OPERATOR_SYMBOLS.get(self.operator)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in NumExpr.'
             raise ValueError(msg)
         return f"({self.left.to_numexpr()} {symbol} {self.right.to_numexpr()})"
 
     def to_root(self) -> str:
-        symbol = ROOT_OPERATOR_SYMBOLS.get(self.operator, None)
+        symbol = ROOT_OPERATOR_SYMBOLS.get(self.operator)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in ROOT.'
             raise ValueError(msg)
@@ -206,7 +206,7 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
         return out
 
     def to_python(self) -> str:
-        symbol = PYTHON_OPERATOR_SYMBOLS.get(self.operator, None)
+        symbol = PYTHON_OPERATOR_SYMBOLS.get(self.operator)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in Python.'
             raise ValueError(msg)
@@ -230,7 +230,7 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
 
 @dataclass
 class Matrix(AST):  # Matrix: A matrix call
-    var: Symbol
+    var: AST
     indices: list[AST]
 
     def __str__(self) -> str:
@@ -272,7 +272,7 @@ class Call(AST):  # Call: evaluate a function on arguments
         return f"{self.function}({', '.join(str(x) for x in self.arguments)})"
 
     def to_numexpr(self) -> str:
-        function_str = NUMEXPR_FUNCTIONS.get(self.function, None)
+        function_str = NUMEXPR_FUNCTIONS.get(self.function)
         if self.function == "pow":
             # pow needs to be written with this notation in NumExpr
             return f"({self.arguments[0].to_numexpr()} ** {self.arguments[1].to_numexpr()})"
@@ -283,7 +283,7 @@ class Call(AST):  # Call: evaluate a function on arguments
         return f"{function_str}({arguments})"
 
     def to_root(self) -> str:
-        function_str = ROOT_FUNCTIONS.get(self.function, None)
+        function_str = ROOT_FUNCTIONS.get(self.function)
         if function_str is None:
             msg = f'Function "{self.function}" is not supported in ROOT.'
             raise ValueError(msg)
@@ -291,7 +291,7 @@ class Call(AST):  # Call: evaluate a function on arguments
         return f"{function_str}({arguments})"
 
     def to_python(self) -> str:
-        function_str = PYTHON_FUNCTIONS.get(self.function, None)
+        function_str = PYTHON_FUNCTIONS.get(self.function)
         if function_str is None:
             msg = f'Function "{self.function}" is not supported in Python.'
             raise ValueError(msg)

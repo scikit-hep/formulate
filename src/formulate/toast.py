@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import typing
 from ast import literal_eval
 from keyword import iskeyword
 
@@ -28,20 +27,20 @@ def _get_var_name(node: lark.Tree | lark.Token) -> str:
     return CONSTANTS_ALIASES.get(var_name, var_name)
 
 
-def _get_raw_function_name(func_names: lark.Tree, invert: bool = True) -> list[str]:
-    children = []
-    if len(func_names.children) > 1:
-        children.extend(_get_raw_function_name(func_names.children[1], False))
-    children.append(func_names.children[0])
-    if invert:
-        children.reverse()
-    return children
+def _get_raw_function_name(node: lark.Tree) -> list[str]:
+    parts = []
+    while True:
+        parts.append(str(node.children[0]))
+        if len(node.children) == 1:
+            break
+        node = node.children[1]
+    return parts
 
 
 def _get_function_name(node: lark.Tree) -> str:
-    raw_name = _get_raw_function_name(node)
-    full_name = "::".join(raw_name)
-    pieces = full_name.replace(".", "::").split("::")
+    pieces = []
+    for part in _get_raw_function_name(node):
+        pieces.extend(part.replace(".", "::").split("::"))
     if len(pieces) == 1:
         name = pieces[0]
     elif len(pieces) == 2:
@@ -50,6 +49,7 @@ def _get_function_name(node: lark.Tree) -> str:
             raise ValueError(msg)
         name = pieces[1]
     else:
+        full_name = "::".join(pieces)
         msg = f'Unknown function or constant "{full_name}"'
         raise ValueError(msg)
     # Now we normalize the name and make sure it is supported
@@ -66,8 +66,10 @@ def _get_function_name(node: lark.Tree) -> str:
     return name
 
 
-@typing.no_type_check  # TODO: Figure out how to make mypy happy
-def toast(ptnode: lark.Tree) -> AST.AST:
+def toast(ptnode: lark.Tree | lark.Token) -> AST.AST:
+    if not isinstance(ptnode, lark.Tree):
+        msg = f'Unknown Node Type: "{ptnode!r}".'
+        raise TypeError(msg)
     match ptnode:
         case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:
             left_exp, right_exp = toast(left), toast(right)

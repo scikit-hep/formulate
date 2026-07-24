@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import importlib.resources
 from typing import Any
 
@@ -14,6 +15,7 @@ from .exceptions import ParseError
 __all__ = ["ParseError", "__version__", "from_numexpr", "from_root"]
 
 
+@functools.cache
 def _get_parser(parser_type: str) -> lark.lark.Lark:
     grammar = (
         importlib.resources.files(__package__)
@@ -23,25 +25,21 @@ def _get_parser(parser_type: str) -> lark.lark.Lark:
     return lark.Lark(grammar, parser="lalr")
 
 
-_numexpr_parser = _get_parser("numexpr")
-_root_parser = _get_parser("root")
-
-
 def from_root(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
     """Evaluate ROOT expressions."""
     try:
-        ptree = _root_parser.parse(exp)
+        ptree = _get_parser("root").parse(exp)
     except lark.LarkError as e:
         new_e = exceptions.debug_root(exp, e)
         raise new_e from e
-    return toast.toast(ptree)  # type: ignore[no-any-return]
+    return toast.toast(ptree)
 
 
 def from_numexpr(exp: str, **kwargs: dict[str, Any]) -> AST.AST:
     """Evaluate numexpr expressions."""
     try:
-        ptree = _numexpr_parser.parse(exp)
+        ptree = _get_parser("numexpr").parse(exp)
     except lark.LarkError as e:
         new_e = exceptions.debug_numexpr(exp, e)
         raise new_e from e
-    return toast.toast(ptree)  # type: ignore[no-any-return]
+    return toast.toast(ptree)
