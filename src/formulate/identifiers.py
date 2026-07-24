@@ -317,7 +317,7 @@ ROOT_FUNCTIONS = {
 
 PYTHON_FUNCTIONS = {
     **NUMEXPR_FUNCTIONS,
-    "pow": "pow",
+    "pow": "power",
     "complex": "complex128",
     # np.minimum/maximum are the element-wise equivalents of TMath::Min/Max
     "tmath_min": "minimum",
@@ -442,7 +442,7 @@ ROOT_CONSTANTS = {
 }
 
 PYTHON_CONSTANTS = {
-    **NUMEXPR_OPERATOR_SYMBOLS,
+    **NUMEXPR_CONSTANTS,
     "inf": "float('inf')",
     "neginf": "float('-inf')",
     "nan": "float('nan')",
