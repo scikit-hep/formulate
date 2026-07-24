@@ -208,7 +208,9 @@ def test_multiple_pow2():
     ["pi", "sqrt2", "exp1", "true", "false", "TMath::Infinity()"],
 )
 def test_constant_to_python(expr):
-    assert formulate.from_root(expr).to_python()
+    out = formulate.from_root(expr).to_python()
+    assert out
+    ast.parse(out)
 
 
 def test_function_pow_uses_np_power():
