@@ -2,6 +2,7 @@
 
 [![Actions Status][actions-badge]][actions-link]
 [![Documentation Status][rtd-badge]][rtd-link]
+[![codecov](https://codecov.io/gh/scikit-hep/formulate/graph/badge.svg?token=W5wXQ9wcvN)](https://codecov.io/gh/scikit-hep/formulate)
 
 [![PyPI version][pypi-version]][pypi-link]
 [![Conda-Forge][conda-badge]][conda-link]

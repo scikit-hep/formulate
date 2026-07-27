@@ -10,6 +10,13 @@ on:
       - "ci/*"
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   unittests:
     name: Tests for Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
@@ -22,21 +29,18 @@ jobs:
       matrix:
         python-version:
           - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
           - "3.14"
+          - "3.14 python-freethreading"
         runs-on:
           - ubuntu-latest
-        include:
-          - python-version: "3.10"
-            runs-on: macOS-latest
-          - python-version: "3.10"
-            runs-on: windows-latest
+          - macOS-latest
+          - windows-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: mamba-org/setup-micromamba@v3
+      - uses: mamba-org/setup-micromamba@ce51e99f4bb8a82ab7158c4dc59ef4634c59c4f9 # v3.1.0
         with:
           init-shell: bash
           environment-name: formulate-env
@@ -45,23 +49,41 @@ jobs:
             conda-forge/label/python_rc::_python_rc
             python=${{ matrix.python-version }} uv
 
-      - name: Add ROOT installation
-        if: runner.os == 'Linux' && matrix.python-version != '3.14'
+      - name: Install ROOT
+        if: runner.os == 'Linux' && matrix.python-version == '3.10'
         run: |
           micromamba install root -y
-      - name: Install user dependencies
-        run: |
-          uv pip install .
 
-      - name: Test import to check for dependencies
-        run: python -c "import formulate; from formulate import *"
-
-      - name: Install test dependencies
+      - name: Install package
         run: |
-          # Fix when root is available for Python 3.14
-          conda install coveralls uv pytest-cov ${{ matrix.python-version == '3.14' && ' ' || 'root' }} -y
+          uv pip install pytest-cov
           uv pip install -U .[dev,test]
 
       - name: Test with pytest
         run: |
-          pytest --cov=formulate --verbose
+          pytest -vv --cov=formulate --cov-branch --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+
+      - name: Upload coverage to Codecov
+        if: runner.os == 'Linux' && matrix.python-version == '3.10'
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && runner.os == 'Linux' && matrix.python-version == '3.10' }}
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
+
+  pass:
+    name: Check required tests
+    if: always()
+    needs: [unittests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        with:
+          jobs: ${{ toJSON(needs) }}
