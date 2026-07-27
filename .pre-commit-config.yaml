@@ -121,5 +121,5 @@ repos:
     rev: 64a97fb7fa63188393d3215c6e312f5f9c6d0f78 # frozen: v1.27.0
     hooks:
       - id: zizmor
-        files: ^.github
+        files: '^\.github/'
         args: [--persona=pedantic]
