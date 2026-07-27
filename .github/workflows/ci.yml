@@ -61,13 +61,20 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest --cov=formulate --cov-branch --cov-report=xml -vv
+          pytest -vv --cov=formulate --cov-branch --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload coverage to Codecov
         if: runner.os == 'Linux' && matrix.python-version == '3.10'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() runner.os == 'Linux' && matrix.python-version == '3.10' }}
+        uses: codecov/test-results-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
 
   pass:
     name: Check required tests
