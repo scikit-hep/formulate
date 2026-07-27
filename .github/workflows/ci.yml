@@ -61,7 +61,12 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest --cov=formulate -vv
+          pytest --cov=formulate --cov-branch --cov-report=xml -vv
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   pass:
     name: Check required tests
