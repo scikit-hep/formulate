@@ -96,3 +96,13 @@ def test_indexed_power_parses(expr):
 def test_indexed_power_roundtrip():
     expr = formulate.from_root("a[0]**2")
     assert "**" in expr.to_root()
+
+
+# --- multi_out (:) operator is unparenthesized in ROOT ---
+
+
+def test_multi_out_to_root_unparenthesized():
+    # The : operator separates multiple outputs in ROOT TTreeFormula and is
+    # never wrapped in parentheses (unlike arithmetic/logical operators).
+    result = formulate.from_root("a:b")
+    assert result.to_root() == "a : b"

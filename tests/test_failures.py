@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import lark
 import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 import formulate
+from formulate.exceptions import ParseError, _build_parse_error
 
 # --- Semantic errors raised by the AST builder after successful parsing ---
 
@@ -37,6 +39,22 @@ def test_python_keyword_as_symbol_raises():
     # Python keywords are not valid variable names in formulate expressions
     with pytest.raises(SyntaxError, match="not a valid symbol"):
         formulate.from_root("class")
+
+
+def test_unknown_dollar_suffix_raises():
+    # foo$ ends with $ but "foo" is not a known array function
+    with pytest.raises(SyntaxError, match="not a valid symbol"):
+        formulate.from_root("foo$")
+
+
+def test_build_parse_error_without_unexpected_input():
+    # When the lark error is not an UnexpectedInput subclass, _build_parse_error
+    # should still produce a valid ParseError (just without the location context).
+    error = lark.LarkError("some error")
+    result = _build_parse_error("a + b", error, ["- Try this fix"])
+    assert isinstance(result, ParseError)
+    assert "- Try this fix" in str(result)
+    assert "at or near" not in str(result)
 
 
 def test_debug_root_suggests_for_bare_ampersand():

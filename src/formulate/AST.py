@@ -64,10 +64,10 @@ _PYTHON = _Backend(
 
 class AST(metaclass=ABCMeta):
     @abstractmethod
-    def __str__(self) -> str: ...
+    def __str__(self) -> str: ...  # pragma: no cover
 
     @abstractmethod
-    def _to_backend(self, backend: _Backend) -> str: ...
+    def _to_backend(self, backend: _Backend) -> str: ...  # pragma: no cover
 
     def to_numexpr(self) -> str:
         return self._to_backend(_NUMEXPR)
@@ -80,15 +80,15 @@ class AST(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def variables(self) -> OrderedSet[str]: ...
+    def variables(self) -> OrderedSet[str]: ...  # pragma: no cover
 
     @property
     @abstractmethod
-    def named_constants(self) -> OrderedSet[str]: ...
+    def named_constants(self) -> OrderedSet[str]: ...  # pragma: no cover
 
     @property
     @abstractmethod
-    def unnamed_constants(self) -> OrderedSet[int | float]: ...
+    def unnamed_constants(self) -> OrderedSet[int | float]: ...  # pragma: no cover
 
 
 @dataclass(frozen=True, slots=True)
