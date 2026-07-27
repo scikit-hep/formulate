@@ -1,9 +1,11 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 from __future__ import annotations
 
+import sys
+
 import pytest
 
-from formulate.cli import parse_args
+from formulate.cli import main, parse_args
 
 
 def test_root2numexpr_conversion():
@@ -61,6 +63,20 @@ def test_get_unnamed_constants():
         ["--from-root", "(A && B) || TMath::Sqrt(A) + 5.4**pi", "--unnamed-constants"]
     )
     assert result == "5.4"
+
+
+def test_to_python_conversion():
+    result = parse_args(["--from-root", "TMath::Sqrt(A)", "--to-python"])
+    assert result == "np.sqrt(A)"
+
+
+def test_main_writes_result_to_stdout(monkeypatch, capsys):
+    monkeypatch.setattr(
+        sys, "argv", ["formulate", "--from-numexpr", "sqrt(A)", "--to-root"]
+    )
+    main()
+    captured = capsys.readouterr()
+    assert captured.out == "TMath::Sqrt(A)\n"
 
 
 def test_invalid_args():

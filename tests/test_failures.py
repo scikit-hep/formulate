@@ -6,6 +6,38 @@ from hypothesis import strategies as st
 
 import formulate
 
+# --- Semantic errors raised by the AST builder after successful parsing ---
+
+
+def test_unknown_namespace_raises():
+    # Only "tmath" is a recognized namespace; anything else is an error
+    with pytest.raises(ValueError, match="Unknown namespace"):
+        formulate.from_root("foo::sqrt(a)")
+
+
+def test_too_many_namespace_parts_raises():
+    # A::B::C has three namespace segments, which is not supported
+    with pytest.raises(ValueError, match="Unknown function or constant"):
+        formulate.from_root("A::B::C(a)")
+
+
+def test_unknown_function_name_raises():
+    # A syntactically valid call to a function formulate does not know
+    with pytest.raises(ValueError, match="Unknown function or constant"):
+        formulate.from_root("unknownfunc(a)")
+
+
+def test_constant_called_with_arguments_raises():
+    # pi is a constant; calling it like a function is an error
+    with pytest.raises(SyntaxError, match="should not have arguments"):
+        formulate.from_root("pi(a)")
+
+
+def test_python_keyword_as_symbol_raises():
+    # Python keywords are not valid variable names in formulate expressions
+    with pytest.raises(SyntaxError, match="not a valid symbol"):
+        formulate.from_root("class")
+
 
 def test_debug_root_suggests_for_bare_ampersand():
     with pytest.raises(formulate.ParseError, match="'&&'"):
