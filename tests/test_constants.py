@@ -301,13 +301,13 @@ def test_tformula_cannot_compile_modulo_on_doubles():
 
 
 @pytest.mark.parametrize(
-    "index,case",
-    enumerate(MODULO_CASES),
+    "index,a,b,expected_root,expected_numexpr",
+    [(index, *case) for index, case in enumerate(MODULO_CASES)],
     ids=[f"{a}%{b}" for a, b, _, _ in MODULO_CASES],
 )
-def test_modulo_disagrees_between_root_and_numexpr(index, case, modulo_tree):
-    a, b, expected_root, expected_numexpr = case
-
+def test_modulo_disagrees_between_root_and_numexpr(
+    index, a, b, expected_root, expected_numexpr, modulo_tree
+):
     # formulate converts it happily in both directions ...
     assert formulate.from_root("a%b").to_numexpr() == "(a % b)"
     assert formulate.from_numexpr("a%b").to_root() == "(a % b)"

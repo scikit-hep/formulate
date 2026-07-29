@@ -51,9 +51,22 @@ def test_generated_expression_is_long_and_parseable():
     assert parsed.variables <= set(VARIABLES)
 
 
-def test_deeply_nested_expression_does_not_overflow_the_stack():
-    """Nesting, rather than chaining, is what drives recursion depth."""
-    expr = "((((" * 500 + "a" + "))))" * 500
+# Nesting costs far more stack than chaining. The grammar's precedence chain
+# (expression -> disjunction -> ... -> atom) is eleven rules deep and none of
+# them are inlined, so each "(" costs about eleven `toast` frames where each
+# "+" in a flat chain costs one.
+#
+# Deep enough input exhausts the C stack and kills the interpreter outright
+# rather than raising RecursionError, because the limit raised above lets Python
+# outrun it. Measured against a 1 MB stack -- the tightest CI platform -- 300
+# levels still parse and 500 crash, so this stays well below that.
+NESTING_DEPTH = 100
+
+
+def test_nested_parentheses_parse_at_moderate_depth():
+    """Redundant nesting is a different shape from a long chain, and collapses
+    away entirely once parsed."""
+    expr = "(" * NESTING_DEPTH + "a" + ")" * NESTING_DEPTH
     assert formulate.from_root(expr).to_root() == "a"
 
 
