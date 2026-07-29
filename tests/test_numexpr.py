@@ -70,6 +70,17 @@ def test_pow_function_becomes_operator():
     assert formulate.from_root("TMath::Power(a, b)").to_numexpr() == "(a ** b)"
 
 
+@pytest.mark.parametrize("expr", ["TMath::Power(a)", "TMath::Power(a, b, c)"])
+def test_pow_with_the_wrong_arity_is_rejected(expr):
+    """`**` is binary, so there is nothing to render any other arity to. ROOT
+    passes these through, so the error has to come from the NumExpr side."""
+    parsed = formulate.from_root(expr)
+    assert parsed.to_root() == expr
+
+    with pytest.raises(ValueError, match="exactly two arguments"):
+        parsed.to_numexpr()
+
+
 def test_named_constant_is_inlined_as_a_number():
     # NumExpr has no symbolic constants, so they are substituted numerically
     assert formulate.from_numexpr("pi").to_numexpr() == "3.141592653589793"

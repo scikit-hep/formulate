@@ -1,11 +1,15 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
+import functools
 from ast import literal_eval
+from collections.abc import Callable, Sequence
 from keyword import iskeyword
+from typing import Any
 
 import lark
 
 from . import AST
+from ._traversal import fold
 from .identifiers import (
     BINARY_OPERATORS,
     CONSTANTS,
@@ -19,8 +23,8 @@ from .identifiers import (
 
 
 def _get_var_name(node: lark.Tree | lark.Token) -> str:
-    if isinstance(node, lark.Tree):
-        return _get_var_name(node.children[0])
+    while isinstance(node, lark.Tree):
+        node = node.children[0]
     var_name = str(node)
     return CONSTANTS_ALIASES.get(var_name, var_name)
 
@@ -71,24 +75,29 @@ def _get_function_name(node: lark.Tree) -> str:
     return name
 
 
-def toast(ptnode: lark.Tree) -> AST.AST:
+def _constant(node: AST.AST) -> Callable[[], AST.AST]:
+    """Builder for a parse-tree node that needs no children converted."""
+    return lambda: node
+
+
+def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
+    """Decompose one parse-tree node for `fold`.
+
+    Returns the child parse-tree nodes that still need converting, together
+    with a builder that assembles the AST node once they have been converted.
+    Anything that does not depend on the children — name resolution and the
+    errors it raises — happens here, before they are visited.
+    """
     match ptnode:
         case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:
-            left_exp, right_exp = toast(left), toast(right)
-            return AST.BinaryOperator(
-                operator,
-                left_exp,
-                right_exp,
-            )
+            return (left, right), functools.partial(AST.BinaryOperator, operator)
 
         case lark.Tree(operator, operand) if operator in UNARY_OPERATORS:
-            argument = toast(operand[0])
-            return AST.UnaryOperator(operator, argument)
+            return (operand[0],), functools.partial(AST.UnaryOperator, operator)
 
         case lark.Tree("matr", (array, *indices)):
-            mat = toast(array)
-            ind = [toast(elem.children[0]) for elem in indices]
-            return AST.Matrix(mat, ind)
+            children = [array, *(elem.children[0] for elem in indices)]
+            return children, lambda mat, *ind: AST.Matrix(mat, list(ind))
 
         case lark.Tree("func", (func_name, trailer)):
             func_name = _get_function_name(func_name)
@@ -101,13 +110,11 @@ def toast(ptnode: lark.Tree) -> AST.AST:
                 ):
                     msg = f'The constant "{func_name}" should not have arguments.'
                     raise SyntaxError(msg)
-                return AST.Symbol(func_name)
+                return (), _constant(AST.Symbol(func_name))
 
             arg_list = trailer.children[0]
-            func_arguments = (
-                [] if arg_list is None else [toast(elem) for elem in arg_list.children]
-            )
-            return AST.Call(func_name, func_arguments)
+            arguments = () if arg_list is None else tuple(arg_list.children)
+            return arguments, lambda *args: AST.Call(func_name, list(args))
 
         case lark.Tree("symbol", children):
             var_name = _get_var_name(children[0])
@@ -117,21 +124,26 @@ def toast(ptnode: lark.Tree) -> AST.AST:
             if var_name.endswith("$"):
                 func_name = var_name[:-1].lower()
                 if func_name in FUNCTIONS:
-                    return AST.Call(func_name, [])
+                    return (), _constant(AST.Call(func_name, []))
             if any(
                 not part.isidentifier() or iskeyword(part)
                 for part in var_name.split(".")
             ):
                 msg = f'The symbol "{var_name}" is not a valid symbol.'
                 raise SyntaxError(msg)
-            return AST.Symbol(var_name)
+            return (), _constant(AST.Symbol(var_name))
 
         case lark.Tree("literal", children):
-            return AST.Literal(literal_eval(children[0]))
+            return (), _constant(AST.Literal(literal_eval(children[0])))
 
         case lark.Tree(_, (child,)):
-            return toast(child)
+            return (child,), lambda child_exp: child_exp
 
         case _:  # pragma: no cover
             msg = f'Unknown Node Type: "{ptnode!r}".'
             raise TypeError(msg)
+
+
+def toast(ptnode: lark.Tree) -> AST.AST:
+    """Convert a lark parse tree into the backend-neutral AST."""
+    return fold(ptnode, _expand)

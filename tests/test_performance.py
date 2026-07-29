@@ -1,15 +1,18 @@
 """Very long expressions must parse and convert quickly and without recursing
 past Python's stack limit.
 
-Both halves matter: the AST walk is recursive, so a 10,000-term expression is
-also a regression test for stack depth, and the timing bound catches accidental
-quadratic behaviour in the parser or the serializer.
+Both halves matter. Every walk over the parse tree and the AST — `toast`,
+`_to_backend`, `str()` and the `variables` family — uses an explicit stack, so
+peak frame depth is a small constant no matter how big the expression is. These
+tests deliberately run at CPython's default recursion limit so that
+reintroducing a recursive walk fails here rather than in a user's traceback. The
+timing bound catches accidental quadratic behaviour in the parser or the
+serializer.
 """
 
 from __future__ import annotations
 
 import random
-import sys
 import time
 
 import pytest
@@ -18,10 +21,6 @@ import formulate
 
 EXPRESSION_LENGTH = 10_000
 TIME_LIMIT_SECONDS = 3.0
-
-# The AST is walked recursively, so a long expression needs a deeper stack than
-# CPython's default of 1000 frames.
-sys.setrecursionlimit(50_000)
 
 VARIABLES = ["a", "b", "c", "d", "x", "y", "z"]
 CONSTANTS = ["1.0", "2.0", "3.14", "42.0", "0.5"]
@@ -51,32 +50,32 @@ def test_generated_expression_is_long_and_parseable():
     assert parsed.variables <= set(VARIABLES)
 
 
-# Sizes below are bounded by C stack, not by the recursion limit raised above.
-# Because that limit is raised, `toast` can recurse past the point where the C
-# stack runs out, and the interpreter dies outright instead of raising
-# RecursionError.
-#
-# The binding platform is Python 3.10 on Windows under coverage: 3.11 moved
-# pure-Python calls off the C stack, so 3.11+ has orders of magnitude more room
-# and never reaches this, and coverage's tracer adds a C frame per Python frame.
-# Measured peak Python frames against what that job actually does:
-#
-#     one-way parse of 10,000 terms   2,565   passes
-#     round trip of 1,000 terms       3,029   crashes
-#     nesting of 100 levels           1,118   passes
-#     round trip of 200 terms           713   passes
-#
-# So the budget there is somewhere between 2,500 and 3,000 frames. Keep new
-# cases well under that, and measure rather than reason about it: frame counts
-# are not obvious from the size of the expression.
+def test_every_walk_handles_a_long_expression():
+    """`str()` and the `variables` family walk the AST as well, and used to be
+    the deepest recursion in the package."""
+    parsed = formulate.from_root(generate_long_expression(EXPRESSION_LENGTH))
+
+    assert str(parsed)
+    assert parsed.to_python()
+    assert parsed.variables <= set(VARIABLES)
+    assert not parsed.named_constants
+    assert parsed.unnamed_constants <= {float(value) for value in CONSTANTS}
+
+
+# Deep enough that a single recursive frame per level would exhaust CPython's
+# default limit of 1000 frames. The sizes in this file are bounded by the time
+# limit rather than by the stack now, and the slowest job in the matrix is
+# Windows/3.10 under coverage, so keep them modest.
+DEEP_NESTING = 1_000
+
+# Redundant parentheses, which the parser has to chew through but which leave
+# nothing behind in the AST.
 NESTING_DEPTH = 100
 
 # Round trips are far more expensive than one-way conversions of the same
 # length, because the canonical form is fully parenthesized: a 1,000-term chain
-# comes back as 251 levels of nesting, and re-parsing nesting costs about eleven
-# frames per level (the grammar's precedence chain, expression -> disjunction ->
-# ... -> atom, is eleven rules deep and none of them are inlined). That is why
-# this is so much smaller than EXPRESSION_LENGTH.
+# comes back as 251 levels of nesting and a much longer string to re-parse. That
+# is why this is so much smaller than EXPRESSION_LENGTH.
 ROUND_TRIP_LENGTH = 200
 
 
@@ -85,6 +84,17 @@ def test_nested_parentheses_parse_at_moderate_depth():
     away entirely once parsed."""
     expr = "(" * NESTING_DEPTH + "a" + ")" * NESTING_DEPTH
     assert formulate.from_root(expr).to_root() == "a"
+
+
+def test_deeply_nested_calls_survive_every_walk():
+    """Nesting that survives parsing, unlike redundant parentheses: one AST
+    level per `sqrt`, so a recursive walk would run out of stack here."""
+    parsed = formulate.from_root("sqrt(" * DEEP_NESTING + "a" + ")" * DEEP_NESTING)
+
+    assert str(parsed).count("sqrt") == DEEP_NESTING
+    assert parsed.to_python().count("np.sqrt") == DEEP_NESTING
+    assert parsed.to_root().count("TMath::Sqrt") == DEEP_NESTING
+    assert parsed.variables == {"a"}
 
 
 @pytest.mark.parametrize(

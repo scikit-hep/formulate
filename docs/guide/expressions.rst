@@ -201,6 +201,4 @@ While Formulate supports a wide range of expressions, there are some limitations
 
 3. **Custom Functions**: User-defined functions are not automatically supported for conversion.
 
-4. **Recursion Depth**: Very complex nested expressions might hit recursion limits. If you encounter such issues, consider increasing the recursion limit in Python or simplifying the expression, via ``sys.setrecursionlimit(N)``, with ``N`` above 10'000.
-
 For more details on specific limitations or to request support for additional expressions, please refer to the :doc:`issues` page or open an issue on the GitHub repository.
