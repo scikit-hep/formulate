@@ -158,9 +158,13 @@ def test_string_literals_are_not_supported(expr):
         formulate.from_numexpr(expr)
 
 
-def test_contains_accepts_non_string_operands():
+def test_contains_is_a_numexpr_only_function():
     # The function itself exists, it is only string *literals* that are absent
     assert formulate.from_numexpr("contains(s, t)").to_numexpr() == "contains(s, t)"
+    # Neither other backend has a substring test to translate it into
+    for backend in ("to_root", "to_python"):
+        with pytest.raises(ValueError, match="not supported"):
+            getattr(formulate.from_numexpr("contains(s, t)"), backend)()
 
 
 # --- Both parsers agree on shared syntax ---

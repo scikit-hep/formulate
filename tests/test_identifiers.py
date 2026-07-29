@@ -146,18 +146,19 @@ def test_functions_accept_any_number_of_arguments(arity):
     )
 
 
-# NumExpr's contains() has no NumPy counterpart, so `to_python` currently emits
-# a call to a function that does not exist.  Pinned here so the gap is visible
-# and so that closing it (or opening another one) shows up as a test failure.
-PYTHON_FUNCTIONS_MISSING_FROM_NUMPY = {"contains"}
+@pytest.mark.parametrize("numpy_name", sorted(set(PYTHON_FUNCTIONS.values())))
+def test_python_backend_names_exist_in_numpy(numpy_name):
+    """Every name the Python backend emits must be a real NumPy attribute,
+    otherwise `to_python` produces code that fails with a NameError."""
+    assert hasattr(np, numpy_name), f"np.{numpy_name} does not exist"
 
 
-@pytest.mark.parametrize("canonical,numpy_name", sorted(PYTHON_FUNCTIONS.items()))
-def test_python_backend_names_exist_in_numpy(canonical, numpy_name):
-    if canonical in PYTHON_FUNCTIONS_MISSING_FROM_NUMPY:
-        assert not hasattr(np, numpy_name)
-    else:
-        assert hasattr(np, numpy_name), f"np.{numpy_name} does not exist"
+def test_contains_is_not_offered_by_the_python_backend():
+    # NumExpr's substring test has no single-name NumPy equivalent, so it must
+    # be refused rather than rendered as a call to a function that is not there
+    assert "contains" not in PYTHON_FUNCTIONS
+    with pytest.raises(ValueError, match="not supported in Python"):
+        formulate.from_numexpr("contains(s, t)").to_python()
 
 
 @pytest.mark.parametrize(

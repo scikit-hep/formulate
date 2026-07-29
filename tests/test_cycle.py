@@ -183,18 +183,28 @@ def test_named_constants_do_not_survive_a_round_trip_through_numexpr():
     assert formulate.from_numexpr(numexpr).to_root() == "3.141592653589793"
 
 
-@pytest.mark.parametrize(
-    "root_expr,array_form", [("TMath::Min(a, b)", "Min$"), ("TMath::Max(a, b)", "Max$")]
-)
-def test_tmath_min_max_collapse_onto_the_array_form_via_numexpr(root_expr, array_form):
-    """ROOT distinguishes TMath::Min from Min$; NumExpr has only one `min`.
-
-    Both therefore serialize to the same NumExpr call, and parsing that back
-    yields the array-reduction form.  ROOT -> ROOT is unaffected (see
-    tests/test_root_semantics.py); only a detour through NumExpr collapses them.
+@pytest.mark.parametrize("root_expr", ["TMath::Min(a, b)", "TMath::Max(a, b)"])
+def test_element_wise_min_max_have_no_numexpr_equivalent(root_expr):
+    """NumExpr's min/max reduce one array; they are not the element-wise
+    two-argument functions TMath::Min/Max are, and NumExpr rejects the
+    two-argument call.  Refusing the conversion is better than emitting
+    ``min(a, b)``, which only fails once someone tries to evaluate it.
     """
-    numexpr = formulate.from_root(root_expr).to_numexpr()
-    assert formulate.from_numexpr(numexpr).to_root() == f"{array_form}(a, b)"
+    with pytest.raises(ValueError, match="not supported in NumExpr"):
+        formulate.from_root(root_expr).to_numexpr()
+
+
+@pytest.mark.parametrize(
+    "root_expr,python_expr",
+    [
+        ("TMath::Min(a, b)", "np.minimum(a, b)"),
+        ("TMath::Max(a, b)", "np.maximum(a, b)"),
+    ],
+)
+def test_element_wise_min_max_do_convert_to_python(root_expr, python_expr):
+    """NumPy, unlike NumExpr, has the element-wise forms."""
+    assert formulate.from_root(root_expr).to_python() == python_expr
+    assert formulate.from_root(root_expr).to_root() == root_expr
 
 
 # --- Property-based coverage over randomly built expressions ---
