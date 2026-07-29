@@ -254,6 +254,15 @@ class Call(AST):  # Call: evaluate a function on arguments
 
     def _serializer(self, backend: _Backend) -> Callable[..., str]:
         if backend.pow_as_operator and self.function == "pow":
+            # The backend has no pow() to fall back on: it is spelled as the
+            # binary ** operator, so any other arity has nothing to render to.
+            if len(self.arguments) != 2:
+                msg = (
+                    f'Function "pow" is written as the ** operator in '
+                    f"{backend.name}, so it takes exactly two arguments, not "
+                    f"{len(self.arguments)}."
+                )
+                raise ValueError(msg)
             return lambda base, exponent: f"({base} ** {exponent})"
         function_str = backend.functions.get(self.function)
         if function_str is None:
