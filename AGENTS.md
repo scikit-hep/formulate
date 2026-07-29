@@ -1,0 +1,106 @@
+# AGENTS.md
+
+This file provides guidance to agents when working with code in this repository.
+
+## What this is
+
+`formulate` converts expressions between ROOT/`TTreeFormula` syntax, NumExpr syntax, and
+(output-only) plain Python/NumPy. Public API is `formulate.from_root(str)` /
+`formulate.from_numexpr(str)` returning an `AST`, then `.to_root()`, `.to_numexpr()`,
+`.to_python()`, or the `.variables` / `.named_constants` / `.unnamed_constants` properties.
+There is also a `formulate` CLI (`src/formulate/cli.py`).
+
+## Commands
+
+```bash
+pip install -e ".[dev]"     # dev install
+prek install                # hook runner; reads .pre-commit-config.yaml
+
+pytest                      # all tests
+pytest tests/test_root.py -k tmath_min       # single file / single test
+pytest --cov=formulate --cov-branch          # with coverage
+
+nox                         # default: lint + pylint + tests
+nox -s tests                # tests in an isolated env
+nox -s docs -- --serve      # build and serve the Sphinx docs
+nox -s coverage
+prek run --all-files        # ruff, ruff-format, mypy (strict, src only), codespell, zizmor
+```
+
+Use `prek` (a drop-in, much faster reimplementation of `pre-commit`) rather than `pre-commit`
+itself — same `.pre-commit-config.yaml`, same hook IDs, same subcommands. Note that
+`nox -s lint` and pre-commit.ci (configured by the `ci:` block in the config) still run
+`pre-commit` proper, so hook behaviour must stay compatible with both.
+
+`tests/test_constants.py` is the only file that evaluates expressions with the real engines;
+it `importorskip`s `ROOT`, which CI installs only on Linux/Python 3.10. Everything else runs
+everywhere. `numexpr` is not a test dependency in `pyproject.toml` (it comes in via `[docs]`),
+so a bare `pip install -e ".[test]"` will skip nothing but will fail to import `numexpr` in
+`test_constants.py` — install `.[dev]`.
+
+## Architecture
+
+Pipeline, in order:
+
+1. **Grammar** — `src/formulate/resources/{root,numexpr}_grammar.lark`, parsed by lark's LALR
+   parser (cached per backend in `__init__.py`). Each grammar encodes _its own_ language's
+   precedence: ROOT follows C++ (`&&`/`||` bind looser than comparisons, `^` is exponentiation,
+   `!` is logical not), NumExpr follows Python (`&`/`|` bind tighter than comparisons, `^` is
+   XOR, chained comparisons are rejected). Rule aliases (`-> add`, `-> inv`, `-> multi_out`)
+   are the canonical operator names used downstream.
+2. **`toast.py`** — walks the lark parse tree and emits the backend-neutral AST. This is where
+   surface names are normalized: namespaces (`TMath::`), the trailing `$` on ROOT array
+   functions, function aliases (`atan2` → `arctan2`), and constant aliases (`e_num` → `exp1`).
+   Unknown names raise here.
+3. **`AST.py`** — five frozen dataclass node types (`Literal`, `Symbol`, `UnaryOperator`,
+   `BinaryOperator`, `Matrix`, `Call`) plus a `_Backend` descriptor. Serialization is a single
+   `_to_backend(backend)` method per node; the three public `to_*` methods just pass the
+   corresponding `_Backend` instance (`_ROOT`, `_NUMEXPR`, `_PYTHON`). There is no
+   per-backend visitor class — a new backend is a new `_Backend` literal plus new tables.
+4. **`identifiers.py`** — the hand-maintained lookup tables. `FUNCTIONS`/`CONSTANTS` are the
+   canonical name sets; `ROOT_*`/`NUMEXPR_*`/`PYTHON_*` map canonical names to each backend's
+   spelling. A name absent from a backend's table is how "unsupported" is expressed — the
+   serializer raises `ValueError` on the `None` lookup.
+
+Two invariants worth knowing before editing:
+
+- **The AST is canonical, not any backend's dialect.** Node operator/function strings
+  (`"add"`, `"inv"`, `"tmath_min"`) are internal identifiers. Never leak a backend spelling
+  into the AST or into `toast.py`.
+- **Serialization is fully parenthesized and deterministic**, which makes the serialized string
+  a canonical form. Most tests exploit this: they parse two spellings and assert the output
+  strings are identical, rather than evaluating numerically. Changing the parenthesization
+  rules (`_Backend.unparenthesized_ops`) will move a lot of expected strings.
+
+### Adding a function or constant
+
+Add the canonical name to `FUNCTIONS`/`CONSTANTS`, then an entry in each backend map where it
+is supported, plus any spelling in `FUNCTION_ALIASES` / `CONSTANTS_ALIASES` /
+`CONSTANTS_FUNCTION_ALIASES`. `tests/test_identifiers.py` drives every table entry through the
+parser and cross-checks the tables against each other, so a declared-but-unmapped name fails
+loudly. If the name has both a scalar `TMath::` form and an array `$` form (as with
+`Min`/`Max`), it needs the `tmath_`-prefixed qualified variant — see `_get_function_name`.
+
+### Unsupported constructs
+
+Anything with no faithful equivalent in the target raises `ValueError` rather than emitting
+something subtly different. The single documented exception is `%`, which converts silently
+even though ROOT truncates its operands to integers and NumExpr does float modulo. See
+`docs/guide/issues.rst`; that file is the reference for the cross-language gotchas and should
+be kept in sync with behaviour changes.
+
+`exceptions.py` builds `ParseError` with heuristic suggestions (`debug_root`, `debug_numexpr`)
+based on regex-scanning the source expression — e.g. suggesting `&&` when a ROOT expression
+contains a lone `&`. New syntax that people commonly get wrong belongs here.
+
+## Constraints to respect
+
+- **Coverage is enforced at 100%** for both project and patch (`codecov.yml`, threshold 0).
+  Genuinely unreachable code is marked `# pragma: no cover`; prefer deleting dead branches.
+- `filterwarnings = ["error"]` and `xfail_strict` are on — a new warning fails the suite.
+- mypy runs `--strict` over `src` only; the package ships `py.typed`.
+- Supported Python is 3.10+, and the CI matrix includes Windows and free-threaded 3.14. The
+  AST walk is recursive, so expression-length limits in `tests/test_performance.py` are bounded
+  by the _C_ stack on the weakest platform (Windows/3.10 under coverage), not by
+  `sys.setrecursionlimit`. Don't raise those sizes without checking that job.
+- Version comes from git tags via `hatch-vcs` (`_version.py` is generated; do not edit).
