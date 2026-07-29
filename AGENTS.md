@@ -63,10 +63,10 @@ Pipeline, in order:
    `unnamed_constants`. Nothing here recurses, so depth is bounded by memory, not by the
    stack. The three public `to_*` methods just pass the corresponding `_Backend` instance
    (`_ROOT`, `_NUMEXPR`, `_PYTHON`). There is no per-backend visitor class — a new backend is
-   a new `_Backend` literal plus new tables. Where a node raises matters: a check in
-   `_serializer` fires before that node's children are visited, a check inside the builder it
-   returns fires after. The current placement reproduces the order the recursive version
-   raised in, so an expression with more than one problem still reports the same one.
+   a new `_Backend` literal plus new tables. Every node validates in `_serializer`, which runs
+   before its children are visited, so an expression with more than one unsupported construct
+   reports the outermost one. Keep new checks there: the builder `_serializer` returns should
+   only join strings, and moving a check into it would silently change which error surfaces.
 4. **`identifiers.py`** — the hand-maintained lookup tables. `FUNCTIONS`/`CONSTANTS` are the
    canonical name sets; `ROOT_*`/`NUMEXPR_*`/`PYTHON_*` map canonical names to each backend's
    spelling. A name absent from a backend's table is how "unsupported" is expressed — the

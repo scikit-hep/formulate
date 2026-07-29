@@ -179,19 +179,14 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return f"{self.operator}({parts[0]})"
 
     def _serializer(self, backend: _Backend) -> Callable[..., str]:
-        # Unlike the other nodes this one validates in the builder rather than
-        # here, because the recursive version raised only after its operand had
-        # been serialized.
-        def build(operand: str) -> str:
-            if (function := backend.unary_functions.get(self.operator)) is not None:
-                return f"{backend.function_prefix}{function}({operand})"
-            symbol = backend.operator_symbols.get(self.operator)
-            if symbol is None:
-                msg = f'Operator "{self.operator}" is not supported in {backend.name}.'
-                raise ValueError(msg)
-            return f"({symbol}{operand})"
-
-        return build
+        if (function := backend.unary_functions.get(self.operator)) is not None:
+            name = f"{backend.function_prefix}{function}"
+            return lambda operand: f"{name}({operand})"
+        symbol = backend.operator_symbols.get(self.operator)
+        if symbol is None:
+            msg = f'Operator "{self.operator}" is not supported in {backend.name}.'
+            raise ValueError(msg)
+        return lambda operand: f"({symbol}{operand})"
 
 
 @dataclass(frozen=True, slots=True)
