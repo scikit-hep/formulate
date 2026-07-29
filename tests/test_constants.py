@@ -13,6 +13,9 @@ automatically instead of silently going untested.
 
 from __future__ import annotations
 
+import array
+import math
+
 import numexpr
 import numpy as np
 import pytest
@@ -46,6 +49,15 @@ def root_eval(expression: str) -> float:
 
 def numexpr_eval(expression: str) -> float:
     return float(numexpr.evaluate(expression, local_dict=VARIABLE_VALUES))
+
+
+def numexpr_eval_with(expression: str, **values: float) -> float:
+    return float(
+        numexpr.evaluate(
+            expression,
+            local_dict={name: np.float64(v) for name, v in values.items()},
+        )
+    )
 
 
 def assert_same_value(left: float, right: float, context: str) -> None:
@@ -134,8 +146,10 @@ def test_every_tmath_name_exists_in_root(root_name):
 
 # --- Whole expressions ---
 
-# '%' is excluded on purpose: formulate translates it faithfully, but TFormula
-# compiles to C++ where '%' is integer-only and so rejects it on doubles.
+# '%' is excluded here because TFormula compiles to C++, where '%' is
+# integer-only and so will not compile on doubles.  TTreeFormula does accept it,
+# with semantics that differ from NumExpr's -- see the modulo tests at the end
+# of this file.
 SHARED_EXPRESSIONS = [
     # Arithmetic and precedence
     "x+y*z",
@@ -235,3 +249,87 @@ def test_element_wise_min_max_are_not_translated_to_numexpr():
         formulate.from_root("TMath::Min(x, y)").to_python(),
         {"np": np, **NUMPY_VARIABLE_VALUES},
     ) == min(VARIABLE_VALUES["x"], VARIABLE_VALUES["y"])
+
+
+# --- The '%' operator means different things in the two languages ---
+#
+# formulate maps `mod` to '%' for every backend, so `a % b` converts in both
+# directions with no error.  The two engines do not agree on what it computes:
+#
+#   TTreeFormula   truncates both operands to integers and applies C's '%',
+#                  whose result takes the sign of the dividend
+#   NumExpr/NumPy  floating-point modulo, whose result takes the sign of the
+#                  divisor
+#
+# They coincide only when both operands are non-negative whole numbers.  The
+# tests below pin both sides so the divergence stays visible and any change to
+# either engine, or to formulate's mapping, shows up as a failure.
+#
+# TFormula cannot be used here: it compiles to C++ and rejects '%' on doubles.
+# TTreeFormula is the evaluator formulate's ROOT grammar actually targets, and
+# reaching it requires a TTree.
+
+# (a, b, TTreeFormula result, NumExpr result)
+MODULO_CASES = [
+    (7.0, 3.0, 1.0, 1.0),  # the only shape in which the two agree
+    (7.5, 3.0, 1.0, 1.5),  # ROOT truncates the dividend, NumExpr does not
+    (-7.0, 3.0, -1.0, 2.0),  # sign follows the dividend vs the divisor
+    (-7.5, 3.0, -1.0, 1.5),
+    (7.0, -3.0, 1.0, -2.0),
+    (0.5, 3.0, 0.0, 0.5),  # ROOT truncates to 0 % 3
+]
+
+
+@pytest.fixture(scope="module")
+def modulo_tree():
+    """An in-memory TTree; TTreeFormula cannot be built without one."""
+    tree = ROOT.TTree("modulo", "modulo")
+    left = array.array("d", [0.0])
+    right = array.array("d", [0.0])
+    tree.Branch("a", left, "a/D")
+    tree.Branch("b", right, "b/D")
+    for a, b, _, _ in MODULO_CASES:
+        left[0], right[0] = a, b
+        tree.Fill()
+    # Keep the buffers alive for as long as the tree is
+    tree._formulate_buffers = (left, right)
+    return tree
+
+
+def test_tformula_cannot_compile_modulo_on_doubles():
+    assert ROOT.TFormula("", "x%y").Compile() != 0
+
+
+@pytest.mark.parametrize(
+    "index,case",
+    enumerate(MODULO_CASES),
+    ids=[f"{a}%{b}" for a, b, _, _ in MODULO_CASES],
+)
+def test_modulo_disagrees_between_root_and_numexpr(index, case, modulo_tree):
+    a, b, expected_root, expected_numexpr = case
+
+    # formulate converts it happily in both directions ...
+    assert formulate.from_root("a%b").to_numexpr() == "(a % b)"
+    assert formulate.from_numexpr("a%b").to_root() == "(a % b)"
+
+    # ... but the two engines compute different things
+    formula = ROOT.TTreeFormula("m", formulate.from_root("a%b").to_root(), modulo_tree)
+    assert formula.GetNdim() != 0
+    modulo_tree.GetEntry(index)
+    assert formula.EvalInstance() == expected_root
+
+    assert numexpr_eval_with(
+        formulate.from_root("a%b").to_numexpr(), a=a, b=b
+    ) == pytest.approx(expected_numexpr)
+
+    if (a, b) != (7.0, 3.0):
+        assert expected_root != expected_numexpr
+
+
+@pytest.mark.parametrize(
+    "case", MODULO_CASES, ids=[f"{a}%{b}" for a, b, _, _ in MODULO_CASES]
+)
+def test_root_modulo_is_c_modulo_on_truncated_operands(case):
+    """The rule behind the numbers above, stated once."""
+    a, b, expected_root, _ = case
+    assert math.fmod(int(a), int(b)) == expected_root
