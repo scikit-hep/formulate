@@ -51,12 +51,22 @@ Pipeline, in order:
 2. **`toast.py`** — walks the lark parse tree and emits the backend-neutral AST. This is where
    surface names are normalized: namespaces (`TMath::`), the trailing `$` on ROOT array
    functions, function aliases (`atan2` → `arctan2`), and constant aliases (`e_num` → `exp1`).
-   Unknown names raise here.
+   Unknown names raise here. The walk is iterative: `_expand` handles one parse-tree node,
+   returning the children still to convert plus a builder that assembles the AST node from
+   them, and `toast` drives that with an explicit stack.
 3. **`AST.py`** — five frozen dataclass node types (`Literal`, `Symbol`, `UnaryOperator`,
-   `BinaryOperator`, `Matrix`, `Call`) plus a `_Backend` descriptor. Serialization is a single
-   `_to_backend(backend)` method per node; the three public `to_*` methods just pass the
-   corresponding `_Backend` instance (`_ROOT`, `_NUMEXPR`, `_PYTHON`). There is no
-   per-backend visitor class — a new backend is a new `_Backend` literal plus new tables.
+   `BinaryOperator`, `Matrix`, `Call`) plus a `_Backend` descriptor. A node type implements
+   exactly three things: `_children()`, `_format(*parts)` for `str()`, and
+   `_serializer(backend)`, which returns the builder that joins its already-serialized
+   children. Every traversal lives on the base class and is iterative: `_fold` drives both
+   `__str__` and `_to_backend`, and `_walk` backs `variables` / `named_constants` /
+   `unnamed_constants`. Nothing here recurses, so depth is bounded by memory, not by the
+   stack. The three public `to_*` methods just pass the corresponding `_Backend` instance
+   (`_ROOT`, `_NUMEXPR`, `_PYTHON`). There is no per-backend visitor class — a new backend is
+   a new `_Backend` literal plus new tables. Where a node raises matters: a check in
+   `_serializer` fires before that node's children are visited, a check inside the builder it
+   returns fires after. The current placement reproduces the order the recursive version
+   raised in, so an expression with more than one problem still reports the same one.
 4. **`identifiers.py`** — the hand-maintained lookup tables. `FUNCTIONS`/`CONSTANTS` are the
    canonical name sets; `ROOT_*`/`NUMEXPR_*`/`PYTHON_*` map canonical names to each backend's
    spelling. A name absent from a backend's table is how "unsupported" is expressed — the
@@ -99,8 +109,11 @@ contains a lone `&`. New syntax that people commonly get wrong belongs here.
   Genuinely unreachable code is marked `# pragma: no cover`; prefer deleting dead branches.
 - `filterwarnings = ["error"]` and `xfail_strict` are on — a new warning fails the suite.
 - mypy runs `--strict` over `src` only; the package ships `py.typed`.
-- Supported Python is 3.10+, and the CI matrix includes Windows and free-threaded 3.14. The
-  AST walk is recursive, so expression-length limits in `tests/test_performance.py` are bounded
-  by the _C_ stack on the weakest platform (Windows/3.10 under coverage), not by
-  `sys.setrecursionlimit`. Don't raise those sizes without checking that job.
+- Supported Python is 3.10+, and the CI matrix includes Windows and free-threaded 3.14.
+- **No recursive tree walks.** `toast`, `_fold` and `_walk` all use an explicit stack, so peak
+  frame depth is a small constant whatever the expression size. `tests/test_performance.py`
+  runs at CPython's default recursion limit on purpose and nests 1,000 levels deep, so a
+  recursive walk added back anywhere in the pipeline fails there. The sizes in that file are
+  bounded by its 3s timing budget on the slowest job (Windows/3.10 under coverage), not by the
+  stack.
 - Version comes from git tags via `hatch-vcs` (`_version.py` is generated; do not edit).

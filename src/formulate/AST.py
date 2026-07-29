@@ -1,11 +1,13 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
 from abc import ABCMeta, abstractmethod
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
 from ordered_set import OrderedSet
 
+from ._traversal import fold
 from .identifiers import (
     CONSTANTS,
     NUMEXPR_CONSTANTS,
@@ -69,10 +71,33 @@ _PYTHON = _Backend(
 
 class AST(metaclass=ABCMeta):
     @abstractmethod
-    def __str__(self) -> str: ...  # pragma: no cover
+    def _children(self) -> Sequence["AST"]: ...  # pragma: no cover
 
     @abstractmethod
-    def _to_backend(self, backend: _Backend) -> str: ...  # pragma: no cover
+    def _format(self, *parts: str) -> str: ...  # pragma: no cover
+
+    @abstractmethod
+    def _serializer(
+        self, backend: _Backend
+    ) -> Callable[..., str]: ...  # pragma: no cover
+
+    def _walk(self) -> Iterator["AST"]:
+        """Yield every node in the tree, parents first and left to right.
+
+        Leaves therefore come out in the order they appear in the expression,
+        which is the order the `variables` family reports them in.
+        """
+        stack: list[AST] = [self]
+        while stack:
+            node = stack.pop()
+            yield node
+            stack.extend(reversed(node._children()))
+
+    def __str__(self) -> str:
+        return fold(self, lambda node: (node._children(), node._format))
+
+    def _to_backend(self, backend: _Backend) -> str:
+        return fold(self, lambda node: (node._children(), node._serializer(backend)))
 
     def to_numexpr(self) -> str:
         return self._to_backend(_NUMEXPR)
@@ -84,68 +109,62 @@ class AST(metaclass=ABCMeta):
         return self._to_backend(_PYTHON)
 
     @property
-    @abstractmethod
-    def variables(self) -> OrderedSet[str]: ...  # pragma: no cover
+    def variables(self) -> OrderedSet[str]:
+        return OrderedSet(
+            node.name
+            for node in self._walk()
+            if isinstance(node, Symbol) and node.name not in CONSTANTS
+        )
 
     @property
-    @abstractmethod
-    def named_constants(self) -> OrderedSet[str]: ...  # pragma: no cover
+    def named_constants(self) -> OrderedSet[str]:
+        return OrderedSet(
+            node.name
+            for node in self._walk()
+            if isinstance(node, Symbol) and node.name in CONSTANTS
+        )
 
     @property
-    @abstractmethod
-    def unnamed_constants(self) -> OrderedSet[int | float]: ...  # pragma: no cover
+    def unnamed_constants(self) -> OrderedSet[int | float]:
+        return OrderedSet(
+            node.value for node in self._walk() if isinstance(node, Literal)
+        )
 
 
 @dataclass(frozen=True, slots=True)
 class Literal(AST):  # Literal: value that appears in the program text
     value: int | float
 
-    def __str__(self) -> str:
+    def _children(self) -> Sequence[AST]:
+        return ()
+
+    def _format(self, *_parts: str) -> str:
         return str(self.value)
 
-    def _to_backend(self, _backend: _Backend) -> str:
-        return repr(self.value)
-
-    @property
-    def variables(self) -> OrderedSet[str]:
-        return OrderedSet()
-
-    @property
-    def named_constants(self) -> OrderedSet[str]:
-        return OrderedSet()
-
-    @property
-    def unnamed_constants(self) -> OrderedSet[int | float]:
-        return OrderedSet([self.value])
+    def _serializer(self, _backend: _Backend) -> Callable[..., str]:
+        text = repr(self.value)
+        return lambda: text
 
 
 @dataclass(frozen=True, slots=True)
 class Symbol(AST):  # Symbol: value referenced by name
     name: str
 
-    def __str__(self) -> str:
+    def _children(self) -> Sequence[AST]:
+        return ()
+
+    def _format(self, *_parts: str) -> str:
         return self.name
 
-    def _to_backend(self, backend: _Backend) -> str:
+    def _serializer(self, backend: _Backend) -> Callable[..., str]:
+        text = self.name
         if self.name in CONSTANTS:
             const = backend.constants.get(self.name)
             if const is None:
                 msg = f'Constant "{self.name}" is not supported in {backend.name}.'
                 raise ValueError(msg)
-            return str(const)
-        return self.name
-
-    @property
-    def variables(self) -> OrderedSet[str]:
-        return OrderedSet() if self.name in CONSTANTS else OrderedSet([self.name])
-
-    @property
-    def named_constants(self) -> OrderedSet[str]:
-        return OrderedSet() if self.name not in CONSTANTS else OrderedSet([self.name])
-
-    @property
-    def unnamed_constants(self) -> OrderedSet[int | float]:
-        return OrderedSet()
+            text = str(const)
+        return lambda: text
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,30 +172,26 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
     operator: str
     operand: AST
 
-    def __str__(self) -> str:
-        return f"{self.operator}({self.operand})"
+    def _children(self) -> Sequence[AST]:
+        return (self.operand,)
 
-    def _to_backend(self, backend: _Backend) -> str:
-        operand = self.operand._to_backend(backend)
-        if (function := backend.unary_functions.get(self.operator)) is not None:
-            return f"{backend.function_prefix}{function}({operand})"
-        symbol = backend.operator_symbols.get(self.operator)
-        if symbol is None:
-            msg = f'Operator "{self.operator}" is not supported in {backend.name}.'
-            raise ValueError(msg)
-        return f"({symbol}{operand})"
+    def _format(self, *parts: str) -> str:
+        return f"{self.operator}({parts[0]})"
 
-    @property
-    def variables(self) -> OrderedSet[str]:
-        return self.operand.variables
+    def _serializer(self, backend: _Backend) -> Callable[..., str]:
+        # Unlike the other nodes this one validates in the builder rather than
+        # here, because the recursive version raised only after its operand had
+        # been serialized.
+        def build(operand: str) -> str:
+            if (function := backend.unary_functions.get(self.operator)) is not None:
+                return f"{backend.function_prefix}{function}({operand})"
+            symbol = backend.operator_symbols.get(self.operator)
+            if symbol is None:
+                msg = f'Operator "{self.operator}" is not supported in {backend.name}.'
+                raise ValueError(msg)
+            return f"({symbol}{operand})"
 
-    @property
-    def named_constants(self) -> OrderedSet[str]:
-        return self.operand.named_constants
-
-    @property
-    def unnamed_constants(self) -> OrderedSet[int | float]:
-        return self.operand.unnamed_constants
+        return build
 
 
 @dataclass(frozen=True, slots=True)
@@ -185,30 +200,24 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
     left: AST
     right: AST
 
-    def __str__(self) -> str:
-        return f"{self.operator}({self.left}, {self.right})"
+    def _children(self) -> Sequence[AST]:
+        return (self.left, self.right)
 
-    def _to_backend(self, backend: _Backend) -> str:
+    def _format(self, *parts: str) -> str:
+        return f"{self.operator}({parts[0]}, {parts[1]})"
+
+    def _serializer(self, backend: _Backend) -> Callable[..., str]:
         symbol = backend.operator_symbols.get(self.operator)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in {backend.name}.'
             raise ValueError(msg)
-        out = f"{self.left._to_backend(backend)} {symbol} {self.right._to_backend(backend)}"
-        if symbol not in backend.unparenthesized_ops:
-            out = f"({out})"
-        return out
+        parenthesize = symbol not in backend.unparenthesized_ops
 
-    @property
-    def variables(self) -> OrderedSet[str]:
-        return self.left.variables | self.right.variables
+        def build(left: str, right: str) -> str:
+            out = f"{left} {symbol} {right}"
+            return f"({out})" if parenthesize else out
 
-    @property
-    def named_constants(self) -> OrderedSet[str]:
-        return self.left.named_constants | self.right.named_constants
-
-    @property
-    def unnamed_constants(self) -> OrderedSet[int | float]:
-        return self.left.unnamed_constants | self.right.unnamed_constants
+        return build
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,41 +225,25 @@ class Matrix(AST):  # Matrix: A matrix call
     var: AST
     indices: list[AST]
 
-    def __str__(self) -> str:
-        return "{}[{}]".format(str(self.var), ", ".join(str(x) for x in self.indices))
+    def _children(self) -> Sequence[AST]:
+        return (self.var, *self.indices)
 
-    def _to_backend(self, backend: _Backend) -> str:
+    def _format(self, *parts: str) -> str:
+        var_str, *indices = parts
+        return "{}[{}]".format(var_str, ", ".join(indices))
+
+    def _serializer(self, backend: _Backend) -> Callable[..., str]:
         if backend.index_format is None:
             msg = f"Matrix operations are forbidden in {backend.name}."
             raise ValueError(msg)
-        var_str = self.var._to_backend(backend)
-        if backend.index_format == "root":
-            index = "".join(f"[{elem._to_backend(backend)}]" for elem in self.indices)
-        else:
-            index = (
-                "["
-                + ", ".join(elem._to_backend(backend) for elem in self.indices)
-                + "]"
-            )
-        return var_str + index
+        root_style = backend.index_format == "root"
 
-    @property
-    def variables(self) -> OrderedSet[str]:
-        return OrderedSet.union(
-            self.var.variables, *[ind.variables for ind in self.indices]
-        )
+        def build(var_str: str, *indices: str) -> str:
+            if root_style:
+                return var_str + "".join(f"[{elem}]" for elem in indices)
+            return var_str + "[" + ", ".join(indices) + "]"
 
-    @property
-    def named_constants(self) -> OrderedSet[str]:
-        return OrderedSet.union(
-            self.var.named_constants, *[ind.named_constants for ind in self.indices]
-        )
-
-    @property
-    def unnamed_constants(self) -> OrderedSet[int | float]:
-        return OrderedSet.union(
-            self.var.unnamed_constants, *[ind.unnamed_constants for ind in self.indices]
-        )
+        return build
 
 
 @dataclass(frozen=True, slots=True)
@@ -258,33 +251,18 @@ class Call(AST):  # Call: evaluate a function on arguments
     function: str
     arguments: list[AST]
 
-    def __str__(self) -> str:
-        return f"{self.function}({', '.join(str(x) for x in self.arguments)})"
+    def _children(self) -> Sequence[AST]:
+        return self.arguments
 
-    def _to_backend(self, backend: _Backend) -> str:
+    def _format(self, *parts: str) -> str:
+        return f"{self.function}({', '.join(parts)})"
+
+    def _serializer(self, backend: _Backend) -> Callable[..., str]:
         if backend.pow_as_operator and self.function == "pow":
-            return f"({self.arguments[0]._to_backend(backend)} ** {self.arguments[1]._to_backend(backend)})"
+            return lambda base, exponent: f"({base} ** {exponent})"
         function_str = backend.functions.get(self.function)
         if function_str is None:
             msg = f'Function "{self.function}" is not supported in {backend.name}.'
             raise ValueError(msg)
-        arguments = ", ".join(arg._to_backend(backend) for arg in self.arguments)
-        return f"{backend.function_prefix}{function_str}({arguments})"
-
-    @property
-    def variables(self) -> OrderedSet[str]:
-        return OrderedSet.union(
-            OrderedSet(), *[arg.variables for arg in self.arguments]
-        )
-
-    @property
-    def named_constants(self) -> OrderedSet[str]:
-        return OrderedSet.union(
-            OrderedSet(), *[arg.named_constants for arg in self.arguments]
-        )
-
-    @property
-    def unnamed_constants(self) -> OrderedSet[int | float]:
-        return OrderedSet.union(
-            OrderedSet(), *[arg.unnamed_constants for arg in self.arguments]
-        )
+        name = f"{backend.function_prefix}{function_str}"
+        return lambda *args: f"{name}({', '.join(args)})"
