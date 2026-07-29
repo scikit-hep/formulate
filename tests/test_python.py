@@ -30,7 +30,8 @@ ROOT_TO_PYTHON = [
     # ROOT's logical operators map onto NumPy's bitwise ones
     ("a&&2.0", "(a & 2.0)"),
     ("a||2.0", "(a | 2.0)"),
-    ("!bool", "(~bool)"),
+    # ROOT's logical '!' becomes np.logical_not, not NumPy's bitwise '~'
+    ("!bool", "np.logical_not(bool)"),
     ("a&&b&&c", "((a & b) & c)"),
     ("a||b||c", "((a | b) | c)"),
     # Unary
@@ -54,7 +55,7 @@ ROOT_TO_PYTHON = [
     ("a-b-c-d", "(((a - b) - c) - d)"),
     ("a*b*c*d", "(((a * b) * c) * d)"),
     ("a/b/c/d", "(((a / b) / c) / d)"),
-    ("!a**b*23/(var||45)", "(((~(a ** b)) * 23) / (var | 45))"),
+    ("!a**b*23/(var||45)", "((np.logical_not((a ** b)) * 23) / (var | 45))"),
 ]
 
 
@@ -90,6 +91,34 @@ def test_python_output_evaluates_to_the_expected_value(expr, expected):
         eval(rendered, {"np": np, "a": 2.0, "b": 3.0, "c": 4.0}),
         expected,
     )
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        np.array([0, 1, 5, -3]),  # integers: '~' would give -1, -2, -6, 2
+        np.array([0.0, 1.0, 5.0, -3.0]),  # floats: '~' raises TypeError
+        np.array([False, True, True, False]),  # booleans: '~' happens to agree
+    ],
+    ids=["int", "float", "bool"],
+)
+def test_logical_not_matches_root_for_every_dtype(values):
+    """ROOT's '!' is a logical NOT; NumPy's '~' is a bitwise inversion.
+
+    The two agree only on booleans, so the Python backend emits
+    np.logical_not rather than '~'.  ROOT's '!x' is true exactly where x is
+    zero, whatever the dtype.
+    """
+    rendered = formulate.from_root("!x").to_python()
+    assert rendered == "np.logical_not(x)"
+    assert np.array_equal(eval(rendered, {"np": np, "x": values}), values == 0)
+
+
+def test_logical_not_of_a_comparison_is_unchanged_by_the_function_form():
+    """The common case has to keep working exactly as before."""
+    rendered = formulate.from_root("!(x > 2)").to_python()
+    x = np.array([0, 1, 5, -3])
+    assert np.array_equal(eval(rendered, {"np": np, "x": x}), ~(x > 2))
 
 
 @pytest.mark.parametrize(
