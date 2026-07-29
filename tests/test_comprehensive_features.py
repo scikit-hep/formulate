@@ -1,8 +1,7 @@
 """Cross-backend feature coverage: ROOT/TFormula and NumExpr language features.
 
-The per-name coverage of the function and constant tables lives in
-tests/test_identifiers.py; this file is about features that behave *differently*
-between the two languages, or that only one of them has.
+Covers features that behave *differently* between the two languages, or that
+only one of them has.
 """
 
 from __future__ import annotations

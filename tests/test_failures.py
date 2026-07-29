@@ -1,8 +1,7 @@
-"""Error reporting: which inputs are rejected, and how helpfully.
+"""Error reporting: not just which inputs are rejected, but how helpfully.
 
-Cases that check *whether* a malformed string is rejected live in
-tests/test_special_cases.py.  This file is about the quality of the failure:
-the exception type, the message, and the suggestions attached to it.
+Covers the quality of the failure: the exception type, the message, and the
+suggestions attached to it.
 """
 
 from __future__ import annotations

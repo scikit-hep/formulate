@@ -217,8 +217,7 @@ _UNARY_OPS = st.sampled_from(["-", "+", "~"])
 _FUNCTIONS = st.sampled_from(["sqrt", "abs", "log", "sin", "cos", "arctan"])
 
 # Every generated node is parenthesized, so the string is unambiguous and these
-# tests exercise conversion rather than the grammar's precedence rules (those
-# are covered by tests/test_operator_precedence.py).
+# tests exercise conversion rather than the grammar's precedence rules.
 GENERATED_NUMEXPR = st.recursive(
     _LEAVES,
     lambda children: st.one_of(
