@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+No breaking changes. This is a bug-fix and maintenance release.
+
+### Bug fixes
+
+- `to_python()` raised for every named constant except `inf`, `neginf` and `nan`, because the Python constant table was built from the wrong source. All of them now convert.
+- `to_python()` emitted `np.pow`, which only exists in NumPy 2.0 and later; it now emits `np.power`.
+- `TMath::Min(a, b)` and `TMath::Max(a, b)`, which are element-wise two-argument functions, were conflated with the `Min$`/`Max$` array reductions and silently round-tripped as the wrong one. They are now distinct, and convert to `np.minimum`/`np.maximum` in Python. They have no numexpr equivalent, and say so rather than converting.
+- ROOT's `$` functions used without parentheses, such as a bare `Length$`, are now parsed.
+- An index followed by a power, such as `Jet_pt[0]**2`, was a parse error in ROOT.
+- Zero-argument calls such as `Length$()` raised an internal error.
+- `named_constants` and `unnamed_constants` ignored the indexed expression itself, so `pi[0]` reported no constants.
+- `from_root()` and `from_numexpr()` accepted arbitrary keyword arguments and silently ignored them, turning a typo into a no-op.
+- The ROOT parse-error hints missed a bare `&` or `|` written without surrounding spaces.
+- Converting `TMath::Min`/`TMath::Max` to numexpr reported the internal name (`Function "tmath_min" is not supported`) rather than what was written.
+
+### Improvements
+
+- Expression trees are now walked iteratively throughout, so deeply nested expressions are limited by memory rather than by Python's recursion limit.
+- AST nodes are immutable (frozen, slotted dataclasses).
+- Each grammar is compiled on first use rather than at import, so parsing only one language costs only one parser.
+- The package ships a `py.typed` marker, so type checkers now see its annotations.
+- The documentation has been substantially expanded: every supported operator, function and constant is now listed with its spelling in each language, and the API reference is generated from real docstrings.
+- Python 3.14, including the free-threaded build, is tested in CI.
+
 ## v1.0.1 (16 Oct. 2025)
 
 This release provided significant bug fixes and cleanup with respect to the previous overhaul. The switch to Lark as the parsing backend and the internal AST were kept, but the code was significantly simplified and many issues were ironed out.

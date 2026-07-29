@@ -1,10 +1,29 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
+
+"""The tables that say how each name is spelled in each language.
+
+``FUNCTIONS`` and ``CONSTANTS`` hold the canonical names — the ones that appear
+inside the AST — and the ``ROOT_*``, ``NUMEXPR_*`` and ``PYTHON_*`` maps give
+each backend's spelling of them. A canonical name absent from a backend's map
+is how "not supported here" is expressed: rendering it raises ``ValueError``
+rather than emitting an approximation.
+
+The ``*_ALIASES`` maps go the other way, folding the surface spellings a parser
+may see onto one canonical name, which is what makes ``TMath::ATan2``,
+``atan2`` and ``arctan2`` the same function, and ``e_num``, ``e_euler`` and
+``TMath::E()`` the same constant.
+
+Numeric values for the physical constants come from :mod:`hepunits`, so they
+agree with the rest of Scikit-HEP.
+"""
+
 import math
 
 from hepunits import constants
 from hepunits.units import coulomb, e_SI, electronvolt, joule, kelvin, m, mole, s
 
 UNARY_OPERATORS = {"pos", "neg", "inv"}
+"""Canonical names of the operators a :class:`~formulate.AST.UnaryOperator` may use."""
 
 BINARY_OPERATORS = {
     "add",
@@ -24,6 +43,7 @@ BINARY_OPERATORS = {
     "pow",
     "multi_out",
 }
+"""Canonical names of the operators a :class:`~formulate.AST.BinaryOperator` may use."""
 
 COMMON_OPERATOR_SYMBOLS = {
     "pos": "+",
@@ -41,6 +61,7 @@ COMMON_OPERATOR_SYMBOLS = {
     "neq": "!=",
     "pow": "**",
 }
+"""Operator spellings that all three languages agree on."""
 
 NUMEXPR_OPERATOR_SYMBOLS = {
     **COMMON_OPERATOR_SYMBOLS,
@@ -49,6 +70,7 @@ NUMEXPR_OPERATOR_SYMBOLS = {
     "or": "|",
     "xor": "^",
 }
+"""NumExpr's spelling of each operator."""
 
 ROOT_OPERATOR_SYMBOLS = {
     **COMMON_OPERATOR_SYMBOLS,
@@ -58,6 +80,8 @@ ROOT_OPERATOR_SYMBOLS = {
     # xor is not supported since ^ is interpreted as a power operator
     "multi_out": ":",
 }
+"""ROOT's spelling of each operator. There is no ``xor``, since ROOT reads ``^`` as
+exponentiation."""
 
 PYTHON_OPERATOR_SYMBOLS = {
     # "inv" is deliberately absent, and handled by PYTHON_UNARY_FUNCTIONS
@@ -65,6 +89,8 @@ PYTHON_OPERATOR_SYMBOLS = {
     **{op: symbol for op, symbol in NUMEXPR_OPERATOR_SYMBOLS.items() if op != "inv"},
     "multi_out": ",",
 }
+"""Python's spelling of each operator. ``inv`` is absent on purpose; see
+:data:`PYTHON_UNARY_FUNCTIONS`."""
 
 # Operators that Python spells as a function call rather than as a symbol.
 #
@@ -75,9 +101,12 @@ PYTHON_OPERATOR_SYMBOLS = {
 # unconditionally. (NumExpr needs no such treatment: its "~" has no opcode for
 # anything but booleans, so a mistranslation there fails loudly instead.)
 PYTHON_UNARY_FUNCTIONS = {"inv": "logical_not"}
+"""Unary operators Python writes as a function call rather than as a symbol. Takes
+precedence over :data:`PYTHON_OPERATOR_SYMBOLS`."""
 
 # Later on we could add Python libraries as "namespaces" here
 NAMESPACES = {"tmath"}
+"""Namespace prefixes a function name may carry, lower-cased."""
 
 FUNCTIONS = {
     # Common functions
@@ -181,6 +210,7 @@ FUNCTIONS = {
     "tmath_min",
     "tmath_max",
 }
+"""Canonical names of every function formulate knows."""
 
 FUNCTION_ALIASES = {
     "ln": "log",
@@ -193,6 +223,16 @@ FUNCTION_ALIASES = {
     "atanh": "arctanh",
     "power": "pow",
 }
+"""Other spellings of a function, mapped onto its canonical name."""
+
+# Canonical names that no language spells that way, so that an error message
+# names something the reader could have written. Every other canonical name is
+# already a spelling some language accepts, and is used as-is.
+FUNCTION_DISPLAY_NAMES = {
+    "tmath_min": "TMath::Min",
+    "tmath_max": "TMath::Max",
+}
+"""How to name a function in an error message, where its canonical name is internal."""
 
 # https://numexpr.readthedocs.io/en/latest/user_guide.html#supported-functions
 NUMEXPR_FUNCTIONS = {
@@ -233,6 +273,7 @@ NUMEXPR_FUNCTIONS = {
     # TMath::Min/TMath::Max are, and "min(a, b)" is rejected by NumExpr. The
     # equivalent is "where(a < b, a, b)", which is not a plain function name.
 }
+"""NumExpr's spelling of each function it supports."""
 
 # https://root.cern.ch/doc/master/namespaceTMath.html
 ROOT_FUNCTIONS = {
@@ -325,6 +366,7 @@ ROOT_FUNCTIONS = {
     "tmath_min": "TMath::Min",
     "tmath_max": "TMath::Max",
 }
+"""ROOT's spelling of each function it supports."""
 
 PYTHON_FUNCTIONS = {
     # NumExpr's contains() is a substring test with no NumPy equivalent that can
@@ -337,6 +379,8 @@ PYTHON_FUNCTIONS = {
     "tmath_min": "minimum",
     "tmath_max": "maximum",
 }
+"""NumPy's name for each function it supports, without the ``np.`` prefix, which is
+added when the expression is rendered."""
 
 CONSTANTS = {
     "true",
@@ -364,6 +408,8 @@ CONSTANTS = {
     "hbar",
     "hbarc",
 }
+"""Canonical names of every constant formulate knows. A :class:`~formulate.AST.Symbol`
+whose name is in here is a constant; every other symbol is a variable."""
 
 CONSTANTS_ALIASES = {
     "π": "pi",
@@ -393,6 +439,7 @@ CONSTANTS_ALIASES = {
     "degtorad": "deg2rad",
     "radtodeg": "rad2deg",
 }
+"""Other spellings of a constant, mapped onto its canonical name."""
 
 CONSTANTS_FUNCTION_ALIASES = {
     "e": "exp1",
@@ -402,6 +449,8 @@ CONSTANTS_FUNCTION_ALIASES = {
     "na": "avogadro",
     "qe": "eplus",
 }
+"""Constants recognised only in call form, such as ``c()``. Kept separate so that a bare
+``c`` stays a variable, since short branch names are common."""
 
 NUMEXPR_CONSTANTS = {
     "true": True,
@@ -427,6 +476,8 @@ NUMEXPR_CONSTANTS = {
     "hbar": constants.hbar / (electronvolt * s / e_SI),
     "hbarc": constants.hbarc / (electronvolt * m / e_SI),
 }
+"""The value substituted for each constant when rendering to NumExpr, which has no
+symbolic constants of its own."""
 
 ROOT_CONSTANTS = {
     "true": "true",
@@ -454,6 +505,7 @@ ROOT_CONSTANTS = {
     "hbar": "TMath::Hbar()",
     "hbarc": "(TMath::Hbar() * TMath::C())",
 }
+"""ROOT's spelling of each constant, usually a ``TMath`` call."""
 
 PYTHON_CONSTANTS = {
     **NUMEXPR_CONSTANTS,
@@ -461,3 +513,4 @@ PYTHON_CONSTANTS = {
     "neginf": "float('-inf')",
     "nan": "float('nan')",
 }
+"""The value substituted for each constant when rendering to Python."""
