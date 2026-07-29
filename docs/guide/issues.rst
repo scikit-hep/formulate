@@ -107,60 +107,6 @@ things is worth knowing about when reading a converted expression:
 ROOT has no XOR operator at all, since it spells exponentiation with ``^``, so
 a numexpr expression using XOR cannot be converted.
 
-.. _issues-logical-not:
-
-``!`` and ``~`` are not interchangeable
----------------------------------------------------------------------------
-
-Each language accepts exactly one of them, and formulate says which:
-
-.. code-block:: pycon
-
-   >>> formulate.from_root("~a")
-   ParseError: ... - Use '!' instead of '~'.
-   >>> formulate.from_numexpr("!a")
-   ParseError: ... - Use '~' instead of '!'.
-
-ROOT's ``TTreeFormula`` has no ``~`` operator, and numexpr has no ``!`` (it
-parses through Python's :mod:`ast`, where ``!x`` is a syntax error; ``!`` only
-appears as part of ``!=``). So use ``!`` in ROOT expressions and ``~`` in
-numexpr ones.
-
-They are also different operations. ROOT's ``!`` is a *logical* NOT, defined
-for any numeric type, while ``~`` is a *bitwise* inversion:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 25 25 25 25
-
-   * - operand
-     - ROOT ``!x``
-     - numexpr ``~x``
-     - NumPy ``~x``
-   * - boolean
-     - logical not
-     - logical not
-     - logical not
-   * - integer
-     - ``0`` / ``1``
-     - raises
-     - ``-x-1``
-   * - float
-     - ``0`` / ``1``
-     - raises
-     - raises
-
-They coincide on booleans, which is the usual case (``!(pt > 20)``). For other
-types numexpr raises, because its ``~`` has no opcode for anything but
-booleans. NumPy's ``~`` does not raise on integers, so to keep ``to_python()``
-faithful to ROOT for every dtype formulate emits ``np.logical_not`` rather than
-``~``:
-
-.. code-block:: pycon
-
-   >>> formulate.from_root("!x").to_python()
-   'np.logical_not(x)'
-
 .. _issues-logical-binding:
 
 Logical operators bind differently in the two languages

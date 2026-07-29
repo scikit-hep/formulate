@@ -93,10 +93,9 @@ Logical Operators
 
 .. note::
 
-   These spellings are not interchangeable: ROOT accepts only ``!`` and numexpr
-   accepts only ``~``, and formulate will tell you which one a given expression
-   needs. They also bind differently against comparisons. See
-   :ref:`issues-logical-not` and :ref:`issues-logical-binding`.
+   Each language accepts only its own spelling, and formulate will tell you
+   which one an expression needs. They also bind differently against
+   comparisons; see :ref:`issues-logical-binding`.
 
 Functions
 ----------------
