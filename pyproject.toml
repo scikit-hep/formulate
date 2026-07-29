@@ -58,7 +58,7 @@ docs = [
 dev = [
     "formulate[docs]",
     "formulate[test]",
-    "pre-commit",
+    "prek",
 ]
 all = ["formulate[docs]", "formulate[test]", "formulate[dev]"]
 

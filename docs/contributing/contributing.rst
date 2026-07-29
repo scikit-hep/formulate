@@ -29,12 +29,20 @@ Setting Up Your Development Environment
 
 5. **Set Up Pre-commit Hooks**
 
-   Formulate uses pre-commit hooks to ensure code quality:
+   Formulate uses pre-commit hooks to ensure code quality. They are run with
+   `prek <https://github.com/j178/prek>`_, a faster drop-in replacement for
+   ``pre-commit`` that reads the same ``.pre-commit-config.yaml``. It is
+   installed by the ``dev`` extra above, so you only need to install the hooks:
 
    .. code-block:: bash
 
-       pip install pre-commit
-       pre-commit install
+       prek install
+
+   To run all the hooks against every file without making a commit:
+
+   .. code-block:: bash
+
+       prek run --all-files
 
 Development Workflow
 ----------------------------------------------
@@ -90,7 +98,7 @@ Coding Guidelines
 
 1. **Code Style**
 
-   Formulate follows the PEP 8 style guide. The pre-commit hooks will help ensure your code adheres to this style.
+   Formulate follows the PEP 8 style guide. The hooks installed above will help ensure your code adheres to this style.
 
 2. **Documentation**
 

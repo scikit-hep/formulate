@@ -27,10 +27,10 @@ nox -s coverage
 prek run --all-files        # ruff, ruff-format, mypy (strict, src only), codespell, zizmor
 ```
 
-Use `prek` (a drop-in, much faster reimplementation of `pre-commit`) rather than `pre-commit`
-itself — same `.pre-commit-config.yaml`, same hook IDs, same subcommands. Note that
-`nox -s lint` and pre-commit.ci (configured by the `ci:` block in the config) still run
-`pre-commit` proper, so hook behaviour must stay compatible with both.
+`prek` is a drop-in, much faster reimplementation of `pre-commit` — same
+`.pre-commit-config.yaml`, same hook IDs, same subcommands. It is what the `dev` extra installs
+and what `nox -s lint` runs. pre-commit.ci (configured by the `ci:` block in the config) still
+runs `pre-commit` proper on pull requests, so hooks must stay compatible with both.
 
 `tests/test_constants.py` is the only file that evaluates expressions with the real engines;
 it `importorskip`s `ROOT`, which CI installs only on Linux/Python 3.10. Everything else runs
