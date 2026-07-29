@@ -51,16 +51,33 @@ def test_generated_expression_is_long_and_parseable():
     assert parsed.variables <= set(VARIABLES)
 
 
-# Nesting costs far more stack than chaining. The grammar's precedence chain
-# (expression -> disjunction -> ... -> atom) is eleven rules deep and none of
-# them are inlined, so each "(" costs about eleven `toast` frames where each
-# "+" in a flat chain costs one.
+# Sizes below are bounded by C stack, not by the recursion limit raised above.
+# Because that limit is raised, `toast` can recurse past the point where the C
+# stack runs out, and the interpreter dies outright instead of raising
+# RecursionError.
 #
-# Deep enough input exhausts the C stack and kills the interpreter outright
-# rather than raising RecursionError, because the limit raised above lets Python
-# outrun it. Measured against a 1 MB stack -- the tightest CI platform -- 300
-# levels still parse and 500 crash, so this stays well below that.
+# The binding platform is Python 3.10 on Windows under coverage: 3.11 moved
+# pure-Python calls off the C stack, so 3.11+ has orders of magnitude more room
+# and never reaches this, and coverage's tracer adds a C frame per Python frame.
+# Measured peak Python frames against what that job actually does:
+#
+#     one-way parse of 10,000 terms   2,565   passes
+#     round trip of 1,000 terms       3,029   crashes
+#     nesting of 100 levels           1,118   passes
+#     round trip of 200 terms           713   passes
+#
+# So the budget there is somewhere between 2,500 and 3,000 frames. Keep new
+# cases well under that, and measure rather than reason about it: frame counts
+# are not obvious from the size of the expression.
 NESTING_DEPTH = 100
+
+# Round trips are far more expensive than one-way conversions of the same
+# length, because the canonical form is fully parenthesized: a 1,000-term chain
+# comes back as 251 levels of nesting, and re-parsing nesting costs about eleven
+# frames per level (the grammar's precedence chain, expression -> disjunction ->
+# ... -> atom, is eleven rules deep and none of them are inlined). That is why
+# this is so much smaller than EXPRESSION_LENGTH.
+ROUND_TRIP_LENGTH = 200
 
 
 def test_nested_parentheses_parse_at_moderate_depth():
@@ -101,7 +118,7 @@ def test_parse_and_convert_stay_within_the_time_limit(name, length, parse, seria
     ],
 )
 def test_long_expressions_survive_a_full_round_trip(name, forward, backward):
-    expr = generate_long_expression(1000)
+    expr = generate_long_expression(ROUND_TRIP_LENGTH)
     first_parse = (
         formulate.from_root if name.startswith("root") else formulate.from_numexpr
     )
