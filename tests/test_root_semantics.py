@@ -94,15 +94,19 @@ def test_indexed_power_parses(expr):
 
 
 def test_indexed_power_roundtrip():
-    expr = formulate.from_root("a[0]**2")
-    assert "**" in expr.to_root()
+    assert formulate.from_root("a[0]**2").to_root() == "(a[0] ** 2)"
 
 
-# --- multi_out (:) operator is unparenthesized in ROOT ---
+# --- multi_out (:) is the only operator that is never parenthesized ---
 
 
-def test_multi_out_to_root_unparenthesized():
-    # The : operator separates multiple outputs in ROOT TTreeFormula and is
-    # never wrapped in parentheses (unlike arithmetic/logical operators).
-    result = formulate.from_root("a:b")
-    assert result.to_root() == "a : b"
+def test_multi_out_is_not_parenthesized():
+    # ':' separates the outputs of a TTreeFormula rather than combining two
+    # values, so wrapping it in parentheses would change its meaning.
+    assert formulate.from_root("a:b").to_root() == "a : b"
+    assert formulate.from_root("a+1:b*2").to_root() == "(a + 1) : (b * 2)"
+    assert formulate.from_root("a:b:c").to_root() == "a : b : c"
+
+
+def test_multi_out_becomes_a_comma_in_python():
+    assert formulate.from_root("a:b").to_python() == "a , b"

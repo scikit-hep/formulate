@@ -1,3 +1,11 @@
+"""Very long expressions must parse and convert quickly and without recursing
+past Python's stack limit.
+
+Both halves matter: the AST walk is recursive, so a 10,000-term expression is
+also a regression test for stack depth, and the timing bound catches accidental
+quadratic behaviour in the parser or the serializer.
+"""
+
 from __future__ import annotations
 
 import random
@@ -8,145 +16,86 @@ import pytest
 
 import formulate
 
-
-def generate_long_expression(length=1000):
-    """Generate a very long expression with the specified number of symbols and operators.
-
-    Args:
-        length: The approximate length of the expression in terms of symbols and operators.
-
-    Returns:
-        A string containing a valid expression with approximately the specified length.
-    """
-    # Define variables, operators, and constants to use in the expression
-    variables = ["a", "b", "c", "d", "x", "y", "z"]
-    # Use a more limited set of operators to avoid syntax issues
-    binary_operators = ["+", "-", "*", "/"]
-    constants = ["1.0", "2.0", "3.14", "42.0", "0.5"]
-
-    # Start with a simple expression
-    expression = random.choice(variables)
-
-    # Add operators and operands until we reach the desired length
-    current_length = 1
-    while current_length < length:
-        # Add a binary operator and an operand
-        operator = random.choice(binary_operators)
-        operand = random.choice(variables + constants)
-        expression += operator + operand
-        current_length += 2  # Operator + operand
-
-    return expression
-
-
 EXPRESSION_LENGTH = 10_000
+TIME_LIMIT_SECONDS = 3.0
 
-sys.setrecursionlimit(50_000)  # TODO: where to best set this?
+# The AST is walked recursively, so a long expression needs a deeper stack than
+# CPython's default of 1000 frames.
+sys.setrecursionlimit(50_000)
+
+VARIABLES = ["a", "b", "c", "d", "x", "y", "z"]
+CONSTANTS = ["1.0", "2.0", "3.14", "42.0", "0.5"]
+# Operators that mean the same thing in both languages, so the generated
+# expression can be fed to either parser.
+BINARY_OPERATORS = ["+", "-", "*", "/"]
 
 
-def test_generate_long_expression():
-    """Test that the generate_long_expression function works correctly."""
+def generate_long_expression(length: int, seed: int = 0) -> str:
+    """Build a valid expression with roughly `length` symbols and operators.
+
+    The generator is seeded so a failure is reproducible.
+    """
+    rng = random.Random(seed)
+    parts = [rng.choice(VARIABLES)]
+    while len(parts) < length:
+        parts.append(rng.choice(BINARY_OPERATORS))
+        parts.append(rng.choice(VARIABLES + CONSTANTS))
+    return "".join(parts)
+
+
+def test_generated_expression_is_long_and_parseable():
     expr = generate_long_expression(EXPRESSION_LENGTH)
     assert len(expr) >= EXPRESSION_LENGTH
 
-    # Try to parse the expression to make sure it's valid
-    try:
-        formulate.from_root(expr)
-    except Exception as e:
-        raise
-        pytest.fail(f"Failed to parse generated expression, type={type(e)}: {e}")
+    parsed = formulate.from_root(expr)
+    assert parsed.variables <= set(VARIABLES)
+
+
+def test_deeply_nested_expression_does_not_overflow_the_stack():
+    """Nesting, rather than chaining, is what drives recursion depth."""
+    expr = "((((" * 500 + "a" + "))))" * 500
+    assert formulate.from_root(expr).to_root() == "a"
 
 
 @pytest.mark.parametrize(
-    "test_name, expr_length, loader1, converter1, intermediate, loader2, converter2",
+    "name,length,parse,serialize",
     [
-        # TTreeFormula: Root -> Python -> Root -> Python
-        (
-            "TTreeFormula",
-            EXPRESSION_LENGTH,
-            (formulate.from_root, "from_root"),
-            ("to_python", lambda ast: ast.to_python()),
-            False,
-            (formulate.from_root, "from_root"),
-            ("to_python", lambda ast: ast.to_python()),
-        ),
-        # NumExpr: NumExpr -> Python -> NumExpr -> Python
-        (
-            "NumExpr",
-            EXPRESSION_LENGTH,
-            (formulate.from_numexpr, "from_numexpr"),
-            ("to_python", lambda ast: ast.to_python()),
-            False,
-            (formulate.from_numexpr, "from_numexpr"),
-            ("to_python", lambda ast: ast.to_python()),
-        ),
-        # Root->NumExpr->Root: Root -> NumExpr -> NumExpr -> Root
-        (
-            "Root_to_NumExpr",
-            100,
-            (formulate.from_root, "from_root"),
-            ("to_numexpr", lambda ast: ast.to_numexpr()),
-            True,
-            (formulate.from_numexpr, "from_numexpr"),
-            ("to_root", lambda ast: ast.to_root()),
-        ),
-        # NumExpr->Root->NumExpr: NumExpr -> Root -> Root -> NumExpr
-        (
-            "NumExpr_to_Root",
-            100,
-            (formulate.from_numexpr, "from_numexpr"),
-            ("to_root", lambda ast: ast.to_root()),
-            True,
-            (formulate.from_root, "from_root"),
-            ("to_numexpr", lambda ast: ast.to_numexpr()),
-        ),
+        ("root->python", EXPRESSION_LENGTH, formulate.from_root, "to_python"),
+        ("numexpr->python", EXPRESSION_LENGTH, formulate.from_numexpr, "to_python"),
+        ("root->numexpr", 1000, formulate.from_root, "to_numexpr"),
+        ("numexpr->root", 1000, formulate.from_numexpr, "to_root"),
     ],
 )
-def test_expression_performance(
-    test_name, expr_length, loader1, converter1, intermediate, loader2, converter2
-):
-    """Test that parsing and converting expressions takes less than 1 second.
+def test_parse_and_convert_stay_within_the_time_limit(name, length, parse, serialize):
+    expr = generate_long_expression(length)
 
-    This parameterized test handles all combinations of loaders and converters:
-    - TTreeFormula: from_root -> to_python -> from_root -> to_python
-    - NumExpr: from_numexpr -> to_python -> from_numexpr -> to_python
-    - Root->NumExpr: from_root -> to_numexpr -> from_numexpr -> to_root
-    - NumExpr->Root: from_numexpr -> to_root -> from_root -> to_numexpr
-    """
-    # Generate an expression of appropriate length
-    expr = generate_long_expression(expr_length)
+    start = time.perf_counter()
+    converted = getattr(parse(expr), serialize)()
+    elapsed = time.perf_counter() - start
 
-    # Extract functions and names
-    loader1_func, loader1_name = loader1
-    converter1_name, converter1_func = converter1
-    loader2_func, loader2_name = loader2
-    converter2_name, converter2_func = converter2
+    assert converted
+    assert elapsed < TIME_LIMIT_SECONDS, (
+        f"{name} took {elapsed:.2f}s for a {length}-term expression, "
+        f"which exceeds the {TIME_LIMIT_SECONDS}s limit"
+    )
 
-    # First pass: load the expression and convert it
-    start_time = time.time()
-    ast1 = loader1_func(expr)
-    parse_time1 = time.time() - start_time
 
-    start_time = time.time()
-    converted_expr1 = converter1_func(ast1)
-    convert_time1 = time.time() - start_time
+@pytest.mark.parametrize(
+    "name,forward,backward",
+    [
+        ("root->numexpr->root", "to_numexpr", "to_root"),
+        ("numexpr->root->numexpr", "to_root", "to_numexpr"),
+    ],
+)
+def test_long_expressions_survive_a_full_round_trip(name, forward, backward):
+    expr = generate_long_expression(1000)
+    first_parse = (
+        formulate.from_root if name.startswith("root") else formulate.from_numexpr
+    )
+    second_parse = (
+        formulate.from_numexpr if name.startswith("root") else formulate.from_root
+    )
 
-    # Second pass: load the converted expression (if intermediate=True) or the original expr
-    start_time = time.time()
-    ast2 = loader2_func(converted_expr1) if intermediate else loader2_func(expr)
-    parse_time2 = time.time() - start_time
-
-    start_time = time.time()
-    converter2_func(ast2)
-    convert_time2 = time.time() - start_time
-
-    # Total time should be less than 1 second
-    total_time = parse_time1 + convert_time1 + parse_time2 + convert_time2
-    assert total_time < 3.0, f"Total time ({total_time:.2f}s) exceeds 1 second"
-
-    # Print the times for debugging
-    print(f"{test_name} {loader1_name} time: {parse_time1:.4f}s")
-    print(f"{test_name} {converter1_name} time: {convert_time1:.4f}s")
-    print(f"{test_name} {loader2_name} time: {parse_time2:.4f}s")
-    print(f"{test_name} {converter2_name} time: {convert_time2:.4f}s")
-    print(f"{test_name} total time: {total_time:.4f}s")
+    canonical = getattr(first_parse(expr), forward)()
+    round_tripped = getattr(second_parse(canonical), backward)()
+    assert getattr(first_parse(round_tripped), forward)() == canonical
