@@ -1,181 +1,102 @@
-from __future__ import annotations
+"""Serialization of parsed expressions back to ROOT (TTreeFormula) syntax.
 
-import ast
+Expected values are exact strings: for a serializer the formatting *is* the
+behaviour, so a looser comparison (e.g. re-parsing with ``ast``) would silently
+accept dropped or added parentheses.
+"""
+
+from __future__ import annotations
 
 import pytest
 
 import formulate
 
+# (numexpr source, expected ROOT serialization)
+NUMEXPR_TO_ROOT = [
+    # Arithmetic is spelled the same way in both languages
+    ("a+2.0", "(a + 2.0)"),
+    ("a-2.0", "(a - 2.0)"),
+    ("f*2.0", "(f * 2.0)"),
+    ("a/2.0", "(a / 2.0)"),
+    ("a%2.0", "(a % 2.0)"),
+    ("a**2.0", "(a ** 2.0)"),
+    ("a<2.0", "(a < 2.0)"),
+    ("a<=2.0", "(a <= 2.0)"),
+    ("a>2.0", "(a > 2.0)"),
+    ("a>=2.0", "(a >= 2.0)"),
+    ("a==2.0", "(a == 2.0)"),
+    ("a!=2.0", "(a != 2.0)"),
+    ("+5.0", "(+5.0)"),
+    ("-5.0", "(-5.0)"),
+    ("2.0 - -6", "(2.0 - (-6))"),
+    # Logical operators are doubled in ROOT
+    ("a&b", "(a && b)"),
+    ("a|b", "(a || b)"),
+    ("~bool", "(!bool)"),
+    ("a|b|c", "((a || b) || c)"),
+    ("a&b&c", "((a && b) && c)"),
+    ("a|b|c|d", "(((a || b) || c) || d)"),
+    ("a&b&c&d", "(((a && b) && c) && d)"),
+    # Functions are namespaced
+    ("sqrt(4)", "TMath::Sqrt(4)"),
+    ("arctan2(a, b)", "TMath::ATan2(a, b)"),
+    # Associativity
+    ("a+b+c+d", "(((a + b) + c) + d)"),
+    ("a-b-c-d", "(((a - b) - c) - d)"),
+    ("a*b*c*d", "(((a * b) * c) * d)"),
+    ("a/b/c/d", "(((a / b) / c) / d)"),
+    ("a**b**c**d", "(a ** (b ** (c ** d)))"),
+    # Mixed precedence
+    ("(~a**b)*23/(var|45)", "(((!(a ** b)) * 23) / (var || 45))"),
+]
 
-def test_simple_add():
-    a = formulate.from_numexpr("a+2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a+2.0)"))
-
-
-def test_simple_sub():
-    a = formulate.from_numexpr("a-2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a-2.0)"))
-
-
-def test_simple_mul():
-    a = formulate.from_numexpr("f*2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(f*2.0)"))
-
-
-def test_simple_div():
-    a = formulate.from_numexpr("a/2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a/2.0)"))
-
-
-def test_simple_lt():
-    a = formulate.from_numexpr("a<2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a<2.0)"))
-
-
-def test_simple_lte():
-    a = formulate.from_numexpr("a<=2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a<=2.0)"))
-
-
-def test_simple_gt():
-    a = formulate.from_numexpr("a>2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a>2.0)"))
-
-
-def test_simple_gte():
-    a = formulate.from_numexpr("a>=2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a>=2.0)"))
-
-
-def test_simple_eq():
-    a = formulate.from_numexpr("a==2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a==2.0)"))
-
-
-def test_simple_neq():
-    a = formulate.from_numexpr("a!=2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a!=2.0)"))
-
-
-def test_simple_or():
-    a = formulate.from_numexpr("a|b")
-    out = a.to_root()
-    assert out == "(a || b)"
+# (ROOT source, expected ROOT serialization)
+ROOT_ROUND_TRIPS = [
+    ("a&&2.0", "(a && 2.0)"),
+    ("a||2.0", "(a || 2.0)"),
+    ("!bool", "(!bool)"),
+    ("a&&b&&c", "((a && b) && c)"),
+    ("a||b||c", "((a || b) || c)"),
+    ("a**2.0", "(a ** 2.0)"),
+    # ROOT spells power as ^; it normalizes to **
+    ("a^2.0", "(a ** 2.0)"),
+    ("a^b^c^d", "(a ** (b ** (c ** d)))"),
+    # Array indices stay in ROOT's [i][j] form
+    ("a[45][1]", "a[45][1]"),
+    ("mat1[a**23][mat2[45 - -34]]", "mat1[(a ** 23)][mat2[(45 - (-34))]]"),
+    # Function-name normalization
+    ("TMath::sqrt(4)", "TMath::Sqrt(4)"),
+    ("pow(a, 2)", "TMath::Power(a, 2)"),
+    ("Sum$(pt)", "Sum$(pt)"),
+    # ':' separates multiple outputs and is never parenthesized
+    ("a:b", "a : b"),
+]
 
 
-def test_simple_and():
-    a = formulate.from_numexpr("a&c")
-    out = a.to_root()
-    assert out == "(a && c)"
+@pytest.mark.parametrize("source,expected", NUMEXPR_TO_ROOT, ids=lambda x: x)
+def test_numexpr_to_root(source, expected):
+    assert formulate.from_numexpr(source).to_root() == expected
 
 
-def test_simple_xor():
-    a = formulate.from_numexpr("a^2.0")
-    with pytest.raises(ValueError):
-        a.to_root()
+@pytest.mark.parametrize("source,expected", ROOT_ROUND_TRIPS, ids=lambda x: x)
+def test_root_to_root(source, expected):
+    assert formulate.from_root(source).to_root() == expected
 
 
-def test_simple_pow():
-    a = formulate.from_numexpr("a**2.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a**2.0)"))
+@pytest.mark.parametrize(
+    "expected", [e for _, e in NUMEXPR_TO_ROOT] + [e for _, e in ROOT_ROUND_TRIPS]
+)
+def test_to_root_is_idempotent(expected):
+    """Serialized output must re-parse to itself, so it is a stable canonical form."""
+    assert formulate.from_root(expected).to_root() == expected
 
 
-def test_simple_function():
-    a = formulate.from_numexpr("sqrt(4)")
-    out = a.to_root()
-    assert out == "TMath::Sqrt(4)"
+def test_xor_has_no_root_equivalent():
+    # ROOT reads '^' as exponentiation, so numexpr's XOR cannot be expressed
+    with pytest.raises(ValueError, match="not supported in ROOT"):
+        formulate.from_numexpr("a^2.0").to_root()
 
 
-def test_simple_unary_pos():
-    a = formulate.from_numexpr("+5.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(+5.0)"))
-
-
-def test_simple_unary_neg():
-    a = formulate.from_numexpr("-5.0")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(-5.0)"))
-
-
-def test_simple_unary_inv():
-    a = formulate.from_numexpr("~bool")
-    out = a.to_root()
-    assert out == "(!bool)"
-
-
-def test_unary_binary_pos():
-    a = formulate.from_numexpr("2.0 - -6")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(2.0-(-6))"))
-
-
-def test_complex_exp():
-    a = formulate.from_numexpr("(~a**b)*23/(var|45)")
-    out = a.to_root()
-    assert out == "(((!(a ** b)) * 23) / (var || 45))"
-
-
-def test_multiple_or():
-    a = formulate.from_numexpr("a|b|c")
-    out = a.to_root()
-    assert out == "((a || b) || c)"
-
-
-def test_multiple_and():
-    a = formulate.from_numexpr("a&b&c")
-    out = a.to_root()
-    assert out == "((a && b) && c)"
-
-
-def test_multiple_add():
-    a = formulate.from_numexpr("a+b+c+d")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(((a+b)+c)+d)"))
-
-
-def test_multiple_sub():
-    a = formulate.from_numexpr("a-b-c-d")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(((a-b)-c)-d)"))
-
-
-def test_multiple_mul():
-    a = formulate.from_numexpr("a*b*c*d")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(((a*b)*c)*d)"))
-
-
-def test_multiple_div():
-    a = formulate.from_numexpr("a/b/c/d")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(((a/b)/c)/d)"))
-
-
-def test_multiple_or_four():
-    a = formulate.from_numexpr("a|b|c|d")
-    out = a.to_root()
-    assert out == "(((a || b) || c) || d)"
-
-
-def test_multiple_and_four():
-    a = formulate.from_numexpr("a&b&c&d")
-    out = a.to_root()
-    assert out == "(((a && b) && c) && d)"
-
-
-def test_multiple_pow():
-    a = formulate.from_numexpr("a**b**c**d")
-    out = a.to_root()
-    assert ast.unparse(ast.parse(out)) == ast.unparse(ast.parse("(a**b**c**d)"))
+def test_numexpr_only_function_has_no_root_equivalent():
+    with pytest.raises(ValueError, match="not supported in ROOT"):
+        formulate.from_numexpr("where(a, b, c)").to_root()

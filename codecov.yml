@@ -1,0 +1,19 @@
+codecov:
+  require_ci_to_pass: true
+
+comment:
+  layout: files
+
+coverage:
+  status:
+    project:
+      default:
+        target: 100%
+        threshold: 0%
+    patch:
+      default:
+        target: 100%
+        threshold: 0%
+
+github_checks:
+  annotations: false

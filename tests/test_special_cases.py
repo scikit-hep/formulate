@@ -1,372 +1,154 @@
+"""Surface syntax that must not change the meaning of an expression.
+
+Whitespace and redundant parentheses are the two ways the same expression can
+be written differently.  Each test therefore parses both spellings and compares
+the *canonical serialization*, which is the only way to show that formulate
+built the same tree -- evaluating the two source strings in Python would only
+prove something about Python's own parser.
+"""
+
 from __future__ import annotations
 
-import ast
-
-import numpy as np
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 import formulate
 
 
-# Fixtures
-@pytest.fixture(scope="module")
-def default_values():
-    """Default values for expression evaluation."""
-    return {"a": 5.0, "b": 3.0, "c": 2.0, "d": 1.0, "f": 4.0, "var": 7.0, "bool": True}
+def numexpr_canonical(expr: str) -> str:
+    return formulate.from_numexpr(expr).to_numexpr()
 
 
-@pytest.fixture(scope="module")
-def simple_operators():
-    """List of simple operators for testing."""
-    return ["+", "-", "*", "/", "**", "<", "<=", ">", ">=", "==", "!=", "&", "|"]
+def root_canonical(expr: str) -> str:
+    return formulate.from_root(expr).to_root()
 
 
-@pytest.fixture(scope="module")
-def variable_names():
-    """List of variable names for testing."""
-    return ["a", "b", "c", "d", "f", "var"]
+# --- Whitespace ---
+
+# Kept as token lists so that multi-character operators are never split.
+TOKENIZED_EXPRESSIONS = [
+    ["a", "+", "b"],
+    ["a", "-", "b"],
+    ["a", "*", "b"],
+    ["a", "/", "b"],
+    ["a", "%", "b"],
+    ["a", "**", "b"],
+    ["a", "<", "b"],
+    ["a", "<=", "b"],
+    ["a", ">", "b"],
+    ["a", ">=", "b"],
+    ["a", "==", "b"],
+    ["a", "!=", "b"],
+    ["a", "&", "b"],
+    ["a", "|", "b"],
+    ["a", "^", "b"],
+    ["~", "a"],
+    ["-", "a"],
+    ["sqrt", "(", "a", ")"],
+    ["arctan2", "(", "a", ",", "b", ")"],
+    ["a", "+", "b", "*", "c", "**", "d"],
+    ["(", "a", "+", "b", ")", "*", "c"],
+    ["sqrt", "(", "a", "+", "b", ")", "/", "c"],
+]
+
+WHITESPACE = st.sampled_from(["", " ", "  ", "\t", " \t ", "\n"])
 
 
-@pytest.fixture(scope="module")
-def whitespace_test_cases():
-    """Whitespace variation test cases."""
-    return [
-        ("a+b", ["a + b", "a  +  b", "a +b", "a+ b"]),
-        ("a-b", ["a - b", "a  -  b", "a -b", "a- b"]),
-        ("a*b", ["a * b", "a  *  b", "a *b", "a* b"]),
-        ("a/b", ["a / b", "a  /  b", "a /b", "a/ b"]),
-        ("a**b", ["a ** b", "a  **  b", "a **b", "a** b"]),
-        ("a<b", ["a < b", "a  <  b", "a <b", "a< b"]),
-        ("a<=b", ["a <= b", "a  <=  b", "a <=b", "a<= b"]),
-        ("a>b", ["a > b", "a  >  b", "a >b", "a> b"]),
-        ("a>=b", ["a >= b", "a  >=  b", "a >=b", "a>= b"]),
-        ("a==b", ["a == b", "a  ==  b", "a ==b", "a== b"]),
-        ("a!=b", ["a != b", "a  !=  b", "a !=b", "a!= b"]),
-        ("a&b", ["a & b", "a  &  b", "a &b", "a& b"]),
-        ("a|b", ["a | b", "a  |  b", "a |b", "a| b"]),
-        ("sqrt(a)", ["sqrt (a)", "sqrt( a)", "sqrt(a )", "sqrt ( a )"]),
-    ]
+@pytest.mark.parametrize("tokens", TOKENIZED_EXPRESSIONS, ids="".join)
+@given(data=st.data())
+@settings(max_examples=25)
+def test_whitespace_between_tokens_is_insignificant(tokens, data):
+    gaps = data.draw(
+        st.lists(WHITESPACE, min_size=len(tokens) + 1, max_size=len(tokens) + 1)
+    )
+    spaced = (
+        "".join(gap + token for gap, token in zip(gaps, tokens, strict=False))
+        + gaps[-1]
+    )
+    assert numexpr_canonical(spaced) == numexpr_canonical("".join(tokens))
 
 
-@pytest.fixture(scope="module")
-def bracket_test_cases():
-    """Bracket variation test cases."""
-    return [
-        # Simple expressions with redundant brackets
-        ("a+b", ["(a+b)", "((a+b))"]),
-        ("a-b", ["(a-b)", "((a-b))"]),
-        ("a*b", ["(a*b)", "((a*b))"]),
-        ("a/b", ["(a/b)", "((a/b))"]),
-        ("a**b", ["(a**b)", "((a**b))"]),
-        ("a<b", ["(a<b)", "((a<b))"]),
-        ("a<=b", ["(a<=b)", "((a<=b))"]),
-        ("a>b", ["(a>b)", "((a>b))"]),
-        ("a>=b", ["(a>=b)", "((a>=b))"]),
-        ("a==b", ["(a==b)", "((a==b))"]),
-        ("a!=b", ["(a!=b)", "((a!=b))"]),
-        ("a&b", ["(a&b)", "((a&b))"]),
-        ("a|b", ["(a|b)", "((a|b))"]),
-        # Expressions with brackets around operands
-        ("a+b", ["(a)+b", "a+(b)", "(a)+(b)"]),
-        ("a-b", ["(a)-b", "a-(b)", "(a)-(b)"]),
-        ("a*b", ["(a)*b", "a*(b)", "(a)*(b)"]),
-        ("a/b", ["(a)/b", "a/(b)", "(a)/(b)"]),
-        ("a**b", ["(a)**b", "a**(b)", "(a)**(b)"]),
-        ("a<b", ["(a)<b", "a<(b)", "(a)<(b)"]),
-        ("a<=b", ["(a)<=b", "a<=(b)", "(a)<=(b)"]),
-        ("a>b", ["(a)>b", "a>(b)", "(a)>(b)"]),
-        ("a>=b", ["(a)>=b", "a>=(b)", "(a)>=(b)"]),
-        ("a==b", ["(a)==b", "a==(b)", "(a)==(b)"]),
-        ("a!=b", ["(a)!=b", "a!=(b)", "(a)!=(b)"]),
-        ("a&b", ["(a)&b", "a&(b)", "(a)&(b)"]),
-        ("a|b", ["(a)|b", "a|(b)", "(a)|(b)"]),
-    ]
+@pytest.mark.parametrize(
+    "reference,variation",
+    [
+        ("sqrt(a)", "sqrt (a)"),
+        ("sqrt(a)", "sqrt( a )"),
+        ("TMath::Sqrt(a)", "TMath::Sqrt ( a )"),
+        ("a&&b", "a && b"),
+        ("a||b", "a  ||  b"),
+        ("!a", "! a"),
+        ("a[0]", "a [ 0 ]"),
+        ("Sum$(pt)", "Sum$( pt )"),
+    ],
+)
+def test_root_whitespace_is_insignificant(reference, variation):
+    assert root_canonical(variation) == root_canonical(reference)
 
 
-@pytest.fixture(scope="module")
-def complex_test_cases():
-    """Complex expressions with whitespace and brackets."""
-    return [
-        ("a+b*c", ["a + b * c", "a + (b*c)", "a + ( b * c )"]),
-        ("(a+b)*c", ["( a + b ) * c", "((a+b))*c"]),
-        ("a&b|c", ["a & b | c", "a & (b|c)", "a & ( b | c )"]),
-        ("(a&b)|c", ["( a & b ) | c", "((a&b))|c"]),
-    ]
-
-
-# Helper functions
-def evaluate_expression(expr, values=None):
-    """Evaluate an expression with given values."""
-    if values is None:
-        values = {
-            "a": 5.0,
-            "b": 3.0,
-            "c": 2.0,
-            "d": 1.0,
-            "f": 4.0,
-            "var": 7.0,
-            "bool": True,
-        }
-
-    # Skip evaluation for expressions with operators that our simple
-    # replacement can't handle correctly
-    if "!=" in expr or "^" in expr:
-        # For expressions with != or ^, just return a dummy value
-        # This is a workaround to avoid syntax errors
-        return 1.0
-
-    # For boolean expressions, convert to Python's boolean operators
-    modified_expr = expr
-    modified_expr = modified_expr.replace("&&", " and ")
-    modified_expr = modified_expr.replace("||", " or ")
-    modified_expr = modified_expr.replace("&", " and ")
-    modified_expr = modified_expr.replace("|", " or ")
-    modified_expr = modified_expr.replace("~", " not ")
-    modified_expr = modified_expr.replace("!", " not ")
-
-    # Create a local namespace with the values and numpy
-    local_vars = values.copy()
-    local_vars["np"] = np
-    local_vars["sqrt"] = np.sqrt
-    local_vars["sin"] = np.sin
-    local_vars["cos"] = np.cos
-
-    try:
-        return eval(modified_expr, {"__builtins__": {}}, local_vars)
-    except Exception as e:
-        print(f"Error evaluating {expr} (as {modified_expr}): {e}")
-        raise e
-
-
-def assert_equivalent_expressions(expr1, expr2, values=None):
-    """Assert that two expressions evaluate to the same result."""
-    result1 = evaluate_expression(expr1, values)
-    result2 = evaluate_expression(expr2, values)
-
-    if isinstance(result1, (bool, np.bool_)):
-        assert bool(result1) == bool(result2), (
-            f"Expression '{expr1}' evaluated to {result1}, but '{expr2}' evaluated to {result2}"
-        )
-    else:
-        assert np.isclose(result1, result2), (
-            f"Expression '{expr1}' evaluated to {result1}, but '{expr2}' evaluated to {result2}"
-        )
-
-
-def assert_parse_equivalent(expr1, expr2):
-    """Assert that two expressions parse to equivalent AST."""
-    parsed1 = formulate.from_numexpr(expr1)
-    parsed2 = formulate.from_numexpr(expr2)
-
-    # Check that the parsed expressions have the same AST representation
-    if hasattr(ast, "unparse"):
-        assert ast.unparse(ast.parse(parsed1.to_numexpr())) == ast.unparse(
-            ast.parse(parsed2.to_numexpr())
-        ), f"Expression '{expr1}' parsed differently from '{expr2}'"
-
-
-# Tests
-def test_empty_expression():
-    """Test that empty expressions are handled correctly."""
-    # Empty expressions should raise an exception
-    with pytest.raises(Exception):
-        formulate.from_numexpr("")
-
-    with pytest.raises(Exception):
-        formulate.from_root("")
+# --- Redundant parentheses ---
 
 
 @pytest.mark.parametrize(
     "reference,variations",
     [
-        ("a+b", ["a + b", "a  +  b", "a +b", "a+ b"]),
-        ("a-b", ["a - b", "a  -  b", "a -b", "a- b"]),
-        ("a*b", ["a * b", "a  *  b", "a *b", "a* b"]),
-        ("a/b", ["a / b", "a  /  b", "a /b", "a/ b"]),
-        ("a**b", ["a ** b", "a  **  b", "a **b", "a** b"]),
-        ("a<b", ["a < b", "a  <  b", "a <b", "a< b"]),
-        ("a<=b", ["a <= b", "a  <=  b", "a <=b", "a<= b"]),
-        ("a>b", ["a > b", "a  >  b", "a >b", "a> b"]),
-        ("a>=b", ["a >= b", "a  >=  b", "a >=b", "a>= b"]),
-        ("a==b", ["a == b", "a  ==  b", "a ==b", "a== b"]),
-        ("a!=b", ["a != b", "a  !=  b", "a !=b", "a!= b"]),
-        ("a&b", ["a & b", "a  &  b", "a &b", "a& b"]),
-        ("a|b", ["a | b", "a  |  b", "a |b", "a| b"]),
-        ("sqrt(a)", ["sqrt (a)", "sqrt( a)", "sqrt(a )", "sqrt ( a )"]),
+        ("a+b", ["(a+b)", "((a+b))", "(a)+b", "a+(b)", "(a)+(b)"]),
+        ("a-b", ["(a-b)", "((a-b))", "(a)-(b)"]),
+        ("a*b", ["(a*b)", "((a*b))", "(a)*(b)"]),
+        ("a/b", ["(a/b)", "((a/b))", "(a)/(b)"]),
+        ("a**b", ["(a**b)", "((a**b))", "(a)**(b)"]),
+        ("a<=b", ["(a<=b)", "(a)<=(b)"]),
+        ("a!=b", ["(a!=b)", "(a)!=(b)"]),
+        ("a&b", ["(a&b)", "((a&b))", "(a)&(b)"]),
+        ("a|b", ["(a|b)", "((a|b))", "(a)|(b)"]),
+        ("~a", ["(~a)", "~(a)", "(~(a))"]),
+        ("sqrt(a)", ["(sqrt(a))", "sqrt((a))"]),
+        # Parentheses that merely restate the default precedence
+        ("a+b*c", ["a+(b*c)", "(a+(b*c))"]),
+        ("a*b+c", ["(a*b)+c", "((a*b)+c)"]),
+        ("a&b|c", ["(a&b)|c", "((a&b)|c)"]),
+        ("a|b&c", ["a|(b&c)", "(a|(b&c))"]),
+        ("a**b**c", ["a**(b**c)", "(a**(b**c))"]),
     ],
 )
-def test_whitespace_variations(reference, variations, default_values):
-    """Test that expressions with different whitespace patterns are equivalent."""
+def test_redundant_parentheses_do_not_change_the_tree(reference, variations):
+    expected = numexpr_canonical(reference)
     for variation in variations:
-        assert_parse_equivalent(reference, variation)
-        assert_equivalent_expressions(reference, variation, default_values)
+        assert numexpr_canonical(variation) == expected
 
 
 @pytest.mark.parametrize(
-    "reference,variations",
+    "reference,variation",
     [
-        # Simple expressions with redundant brackets
-        ("a+b", ["(a+b)", "((a+b))"]),
-        ("a-b", ["(a-b)", "((a-b))"]),
-        ("a*b", ["(a*b)", "((a*b))"]),
-        ("a/b", ["(a/b)", "((a/b))"]),
-        ("a**b", ["(a**b)", "((a**b))"]),
-        ("a<b", ["(a<b)", "((a<b))"]),
-        ("a<=b", ["(a<=b)", "((a<=b))"]),
-        ("a>b", ["(a>b)", "((a>b))"]),
-        ("a>=b", ["(a>=b)", "((a>=b))"]),
-        ("a==b", ["(a==b)", "((a==b))"]),
-        ("a!=b", ["(a!=b)", "((a!=b))"]),
-        ("a&b", ["(a&b)", "((a&b))"]),
-        ("a|b", ["(a|b)", "((a|b))"]),
-        # Expressions with brackets around operands
-        ("a+b", ["(a)+b", "a+(b)", "(a)+(b)"]),
-        ("a-b", ["(a)-b", "a-(b)", "(a)-(b)"]),
-        ("a*b", ["(a)*b", "a*(b)", "(a)*(b)"]),
-        ("a/b", ["(a)/b", "a/(b)", "(a)/(b)"]),
-        ("a**b", ["(a)**b", "a**(b)", "(a)**(b)"]),
-        ("a<b", ["(a)<b", "a<(b)", "(a)<(b)"]),
-        ("a<=b", ["(a)<=b", "a<=(b)", "(a)<=(b)"]),
-        ("a>b", ["(a)>b", "a>(b)", "(a)>(b)"]),
-        ("a>=b", ["(a)>=b", "a>=(b)", "(a)>=(b)"]),
-        ("a==b", ["(a)==b", "a==(b)", "(a)==(b)"]),
-        ("a!=b", ["(a)!=b", "a!=(b)", "(a)!=(b)"]),
-        ("a&b", ["(a)&b", "a&(b)", "(a)&(b)"]),
-        ("a|b", ["(a)|b", "a|(b)", "(a)|(b)"]),
+        ("a&&b", "(a)&&(b)"),
+        ("a||b", "((a||b))"),
+        ("!a", "!(a)"),
+        ("a^b", "(a)^(b)"),
+        ("TMath::Sqrt(a)", "(TMath::Sqrt((a)))"),
+        ("a[0]", "(a[0])"),
     ],
 )
-def test_extra_brackets(reference, variations, default_values):
-    """Test that expressions with extra brackets are equivalent."""
-    for variation in variations:
-        assert_equivalent_expressions(reference, variation, default_values)
+def test_root_redundant_parentheses_do_not_change_the_tree(reference, variation):
+    assert root_canonical(variation) == root_canonical(reference)
 
 
 @pytest.mark.parametrize(
-    "reference,variations",
+    "grouped,ungrouped",
     [
-        ("a+b*c", ["a + b * c", "a + (b*c)", "a + ( b * c )"]),
-        ("(a+b)*c", ["( a + b ) * c", "((a+b))*c"]),
-        ("a&b|c", ["a & b | c", "(a&b)|c", "(a & b) | c"]),
-        ("(a&b)|c", ["( a & b ) | c", "((a&b))|c"]),
+        ("(a+b)*c", "a+b*c"),
+        ("a*(b+c)", "a*b+c"),
+        ("(a**b)**c", "a**b**c"),
+        ("(a&b)|c", "a|b&c"),
     ],
 )
-def test_complex_whitespace_and_brackets(reference, variations, default_values):
-    """Test combinations of whitespace variations and extra brackets."""
-    for variation in variations:
-        assert_equivalent_expressions(reference, variation, default_values)
+def test_parentheses_that_do_change_the_tree(grouped, ungrouped):
+    """The counterpart to the tests above: grouping that overrides precedence."""
+    assert numexpr_canonical(grouped) != numexpr_canonical(ungrouped)
 
 
-# Hypothesis tests
-@given(
-    var1=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
-    var2=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
-    op=st.sampled_from(
-        ["+", "-", "*", "/", "**", "<", "<=", ">", ">=", "==", "!=", "&", "|"]
-    ),
-)
-def test_hypothesis_simple_expression(var1, var2, op, default_values):
-    """Test simple expressions with hypothesis."""
-    expr = f"{var1}{op}{var2}"
+# --- Malformed input ---
 
-    # Test with extra spaces
-    expr_with_spaces = f"{var1} {op} {var2}"
-    assert_equivalent_expressions(expr, expr_with_spaces, default_values)
-
-    # Test with brackets
-    expr_with_brackets = f"({var1}{op}{var2})"
-    assert_equivalent_expressions(expr, expr_with_brackets, default_values)
-
-    # Test with brackets around operands
-    expr_with_operand_brackets = f"({var1}){op}({var2})"
-    assert_equivalent_expressions(expr, expr_with_operand_brackets, default_values)
-
-
-@given(
-    var1=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
-    var2=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
-    var3=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
-    op1=st.sampled_from(["+", "-", "*", "/", "&", "|"]),
-    op2=st.sampled_from(["+", "-", "*", "/", "&", "|"]),
-)
-def test_hypothesis_three_variable_expression(
-    var1, var2, var3, op1, op2, default_values
-):
-    """Test three-variable expressions with hypothesis."""
-    expr = f"{var1}{op1}{var2}{op2}{var3}"
-    # We need to add parentheses when there are bitwise operators
-    if any(op in expr for op in ["&", "|"]):
-        expr = f"({var1}{op1}{var2}){op2}{var3}"
-
-    # Test with extra spaces
-    expr_with_spaces = f"{var1} {op1} {var2} {op2} {var3}"
-    if any(op in expr for op in ["&", "|"]):
-        expr_with_spaces = f"({var1} {op1} {var2} ) {op2} {var3}"
-    assert_equivalent_expressions(expr, expr_with_spaces, default_values)
-
-    # Test with various bracket patterns
-    bracket_patterns = [
-        f"({var1}){op1}{var2}{op2}{var3}",
-        f"{var1}{op1}({var2}){op2}{var3}",
-        f"({var1}){op1}{var2}{op2}({var3})",
-        f"(({var1}){op1}({var2}){op2}({var3}))",
-    ]
-
-    for pattern in bracket_patterns:
-        if any(op in expr for op in ["&", "|"]):
-            break
-        assert_equivalent_expressions(expr, pattern, default_values)
-
-
-@given(
-    var_name=st.text(alphabet="abcde", min_size=1, max_size=5),
-    spaces=st.integers(min_value=0, max_value=10),
-    value=st.floats(min_value=-10, max_value=10, allow_nan=False, allow_infinity=False),
-)
-def test_hypothesis_whitespace_insensitive(var_name, spaces, value):
-    """Test that expressions are whitespace insensitive."""
-    # Create expressions with different whitespace patterns
-    expr1 = f"{var_name} + {value}"
-    expr2 = f"{var_name}+{value}"
-    expr3 = f"{var_name}{' ' * spaces}+{' ' * spaces}{value}"
-
-    values = {var_name: 1.0}  # Define the variable
-
-    # Test that all variations produce the same result
-    result1 = evaluate_expression(expr1, values)
-    result2 = evaluate_expression(expr2, values)
-    result3 = evaluate_expression(expr3, values)
-
-    assert np.isclose(result1, result2) and np.isclose(result2, result3)
-
-
-@given(
-    func_name=st.sampled_from(["sqrt", "sin", "cos"]),
-    var_name=st.sampled_from(["a", "b", "c", "d", "f", "var"]),
-    spaces=st.integers(min_value=0, max_value=5),
-)
-def test_hypothesis_function_whitespace(func_name, var_name, spaces, default_values):
-    """Test function calls with various whitespace patterns."""
-    # Create expressions with different whitespace patterns
-    patterns = [
-        f"{func_name}({var_name})",
-        f"{func_name} ({var_name})",
-        f"{func_name}( {var_name})",
-        f"{func_name}({var_name} )",
-        f"{func_name}( {var_name} )",
-        f"{func_name}{' ' * spaces}({var_name})",
-        f"{func_name}({' ' * spaces}{var_name}{' ' * spaces})",
-    ]
-
-    # Use the first pattern as reference
-    reference = patterns[0]
-
-    for pattern in patterns[1:]:
-        assert_equivalent_expressions(reference, pattern, default_values)
-
-
-operators = [
+OPERATORS = [
     "+",
     "-",
     "*",
@@ -385,151 +167,60 @@ operators = [
     "||",
 ]
 
-invalid_expressions = {
-    "a * {op} b": False,  # Invalid operator combination, do not test + or - as it's the sign of the number
-    "a {op} {op} b": False,  # Double operator , do not test + or - as it's the sign of the number
-    "(a {op} b": True,  # Unmatched parenthesis
-    "a {op} b)": True,  # Unmatched parenthesis
-    "a {op} ": True,  # Incomplete expression
-    "{op} b": False,  # Incomplete expression, do not test + or - as it's the sign of the number
+# The bool says whether the template is also invalid for '+' and '-', which are
+# valid as unary prefixes and so make some of these templates parseable.
+INVALID_TEMPLATES = {
+    "a * {op} b": False,  # operator where an operand is expected
+    "a {op} {op} b": False,  # doubled operator
+    "(a {op} b": True,  # unmatched opening parenthesis
+    "a {op} b)": True,  # unmatched closing parenthesis
+    "a {op} ": True,  # missing right operand
+    "{op} b": False,  # missing left operand
 }
 
 
-# Test error handling
-@pytest.mark.parametrize("expr_map", invalid_expressions.items(), ids=lambda x: x[0])
-@pytest.mark.parametrize("op", operators)
-def test_invalid_expressions(expr_map, op):
-    """Test that invalid expressions raise appropriate errors."""
-    expr_string, fail_plusminus = expr_map
-    expr = expr_string.format(op=op)
-    if fail_plusminus or op not in ["+", "-"]:
+@pytest.mark.parametrize("template,fail_plusminus", INVALID_TEMPLATES.items())
+@pytest.mark.parametrize("op", OPERATORS)
+def test_malformed_expressions_are_rejected(template, fail_plusminus, op):
+    expr = template.format(op=op)
+    if fail_plusminus or op not in ("+", "-"):
         with pytest.raises(formulate.ParseError):
             formulate.from_numexpr(expr)
         with pytest.raises(formulate.ParseError):
             formulate.from_root(expr)
-    else:  # check that they both work
+    else:
+        # '+'/'-' are unary prefixes, so these particular strings do parse
         formulate.from_numexpr(expr)
         formulate.from_root(expr)
 
 
 @pytest.mark.parametrize(
-    "expression,equivalent_with_parentheses",
+    "expr",
     [
-        # Test arithmetic operator precedence
-        ("a + b * c", "a + (b * c)"),  # Multiplication before addition
-        ("a * b + c", "(a * b) + c"),  # Multiplication before addition
-        ("a - b * c", "a - (b * c)"),  # Multiplication before subtraction
-        ("a * b - c", "(a * b) - c"),  # Multiplication before subtraction
-        (
-            "a / b * c",
-            "(a / b) * c",
-        ),  # Division and multiplication have same precedence, left-to-right
-        (
-            "a * b / c",
-            "(a * b) / c",
-        ),  # Multiplication and division have same precedence, left-to-right
-        ("a + b / c", "a + (b / c)"),  # Division before addition
-        ("a / b + c", "(a / b) + c"),  # Division before addition
-        ("a ** b * c", "(a ** b) * c"),  # Exponentiation before multiplication
-        ("a * b ** c", "a * (b ** c)"),  # Exponentiation before multiplication
-        ("a ** b ** c", "a ** (b ** c)"),  # Exponentiation is right-associative
-        # Test comparison operator precedence
-        ("a + b < c", "(a + b) < c"),  # Addition before comparison
-        ("a < b + c", "a < (b + c)"),  # Addition before comparison
-        ("a * b < c", "(a * b) < c"),  # Multiplication before comparison
-        ("a < b * c", "a < (b * c)"),  # Multiplication before comparison
-        # Test logical operator precedence
-        ("a & b | c", "(a & b) | c"),  # Bitwise AND before bitwise OR
-        ("a | b & c", "a | (b & c)"),  # Bitwise AND before bitwise OR
-        ("a < b & c < d", "(a < b) & (c < d)"),  # Comparison before bitwise AND
-        ("a & b < c", "a & (b < c)"),  # Comparison before bitwise AND
-        ("a < b | c < d", "(a < b) | (c < d)"),  # Comparison before bitwise OR
-        ("a | b < c", "a | (b < c)"),  # Comparison before bitwise OR
-        # Test complex expressions with multiple precedence levels
-        (
-            "a + b * c ** d",
-            "a + (b * (c ** d))",
-        ),  # Exponentiation, then multiplication, then addition
-        (
-            "a ** b * c + d",
-            "((a ** b) * c) + d",
-        ),  # Exponentiation, then multiplication, then addition
-        (
-            "a < b + c * d",
-            "a < (b + (c * d))",
-        ),  # Multiplication, then addition, then comparison
-        ("a & b | c & d", "(a & b) | (c & d)"),  # Bitwise AND before bitwise OR
-        ("a | b & c | d", "a | (b & c) | d"),  # Bitwise AND before bitwise OR
-        (
-            "a < b & c < d | a < f",
-            "((a < b) & (c < d)) | (a < f)",
-        ),  # Comparison, then bitwise AND, then bitwise OR
+        "sqrt(",
+        "sqrt)",
+        "sqrt(,a)",
+        "sqrt(a,,b)",
+        "a[",
+        "a[0",
+        "a..b",
+        "a b",
+        "3 4",
+        "()",
     ],
 )
-def test_operator_precedence(expression, equivalent_with_parentheses, default_values):
-    """Test that operator precedence is correctly handled."""
-    assert_equivalent_expressions(
-        expression, equivalent_with_parentheses, default_values
-    )
+def test_structurally_broken_expressions_are_rejected(expr):
+    with pytest.raises(formulate.ParseError):
+        formulate.from_root(expr)
 
 
 @pytest.mark.parametrize(
-    "expression,equivalent_with_parentheses",
+    "expr,expected",
     [
-        # Mix arithmetic and comparison operators with power
-        ("a ** b > c", "(a ** b) > c"),  # Power before comparison
-        ("a > b ** c", "a > (b ** c)"),  # Power before comparison
-        ("a ** (b > c)", "a ** (b > c)"),  # Parentheses override precedence
-        # Mix arithmetic, comparison, and logical operators
-        ("a ** b & c ** d", "(a ** b) & (c ** d)"),  # Power before logical AND
-        ("a & b ** c", "a & (b ** c)"),  # Power before logical AND
-        ("a ** b | c ** d", "(a ** b) | (c ** d)"),  # Power before logical OR
-        ("a | b ** c", "a | (b ** c)"),  # Power before logical OR
-        # Complex mixed expressions with power
-        (
-            "a ** b < c & d > a ** b",
-            "((a ** b) < c) & (d > (a ** b))",
-        ),  # Power, then comparison, then logical
-        (
-            "a < b ** c | d > a ** c",
-            "((a < (b ** c)) | (d > (a ** c)))",
-        ),  # Power, then comparison, then logical
-        (
-            "a ** b * c < d + a / b",
-            "((a ** b) * c) < (d + (a / b))",
-        ),  # Complex arithmetic with comparison
-        # Mix all operator types
-        (
-            "a ** b * c / d + a - b < c & d > a | b <= c",
-            "(((((a ** b) * c) / d) + a) - b) < c & (d > a) | (b <= c)",
-        ),
-        ("a | b & c < d + a * b ** c", "a | (b & (c < (d + (a * (b ** c)))))"),
-        (
-            "a ** b < c & d ** a > b | c ** d != a",
-            "(((a ** b) < c) & ((d ** a) > b)) | ((c ** d) != a)",
-        ),
-        # Nested expressions with mixed operators
-        (
-            "a ** (b < c & d > a)",
-            "a ** ((b < c) & (d > a))",
-        ),  # Power of a logical expression
-        (
-            "a ** (b + c * d) < a | b",
-            "(a ** (b + (c * d))) < a | b",
-        ),  # Complex power expression in comparison
-        # Additional complex cases
-        (
-            "a ** b ** c < d & a | b ** c > d",
-            "(((a ** (b ** c)) < d) & a) | ((b ** c) > d)",
-        ),
-        (
-            "a < b & c ** d > a | b < c ** d",
-            "((a < b) & ((c ** d) > a)) | (b < (c ** d))",
-        ),
+        ("sqrt(a,)", "TMath::Sqrt(a)"),
+        ("arctan2(a, b,)", "TMath::ATan2(a, b)"),
     ],
 )
-def test_mixed_operator_types(expression, equivalent_with_parentheses, default_values):
-    """Test expressions that mix different operator types, with emphasis on power operator."""
-    assert_equivalent_expressions(
-        expression, equivalent_with_parentheses, default_values
-    )
+def test_trailing_comma_in_an_argument_list_is_allowed(expr, expected):
+    """The grammar permits a trailing comma, as C++ and Python both do."""
+    assert root_canonical(expr) == expected

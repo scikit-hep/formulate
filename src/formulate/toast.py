@@ -132,6 +132,6 @@ def toast(ptnode: lark.Tree) -> AST.AST:
         case lark.Tree(_, (child,)):
             return toast(child)
 
-        case _:
+        case _:  # pragma: no cover
             msg = f'Unknown Node Type: "{ptnode!r}".'
             raise TypeError(msg)

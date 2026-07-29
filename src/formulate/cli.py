@@ -31,7 +31,7 @@ def parse_args(args: list[str]) -> str:
         expression = from_root(parsed_args.from_root)
     elif parsed_args.from_numexpr is not None:
         expression = from_numexpr(parsed_args.from_numexpr)
-    else:
+    else:  # pragma: no cover
         msg = (
             "This should never happen. "
             "Please report this issue to the Formulate developers."
@@ -50,7 +50,7 @@ def parse_args(args: list[str]) -> str:
         result = "\n".join(expression.named_constants)
     elif parsed_args.unnamed_constants:
         result = "\n".join(map(str, expression.unnamed_constants))
-    else:
+    else:  # pragma: no cover
         msg = (
             "This should never happen. "
             "Please report this issue to the Formulate developers."
@@ -63,7 +63,3 @@ def parse_args(args: list[str]) -> str:
 def main() -> None:
     sys.stdout.write(parse_args(sys.argv[1:]))
     sys.stdout.write("\n")
-
-
-if __name__ == "__main__":
-    main()

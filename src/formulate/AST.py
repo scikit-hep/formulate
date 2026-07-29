@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
 from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from ordered_set import OrderedSet
@@ -14,6 +14,7 @@ from .identifiers import (
     PYTHON_CONSTANTS,
     PYTHON_FUNCTIONS,
     PYTHON_OPERATOR_SYMBOLS,
+    PYTHON_UNARY_FUNCTIONS,
     ROOT_CONSTANTS,
     ROOT_FUNCTIONS,
     ROOT_OPERATOR_SYMBOLS,
@@ -29,6 +30,9 @@ class _Backend:
     function_prefix: str = ""
     pow_as_operator: bool = False
     unparenthesized_ops: frozenset[str] = frozenset()
+    # Unary operators written as a function call instead of a symbol, mapped to
+    # the function name. Takes precedence over operator_symbols.
+    unary_functions: dict[str, str] = field(default_factory=dict)
     index_format: str | None = (
         "python"  # None = forbidden, "root" = [x][y], "python" = [x,y]
     )
@@ -59,15 +63,16 @@ _PYTHON = _Backend(
     constants=PYTHON_CONSTANTS,
     function_prefix="np.",
     unparenthesized_ops=frozenset({","}),
+    unary_functions=PYTHON_UNARY_FUNCTIONS,
 )
 
 
 class AST(metaclass=ABCMeta):
     @abstractmethod
-    def __str__(self) -> str: ...
+    def __str__(self) -> str: ...  # pragma: no cover
 
     @abstractmethod
-    def _to_backend(self, backend: _Backend) -> str: ...
+    def _to_backend(self, backend: _Backend) -> str: ...  # pragma: no cover
 
     def to_numexpr(self) -> str:
         return self._to_backend(_NUMEXPR)
@@ -80,15 +85,15 @@ class AST(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def variables(self) -> OrderedSet[str]: ...
+    def variables(self) -> OrderedSet[str]: ...  # pragma: no cover
 
     @property
     @abstractmethod
-    def named_constants(self) -> OrderedSet[str]: ...
+    def named_constants(self) -> OrderedSet[str]: ...  # pragma: no cover
 
     @property
     @abstractmethod
-    def unnamed_constants(self) -> OrderedSet[int | float]: ...
+    def unnamed_constants(self) -> OrderedSet[int | float]: ...  # pragma: no cover
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,11 +157,14 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
         return f"{self.operator}({self.operand})"
 
     def _to_backend(self, backend: _Backend) -> str:
+        operand = self.operand._to_backend(backend)
+        if (function := backend.unary_functions.get(self.operator)) is not None:
+            return f"{backend.function_prefix}{function}({operand})"
         symbol = backend.operator_symbols.get(self.operator)
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in {backend.name}.'
             raise ValueError(msg)
-        return f"({symbol}{self.operand._to_backend(backend)})"
+        return f"({symbol}{operand})"
 
     @property
     def variables(self) -> OrderedSet[str]:

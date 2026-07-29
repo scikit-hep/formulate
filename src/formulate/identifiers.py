@@ -60,9 +60,21 @@ ROOT_OPERATOR_SYMBOLS = {
 }
 
 PYTHON_OPERATOR_SYMBOLS = {
-    **NUMEXPR_OPERATOR_SYMBOLS,
+    # "inv" is deliberately absent, and handled by PYTHON_UNARY_FUNCTIONS
+    # instead; see the comment there.
+    **{op: symbol for op, symbol in NUMEXPR_OPERATOR_SYMBOLS.items() if op != "inv"},
     "multi_out": ",",
 }
+
+# Operators that Python spells as a function call rather than as a symbol.
+#
+# ROOT's "!" is a logical NOT and NumPy's "~" is a bitwise inversion. They agree
+# on booleans, which is the common case, but not on integers: ROOT reads "!5" as
+# 0 while "~5" is -6 in NumPy. np.logical_not is what ROOT's "!" means for every
+# dtype, and is identical to "~" when the operand is boolean, so it is used
+# unconditionally. (NumExpr needs no such treatment: its "~" has no opcode for
+# anything but booleans, so a mistranslation there fails loudly instead.)
+PYTHON_UNARY_FUNCTIONS = {"inv": "logical_not"}
 
 # Later on we could add Python libraries as "namespaces" here
 NAMESPACES = {"tmath"}
@@ -216,8 +228,10 @@ NUMEXPR_FUNCTIONS = {
     "prod": "prod",
     "min": "min",
     "max": "max",
-    "tmath_min": "min",
-    "tmath_max": "max",
+    # tmath_min/tmath_max are deliberately absent: NumExpr's min and max are
+    # reductions over one array, not the element-wise two-argument functions
+    # TMath::Min/TMath::Max are, and "min(a, b)" is rejected by NumExpr. The
+    # equivalent is "where(a < b, a, b)", which is not a plain function name.
 }
 
 # https://root.cern.ch/doc/master/namespaceTMath.html
@@ -313,7 +327,10 @@ ROOT_FUNCTIONS = {
 }
 
 PYTHON_FUNCTIONS = {
-    **NUMEXPR_FUNCTIONS,
+    # NumExpr's contains() is a substring test with no NumPy equivalent that can
+    # be written as a single function name (np.strings.find(a, b) != -1 is an
+    # expression, not a name), so Python rejects it just as ROOT does.
+    **{name: func for name, func in NUMEXPR_FUNCTIONS.items() if name != "contains"},
     "pow": "power",
     "complex": "complex128",
     # np.minimum/maximum are the element-wise equivalents of TMath::Min/Max

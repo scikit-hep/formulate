@@ -106,3 +106,13 @@ $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --un
 1.2
 5
 ```
+
+## Caveats
+
+`%` is the one operator whose meaning changes when converted: ROOT truncates
+its operands to integers, numexpr does floating-point modulo, and the two only
+agree for non-negative whole numbers. Everything else that has no equivalent in
+the target language raises `ValueError` rather than converting to something
+subtly different. See [Common
+Issues](https://formulate.readthedocs.io/en/latest/guide/issues.html) for the
+details.

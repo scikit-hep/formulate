@@ -36,12 +36,11 @@ Both ROOT and numexpr support the following arithmetic operators:
    * - Modulo (%)
      - ``x % y``
      - ``x % y``
-   * - Left shift (<<)
-     - ``x << y``
-     - ``x << y``
-   * - Right shift (>>)
-     - ``x >> y``
-     - ``x >> y``
+
+.. warning::
+
+   ROOT and numexpr disagree about what ``%`` computes, and formulate converts
+   it in either direction without complaint. See :ref:`issues-modulo`.
 
 Comparison Operators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -91,6 +90,12 @@ Logical Operators
    * - NOT
      - ``!x``
      - ``~x``
+
+.. note::
+
+   Each language accepts only its own spelling, and formulate will tell you
+   which one an expression needs. They also bind differently against
+   comparisons; see :ref:`issues-logical-binding`.
 
 Functions
 ----------------
