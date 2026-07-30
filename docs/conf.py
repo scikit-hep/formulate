@@ -67,7 +67,8 @@ myst_enable_extensions = [
 # of them with dict.__doc__.
 autodoc_inherit_docstrings = False
 
-# Keep the (long) contents of those tables out of the signature line.
+# Keep the (long) contents of those tables out of the signature line. Settable
+# from here only since Sphinx 5.0, which is what the docs extra requires.
 autodoc_default_options = {"no-value": True}
 
 intersphinx_mapping = {
