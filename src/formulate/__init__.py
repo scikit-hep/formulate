@@ -27,7 +27,9 @@ from . import AST, exceptions, toast
 from ._version import __version__
 from .exceptions import ParseError
 
-__all__ = ["ParseError", "__version__", "from_numexpr", "from_root"]
+# Ordered by prominence rather than alphabetically: the two parsing functions
+# are the entry points, and everything else is reached through what they return.
+__all__ = ["from_numexpr", "from_root", "ParseError", "__version__"]  # noqa: RUF022
 
 
 @functools.cache
