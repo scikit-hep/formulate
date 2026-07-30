@@ -13,7 +13,7 @@ from __future__ import annotations
 
 project = "formulate"
 copyright = "2016-2026, The Scikit-HEP Administrators"
-author = "Chris Burr, Jonas Eschle, Aryan Roy"
+author = "Chris Burr, Jonas Eschle, Aryan Roy, Andres Rios-Tascon"
 
 
 # -- General configuration ---------------------------------------------------

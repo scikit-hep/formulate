@@ -7,7 +7,8 @@ name = "formulate"
 authors = [
     { name = "Chris Burr", email = "c.b@cern.ch" },
     { name = "Aryan Roy", email = "aryanroy5678@gmail.com" },
-    { name = "Jonas Eschle", email = "jonas.eschle@gmail.com" }
+    { name = "Jonas Eschle", email = "jonas.eschle@gmail.com" },
+    { name = "Andres Rios-Tascon", email = "ariostas@gmail.com" }
 ]
 maintainers = [
     { name = "The Scikit-HEP admins", email = "scikit-hep-admins@googlegroups.com" },

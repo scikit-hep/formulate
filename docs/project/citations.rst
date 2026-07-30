@@ -21,7 +21,7 @@ version you used. You can get that from the package:
 
     @software{formulate,
       author  = {Burr, Chris and Roy, Aryan and Eschle, Jonas and
-                 {The Scikit-HEP admins}},
+                 Rios-Tascon, Andres and {The Scikit-HEP admins}},
       title   = {formulate: easy conversions between different styles of expressions},
       url     = {https://github.com/scikit-hep/formulate},
       version = {1.0.1},
