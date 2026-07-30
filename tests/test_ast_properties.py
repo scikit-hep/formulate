@@ -26,12 +26,12 @@ from formulate.AST import BinaryOperator, Call, Literal, Matrix, Symbol, UnaryOp
         (Symbol("x"), "x"),
         (UnaryOperator("neg", Symbol("x")), "neg(x)"),
         (BinaryOperator("add", Symbol("a"), Symbol("b")), "add(a, b)"),
-        (Matrix(Symbol("a"), [Literal(0)]), "a[0]"),
-        (Matrix(Symbol("a"), [Literal(0), Symbol("i")]), "a[0, i]"),
-        (Matrix(Symbol("a"), []), "a[]"),
-        (Call("sqrt", [Symbol("a")]), "sqrt(a)"),
-        (Call("length", []), "length()"),
-        (Call("arctan2", [Symbol("a"), Literal(1)]), "arctan2(a, 1)"),
+        (Matrix(Symbol("a"), (Literal(0),)), "a[0]"),
+        (Matrix(Symbol("a"), (Literal(0), Symbol("i"))), "a[0, i]"),
+        (Matrix(Symbol("a"), ()), "a[]"),
+        (Call("sqrt", (Symbol("a"),)), "sqrt(a)"),
+        (Call("length", ()), "length()"),
+        (Call("arctan2", (Symbol("a"), Literal(1))), "arctan2(a, 1)"),
         (
             BinaryOperator("mul", UnaryOperator("neg", Symbol("a")), Literal(2)),
             "mul(neg(a), 2)",
@@ -65,9 +65,9 @@ def test_str_representation(node, expected):
             BinaryOperator("add", Symbol("b"), Symbol("a")),
             False,
         ),
-        (Call("sqrt", [Symbol("a")]), Call("sqrt", [Symbol("a")]), True),
-        (Call("sqrt", [Symbol("a")]), Call("abs", [Symbol("a")]), False),
-        (Matrix(Symbol("a"), [Literal(0)]), Matrix(Symbol("a"), [Literal(0)]), True),
+        (Call("sqrt", (Symbol("a"),)), Call("sqrt", (Symbol("a"),)), True),
+        (Call("sqrt", (Symbol("a"),)), Call("abs", (Symbol("a"),)), False),
+        (Matrix(Symbol("a"), (Literal(0),)), Matrix(Symbol("a"), (Literal(0),)), True),
     ],
 )
 def test_nodes_compare_by_value(left, right, equal):
@@ -77,6 +77,25 @@ def test_nodes_compare_by_value(left, right, equal):
 def test_nodes_are_immutable():
     with pytest.raises(AttributeError):
         Symbol("a").name = "b"
+
+
+def test_every_node_of_a_parsed_tree_is_hashable():
+    # Children are held in tuples, not lists, so a node can be used as a dict
+    # key or set member -- Call and Matrix are the ones that hold several.
+    parsed = formulate.from_root("TMath::Max(a[0][1], -b) + !c > pi")
+    node_types = {type(node).__name__ for node in parsed._walk()}
+    assert node_types == {
+        "Literal",
+        "Symbol",
+        "UnaryOperator",
+        "BinaryOperator",
+        "Matrix",
+        "Call",
+    }
+    assert len({hash(node) for node in parsed._walk()}) > 1
+    assert hash(parsed) == hash(
+        formulate.from_root("TMath::Max(a[0][1], -b) + !c > pi")
+    )
 
 
 def test_equal_expressions_from_different_sources_compare_equal():
@@ -119,34 +138,34 @@ def test_binary_operator_unions_both_sides():
 
 
 def test_matrix_covers_the_base_and_every_index():
-    node = Matrix(Symbol("a"), [Symbol("i"), Literal(3), Symbol("pi")])
+    node = Matrix(Symbol("a"), (Symbol("i"), Literal(3), Symbol("pi")))
     assert node.variables == OrderedSet(["a", "i"])
     assert node.named_constants == OrderedSet(["pi"])
     assert node.unnamed_constants == OrderedSet([3])
 
 
 def test_matrix_with_no_indices():
-    node = Matrix(Symbol("a"), [])
+    node = Matrix(Symbol("a"), ())
     assert node.variables == OrderedSet(["a"])
     assert node.named_constants == OrderedSet()
     assert node.unnamed_constants == OrderedSet()
 
 
 def test_matrix_base_can_itself_hold_constants():
-    assert Matrix(Literal(3.14), [Symbol("i")]).unnamed_constants == OrderedSet([3.14])
+    assert Matrix(Literal(3.14), (Symbol("i"),)).unnamed_constants == OrderedSet([3.14])
     assert formulate.from_root("pi[0]").named_constants == OrderedSet(["pi"])
 
 
 def test_call_covers_every_argument():
     node = Call(
-        "arctan2", [Symbol("a"), BinaryOperator("add", Symbol("b"), Literal(1))]
+        "arctan2", (Symbol("a"), BinaryOperator("add", Symbol("b"), Literal(1)))
     )
     assert node.variables == OrderedSet(["a", "b"])
     assert node.unnamed_constants == OrderedSet([1])
 
 
 def test_call_with_no_arguments_has_no_symbols():
-    node = Call("length", [])
+    node = Call("length", ())
     assert node.variables == OrderedSet()
     assert node.named_constants == OrderedSet()
     assert node.unnamed_constants == OrderedSet()
@@ -191,13 +210,13 @@ def test_binary_operator_unsupported_raises():
 def test_matrix_forbidden_in_numexpr():
     # NumExpr forbids array indexing
     with pytest.raises(ValueError, match="forbidden in NumExpr"):
-        Matrix(Symbol("a"), [Literal(0)]).to_numexpr()
+        Matrix(Symbol("a"), (Literal(0),)).to_numexpr()
 
 
 def test_call_unsupported_function_raises():
     # length (ROOT array function) is not available in NumExpr
     with pytest.raises(ValueError, match="not supported in NumExpr"):
-        Call("length", []).to_numexpr()
+        Call("length", ()).to_numexpr()
 
 
 # --- Literal formatting ---

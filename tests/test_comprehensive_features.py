@@ -318,5 +318,5 @@ def test_variables_preserve_first_appearance_order():
 def test_zero_argument_call_has_no_symbols():
     parsed = formulate.from_root("Length$")
     assert isinstance(parsed, Call)
-    assert parsed.arguments == []
+    assert parsed.arguments == ()
     assert parsed.variables == OrderedSet()

@@ -90,9 +90,9 @@ class AST(metaclass=ABCMeta):
     """Base class of every expression node.
 
     Instances are produced by :func:`formulate.from_root` and
-    :func:`formulate.from_numexpr`, not constructed directly, and are immutable:
-    converting an expression never modifies it, so one parsed expression can be
-    rendered to as many backends as needed.
+    :func:`formulate.from_numexpr`, not constructed directly, and are immutable
+    and hashable: converting an expression never modifies it, so one parsed
+    expression can be rendered to as many backends as needed.
 
     ``str(node)`` gives a language-independent view of the tree in canonical
     names (``add(x, pow(y, 2))``), which is useful when debugging a conversion;
@@ -354,7 +354,7 @@ class Matrix(AST):
     """
 
     var: AST
-    indices: list[AST]
+    indices: tuple[AST, ...]
 
     def _children(self) -> Sequence[AST]:
         return (self.var, *self.indices)
@@ -387,7 +387,7 @@ class Call(AST):
     """
 
     function: str
-    arguments: list[AST]
+    arguments: tuple[AST, ...]
 
     def _children(self) -> Sequence[AST]:
         return self.arguments

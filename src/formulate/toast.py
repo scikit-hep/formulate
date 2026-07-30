@@ -106,7 +106,7 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
 
         case lark.Tree("matr", (array, *indices)):
             children = [array, *(elem.children[0] for elem in indices)]
-            return children, lambda mat, *ind: AST.Matrix(mat, list(ind))
+            return children, lambda mat, *ind: AST.Matrix(mat, ind)
 
         case lark.Tree("func", (func_name, trailer)):
             func_name = _get_function_name(func_name)
@@ -123,7 +123,7 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
 
             arg_list = trailer.children[0]
             arguments = () if arg_list is None else tuple(arg_list.children)
-            return arguments, lambda *args: AST.Call(func_name, list(args))
+            return arguments, lambda *args: AST.Call(func_name, args)
 
         case lark.Tree("symbol", children):
             var_name = _get_var_name(children[0])
@@ -133,7 +133,7 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
             if var_name.endswith("$"):
                 func_name = var_name[:-1].lower()
                 if func_name in FUNCTIONS:
-                    return (), _constant(AST.Call(func_name, []))
+                    return (), _constant(AST.Call(func_name, ()))
             if any(
                 not part.isidentifier() or iskeyword(part)
                 for part in var_name.split(".")

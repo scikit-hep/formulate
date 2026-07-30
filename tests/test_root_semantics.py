@@ -73,7 +73,7 @@ def test_bare_length_dollar():
     expr = formulate.from_root("Length$")
     assert isinstance(expr, Call)
     assert expr.function == "length"
-    assert expr.arguments == []
+    assert expr.arguments == ()
 
 
 def test_bare_sum_dollar():
