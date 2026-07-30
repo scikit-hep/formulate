@@ -128,6 +128,8 @@ This is why ``a < b & c < d`` is rejected in numexpr: ``&`` binds tighter, so
 it parses as the chained comparison ``a < (b & c) < d``, which is not
 supported. Write ``(a < b) & (c < d)`` instead.
 
+.. _issues-constants-round-trip:
+
 Named constants do not survive a round trip through numexpr
 ---------------------------------------------------------------------------
 

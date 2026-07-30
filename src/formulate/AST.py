@@ -1,5 +1,21 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
+"""The backend-neutral expression tree and the serializers that render it.
+
+:func:`formulate.from_root` and :func:`formulate.from_numexpr` both return an
+:class:`AST`. Its node types (:class:`Literal`, :class:`Symbol`,
+:class:`UnaryOperator`, :class:`BinaryOperator`, :class:`Matrix` and
+:class:`Call`) are frozen dataclasses that hold *canonical* names rather than
+any one language's spelling: the ROOT ``&&``, the NumExpr ``&`` and the Python
+``&`` all parse to ``BinaryOperator(operator="and", ...)``.
+
+Rendering that tree back out is the job of :meth:`AST.to_root`,
+:meth:`AST.to_numexpr` and :meth:`AST.to_python`. Each looks its node up in the
+tables in :mod:`formulate.identifiers`; a name that is missing from a table is
+how "this construct has no faithful equivalent here" is expressed, and raises
+``ValueError`` rather than emitting something subtly different.
+"""
+
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
@@ -10,6 +26,7 @@ from ordered_set import OrderedSet
 from ._traversal import fold
 from .identifiers import (
     CONSTANTS,
+    FUNCTION_DISPLAY_NAMES,
     NUMEXPR_CONSTANTS,
     NUMEXPR_FUNCTIONS,
     NUMEXPR_OPERATOR_SYMBOLS,
@@ -70,6 +87,18 @@ _PYTHON = _Backend(
 
 
 class AST(metaclass=ABCMeta):
+    """Base class of every expression node.
+
+    Instances are produced by :func:`formulate.from_root` and
+    :func:`formulate.from_numexpr`, not constructed directly, and are immutable:
+    converting an expression never modifies it, so one parsed expression can be
+    rendered to as many backends as needed.
+
+    ``str(node)`` gives a language-independent view of the tree in canonical
+    names (``add(x, pow(y, 2))``), which is useful when debugging a conversion;
+    use the ``to_*`` methods to get something an engine will accept.
+    """
+
     @abstractmethod
     def _children(self) -> Sequence["AST"]: ...  # pragma: no cover
 
@@ -100,16 +129,69 @@ class AST(metaclass=ABCMeta):
         return fold(self, lambda node: (node._children(), node._serializer(backend)))
 
     def to_numexpr(self) -> str:
+        """Render the expression as NumExpr source.
+
+        Named constants have no NumExpr spelling and are substituted by their
+        numeric value, so ``pi`` comes back as ``3.141592653589793``.
+
+        :raises ValueError: if the expression uses a construct NumExpr has no
+            equivalent for, such as array indexing, ``inf``, or the
+            element-wise ``TMath::Min``/``TMath::Max``.
+
+        .. code-block:: pycon
+
+            >>> import formulate
+            >>> formulate.from_root("TMath::Sqrt(x**2 + y**2)").to_numexpr()
+            'sqrt(((x ** 2) + (y ** 2)))'
+        """
         return self._to_backend(_NUMEXPR)
 
     def to_root(self) -> str:
+        """Render the expression as a ROOT ``TTreeFormula`` string.
+
+        :raises ValueError: if the expression uses a construct ROOT has no
+            equivalent for, such as ``^`` used as XOR or NumExpr's ``where``.
+
+        .. code-block:: pycon
+
+            >>> import formulate
+            >>> formulate.from_numexpr("sqrt(x**2 + y**2)").to_root()
+            'TMath::Sqrt(((x ** 2) + (y ** 2)))'
+        """
         return self._to_backend(_ROOT)
 
     def to_python(self) -> str:
+        """Render the expression as plain Python, using NumPy for functions.
+
+        Function and constant names are emitted with an ``np.`` prefix, so the
+        result is meant to be evaluated somewhere NumPy is imported as ``np``.
+        This backend is output-only: there is no ``from_python``.
+
+        :raises ValueError: if the expression uses a construct with no NumPy
+            equivalent that can be written as a single name, such as NumExpr's
+            ``contains``.
+
+        .. code-block:: pycon
+
+            >>> import formulate
+            >>> formulate.from_root("TMath::Sqrt(x**2 + y**2)").to_python()
+            'np.sqrt(((x ** 2) + (y ** 2)))'
+        """
         return self._to_backend(_PYTHON)
 
     @property
     def variables(self) -> OrderedSet[str]:
+        """The names the expression reads, in order of first appearance.
+
+        Named constants are excluded; see :attr:`named_constants`. For a
+        ``TTree`` expression this is the set of branches that have to be read.
+
+        .. code-block:: pycon
+
+            >>> import formulate
+            >>> list(formulate.from_root("x + TMath::Pi() * y").variables)
+            ['x', 'y']
+        """
         return OrderedSet(
             node.name
             for node in self._walk()
@@ -118,6 +200,17 @@ class AST(metaclass=ABCMeta):
 
     @property
     def named_constants(self) -> OrderedSet[str]:
+        """The constants the expression names, in order of first appearance.
+
+        Names are canonical rather than as written, so both ``TMath::E()`` and
+        ``e_num`` report as ``exp1``.
+
+        .. code-block:: pycon
+
+            >>> import formulate
+            >>> list(formulate.from_root("x + TMath::Pi() * y").named_constants)
+            ['pi']
+        """
         return OrderedSet(
             node.name
             for node in self._walk()
@@ -126,13 +219,23 @@ class AST(metaclass=ABCMeta):
 
     @property
     def unnamed_constants(self) -> OrderedSet[int | float]:
+        """The numeric literals in the expression, in order of first appearance.
+
+        .. code-block:: pycon
+
+            >>> import formulate
+            >>> list(formulate.from_root("2 * x + 1.5").unnamed_constants)
+            [2, 1.5]
+        """
         return OrderedSet(
             node.value for node in self._walk() if isinstance(node, Literal)
         )
 
 
 @dataclass(frozen=True, slots=True)
-class Literal(AST):  # Literal: value that appears in the program text
+class Literal(AST):
+    """A number written out in the expression text, such as ``2`` or ``1.5``."""
+
     value: int | float
 
     def _children(self) -> Sequence[AST]:
@@ -147,7 +250,14 @@ class Literal(AST):  # Literal: value that appears in the program text
 
 
 @dataclass(frozen=True, slots=True)
-class Symbol(AST):  # Symbol: value referenced by name
+class Symbol(AST):
+    """A value referred to by name: a variable, or a named constant.
+
+    Constants are held under their canonical name (``pi``, ``exp1``) and are
+    exactly those names that appear in
+    :data:`formulate.identifiers.CONSTANTS`; every other name is a variable.
+    """
+
     name: str
 
     def _children(self) -> Sequence[AST]:
@@ -168,7 +278,14 @@ class Symbol(AST):  # Symbol: value referenced by name
 
 
 @dataclass(frozen=True, slots=True)
-class UnaryOperator(AST):  # Unary Operator: Operation with one operand
+class UnaryOperator(AST):
+    """An operation with a single operand.
+
+    ``operator`` is one of the canonical names in
+    :data:`formulate.identifiers.UNARY_OPERATORS`: ``"pos"``, ``"neg"``, or
+    ``"inv"`` for the logical NOT written ``!`` in ROOT and ``~`` in NumExpr.
+    """
+
     operator: str
     operand: AST
 
@@ -190,7 +307,14 @@ class UnaryOperator(AST):  # Unary Operator: Operation with one operand
 
 
 @dataclass(frozen=True, slots=True)
-class BinaryOperator(AST):  # Binary Operator: Operation with two operands
+class BinaryOperator(AST):
+    """An operation with two operands.
+
+    ``operator`` is one of the canonical names in
+    :data:`formulate.identifiers.BINARY_OPERATORS` — ``"add"``, ``"lt"``,
+    ``"and"`` and so on — never a backend's spelling of it.
+    """
+
     operator: str
     left: AST
     right: AST
@@ -216,7 +340,14 @@ class BinaryOperator(AST):  # Binary Operator: Operation with two operands
 
 
 @dataclass(frozen=True, slots=True)
-class Matrix(AST):  # Matrix: A matrix call
+class Matrix(AST):
+    """An indexed access, ``var[i]`` or ``var[i][j]``.
+
+    ROOT writes one bracket pair per index and Python writes a single
+    comma-separated one, so the same node renders as ``arr[1][2]`` for ROOT and
+    ``arr[1, 2]`` for Python. NumExpr has no indexing at all and rejects it.
+    """
+
     var: AST
     indices: list[AST]
 
@@ -242,7 +373,14 @@ class Matrix(AST):  # Matrix: A matrix call
 
 
 @dataclass(frozen=True, slots=True)
-class Call(AST):  # Call: evaluate a function on arguments
+class Call(AST):
+    """A function applied to zero or more arguments.
+
+    ``function`` is a canonical name from
+    :data:`formulate.identifiers.FUNCTIONS`, which is what makes
+    ``TMath::ATan2``, ``atan2`` and ``arctan2`` the same node.
+    """
+
     function: str
     arguments: list[AST]
 
@@ -266,7 +404,8 @@ class Call(AST):  # Call: evaluate a function on arguments
             return lambda base, exponent: f"({base} ** {exponent})"
         function_str = backend.functions.get(self.function)
         if function_str is None:
-            msg = f'Function "{self.function}" is not supported in {backend.name}.'
+            display = FUNCTION_DISPLAY_NAMES.get(self.function, self.function)
+            msg = f'Function "{display}" is not supported in {backend.name}.'
             raise ValueError(msg)
         name = f"{backend.function_prefix}{function_str}"
         return lambda *args: f"{name}({', '.join(args)})"

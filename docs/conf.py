@@ -12,8 +12,8 @@ from __future__ import annotations
 # -- Project information -----------------------------------------------------
 
 project = "formulate"
-copyright = "2016-2025, The Scikit-HEP Administrators"
-author = "Chris Burr, Jonas Eschle, Aryan Roy"
+copyright = "2016-2026, The Scikit-HEP Administrators"
+author = "Chris Burr, Jonas Eschle, Aryan Roy, Andres Rios-Tascon"
 
 
 # -- General configuration ---------------------------------------------------
@@ -24,6 +24,7 @@ author = "Chris Burr, Jonas Eschle, Aryan Roy"
 extensions = [
     "myst_parser",
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
@@ -60,3 +61,17 @@ myst_enable_extensions = [
     "colon_fence",
     "deflist",
 ]
+
+# The lookup tables in formulate.identifiers are plain dicts and sets with no
+# docstrings of their own; without this, autodoc falls back to documenting each
+# of them with dict.__doc__.
+autodoc_inherit_docstrings = False
+
+# Keep the (long) contents of those tables out of the signature line. Settable
+# from here only since Sphinx 5.0, which is what the docs extra requires.
+autodoc_default_options = {"no-value": True}
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+}

@@ -15,10 +15,14 @@ Maintainers
 
 Formulate is maintained by:
 
-* **Chris Burr** - Original author
-* **Jonas Eschle** - Core developer
-* **Aryan Roy** - Core developer
-* **The Scikit-HEP Contributors** - A community of developers contributing to the Scikit-HEP ecosystem
+* **Chris Burr** — original author
+* **Jonas Eschle** — core developer
+* **Aryan Roy** — core developer
+* **Andres Rios-Tascon** — core developer
+* **The Scikit-HEP admins**, who maintain the package as part of the project
+
+Everyone who has contributed is listed on the `contributors page
+<https://github.com/scikit-hep/formulate/graphs/contributors>`_.
 
 Getting in Touch
 ----------------------------
@@ -32,8 +36,8 @@ GitHub
 * **Discussions**: For questions, ideas, and general discussion, use `GitHub Discussions <https://github.com/scikit-hep/formulate/discussions>`_.
 * **Pull Requests**: For code contributions, submit a pull request on GitHub. See the :doc:`../contributing/contributing` page for guidelines.
 
-
-
+If you are unsure which of these fits, :doc:`../questions/questions` describes
+what belongs where.
 
 Contributing
 ------------------------

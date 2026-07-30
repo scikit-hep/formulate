@@ -32,11 +32,10 @@ prek run --all-files        # ruff, ruff-format, mypy (strict, src only), codesp
 and what `nox -s lint` runs. pre-commit.ci (configured by the `ci:` block in the config) still
 runs `pre-commit` proper on pull requests, so hooks must stay compatible with both.
 
-`tests/test_constants.py` is the only file that evaluates expressions with the real engines;
-it `importorskip`s `ROOT`, which CI installs only on Linux/Python 3.10. Everything else runs
-everywhere. `numexpr` is not a test dependency in `pyproject.toml` (it comes in via `[docs]`),
-so a bare `pip install -e ".[test]"` will skip nothing but will fail to import `numexpr` in
-`test_constants.py` — install `.[dev]`.
+`tests/test_constants.py` is the only file that evaluates expressions with the real engines.
+It imports `numexpr` at module scope — so `numexpr` is in the `test` extra, not just `docs`,
+or the suite cannot be collected at all — and `importorskip`s `ROOT`, which CI installs only
+on Linux/Python 3.10. So `.[test]` runs everything except the ROOT half, which skips.
 
 ## Architecture
 
@@ -54,7 +53,7 @@ Pipeline, in order:
    Unknown names raise here. `toast` itself is one `_traversal.fold` call; `_expand` is what
    handles a single parse-tree node, returning the children still to convert plus a builder
    that assembles the AST node from them.
-3. **`AST.py`** — five frozen dataclass node types (`Literal`, `Symbol`, `UnaryOperator`,
+3. **`AST.py`** — six frozen dataclass node types (`Literal`, `Symbol`, `UnaryOperator`,
    `BinaryOperator`, `Matrix`, `Call`) plus a `_Backend` descriptor. A node type implements
    exactly three things: `_children()`, `_format(*parts)` for `str()`, and
    `_serializer(backend)`, which returns the builder that joins its already-serialized
@@ -95,7 +94,26 @@ is supported, plus any spelling in `FUNCTION_ALIASES` / `CONSTANTS_ALIASES` /
 `CONSTANTS_FUNCTION_ALIASES`. `tests/test_identifiers.py` drives every table entry through the
 parser and cross-checks the tables against each other, so a declared-but-unmapped name fails
 loudly. If the name has both a scalar `TMath::` form and an array `$` form (as with
-`Min`/`Max`), it needs the `tmath_`-prefixed qualified variant — see `_get_function_name`.
+`Min`/`Max`), it needs the `tmath_`-prefixed qualified variant — see `_get_function_name` —
+and an entry in `FUNCTION_DISPLAY_NAMES`, since that canonical name is one nobody writes and
+would be meaningless in an error message.
+Each table also carries an attribute docstring, which is what the API page renders; the
+name additionally needs a row in the tables in `docs/guide/expressions.rst`, which nothing
+checks automatically.
+
+### Docs
+
+`docs/` is Sphinx (RTD theme, `nox -s docs`, `-- --serve` to serve). Two things to know
+before editing it:
+
+- **Examples execute at build time.** Narrative pages use `jupyter-execute`, not
+  `code-block`, wherever an output is shown, so a stale example fails the build instead of
+  lying on the website. Keep it that way — if you add an example with output, run it.
+- **Which page owns what.** `guide/expressions.rst` is the reference for every supported
+  operator, function and constant, and how each is spelled per backend; `guide/issues.rst`
+  is the reference for where the languages disagree. Behaviour changes belong in one of
+  those two. API pages are `automodule`/`autodata` over the docstrings, so the docstring is
+  where API prose goes, not the `.rst`.
 
 ### Unsupported constructs
 

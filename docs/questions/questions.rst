@@ -26,19 +26,14 @@ For bug reports or specific technical issues:
 * If not, create a `new issue <https://github.com/scikit-hep/formulate/issues/new>`_ with details about your problem
 * Include information about your environment, steps to reproduce, and any error messages
 
-Stack Overflow
+Elsewhere in Scikit-HEP
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-For questions that might be relevant to a broader audience:
-
-* Ask on Stack Overflow with the `formulate <https://stackoverflow.com/questions/tagged/formulate>`_ tag
-* Also consider adding related tags like ``python``, ``root``, or ``numexpr`` depending on your question
-* Follow Stack Overflow's guidelines for asking good questions:
-  - Be specific
-  - Include minimal, reproducible examples
-  - Show what you've tried so far
-
-
+If your question is really about the tool at the other end of the conversion —
+how ``TTreeFormula`` evaluates something, or what numexpr does with a
+particular dtype — that project's own issue tracker will get you a better
+answer. The `Scikit-HEP <https://scikit-hep.org/>`_ website lists the packages
+in the ecosystem and where each is discussed.
 
 How to Ask Effective Questions
 ------------------------------------------------------------------------------------------------------------------------------------------
@@ -60,23 +55,37 @@ To get the best help possible, consider these tips when asking questions:
 
 3. **Show Minimal Examples**
 
-   Include the smallest possible code example that demonstrates your issue:
+   Include the smallest possible code example that demonstrates your issue —
+   the expression that fails, and what you expected instead:
 
    .. jupyter-execute::
 
        import formulate
 
-       # This works
-       expr1 = formulate.from_root("x + y")
-       print(expr1.to_numexpr())  # Outputs: "x + y"
+       # This converts fine
+       print(formulate.from_root("x + y").to_numexpr())
 
-       # This doesn't work
-       expr2 = formulate.from_root("problematic_expression")
-       print(expr2.to_numexpr())  # Error occurs here
+       # This does not, and here is what it says
+       try:
+           formulate.from_root("arr[0]").to_numexpr()
+       except ValueError as error:
+           print(error)
+
+   Reducing a long expression to the part that misbehaves is usually the step
+   that answers the question by itself.
 
 4. **Include Full Error Messages**
 
-   If you're encountering an error, include the complete error message with traceback.
+   If you're encountering an error, include the complete error message with
+   traceback. Formulate's parse errors carry a location and often a
+   suggestion, and both are useful:
+
+   .. jupyter-execute::
+
+       try:
+           formulate.from_root("a & b")
+       except formulate.ParseError as error:
+           print(error)
 
 5. **Describe What You've Tried**
 

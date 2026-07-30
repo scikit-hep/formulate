@@ -1,5 +1,3 @@
-# formulate
-
 [![Actions Status][actions-badge]][actions-link]
 [![Documentation Status][rtd-badge]][rtd-link]
 [![codecov](https://codecov.io/gh/scikit-hep/formulate/graph/badge.svg?token=W5wXQ9wcvN)](https://codecov.io/gh/scikit-hep/formulate)
@@ -12,7 +10,7 @@
 [![Scikit-HEP][sk-badge]](https://scikit-hep.org/)
 
 <!-- prettier-ignore-start -->
-[actions-badge]:            https://github.com/scikit-hep/formulate/workflows/unittests/badge.svg
+[actions-badge]:            https://github.com/scikit-hep/formulate/actions/workflows/ci.yml/badge.svg
 [actions-link]:             https://github.com/Scikit-HEP/formulate/actions
 [conda-badge]:              https://img.shields.io/conda/vn/conda-forge/formulate
 [conda-link]:               https://github.com/conda-forge/formulate-feedstock
@@ -22,18 +20,26 @@
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/formulate
 [pypi-version]:             https://img.shields.io/pypi/v/formulate
 [rtd-badge]:                https://readthedocs.org/projects/formulate/badge/?version=latest
-[rtd-link]:                 https://formulate.readthedocs.io/en/latest/?badge=latest
+[rtd-link]:                 https://formulate.readthedocs.io/latest/?badge=latest
 [sk-badge]:                 https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
 
 <!-- prettier-ignore-end -->
 
 # Formulate
 
-Easy conversions between different styles of expressions. Formulate
-currently supports converting between
-[ROOT](https://root.cern.ch/doc/master/classTFormula.html) and
-[numexpr](https://numexpr.readthedocs.io/en/latest/user_guide.html)
-style expressions.
+Easy conversions between different styles of expressions. Formulate converts in
+either direction between
+[ROOT](https://root.cern.ch/doc/master/classTFormula.html) (`TTreeFormula`) and
+[numexpr](https://numexpr.readthedocs.io/en/latest/user_guide.html) style
+expressions, and can also render a parsed expression as plain Python using
+NumPy functions.
+
+It needs neither ROOT nor numexpr installed — it reads and writes their syntax,
+it does not evaluate anything — and it knows the places where the two languages
+disagree, such as `&&` and `&` binding differently against comparisons, or `^`
+meaning exponentiation in one and XOR in the other.
+
+Full documentation: <https://formulate.readthedocs.io/>
 
 ## Installation
 
@@ -82,6 +88,28 @@ Similarly, when starting with a `numexpr` style expression:
 '((X_PT > 5) & ((Mu_NHits > 3) | (Mu_PT > 10)))'
 ```
 
+Any parsed expression can also be rendered as Python, using NumPy for the
+functions. This direction is output-only — there is no `from_python`:
+
+```pycon
+>>> momentum.to_python()
+'np.sqrt((((X_PX ** 2) + (X_PY ** 2)) + (X_PZ ** 2)))'
+```
+
+Parsing is separate from rendering, so parse once and convert as many times as
+you like. An expression also reports what it refers to, which is how you work
+out what a selection needs to read:
+
+```pycon
+>>> expression = formulate.from_root("TMath::Sqrt(px**2 + py**2) > 5 * TMath::Pi() + 1.5")
+>>> list(expression.variables)
+['px', 'py']
+>>> list(expression.named_constants)
+['pi']
+>>> list(expression.unnamed_constants)
+[2, 5, 1.5]
+```
+
 ### CLI
 
 The package also provides a command-line interface for converting expressions between different styles. To use it, simply run the `formulate` command followed by the input expression and the desired output.
@@ -92,6 +120,9 @@ $ formulate --from-root '(A && B) || TMath::Sqrt(A)' --to-numexpr
 
 $ formulate --from-numexpr '(A & B) | sqrt(A)' --to-root
 ((A && B) || TMath::Sqrt(A))
+
+$ formulate --from-root 'TMath::Sqrt(A)' --to-python
+np.sqrt(A)
 
 $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --variables
 A
@@ -107,12 +138,14 @@ $ formulate --from-root '(A && B) || TMath::Sqrt(1.23) * e_num**1.2 + 5*pi' --un
 5
 ```
 
-## Caveats
+Run `formulate --help` for the full list of options.
 
-`%` is the one operator whose meaning changes when converted: ROOT truncates
-its operands to integers, numexpr does floating-point modulo, and the two only
-agree for non-negative whole numbers. Everything else that has no equivalent in
-the target language raises `ValueError` rather than converting to something
-subtly different. See [Common
-Issues](https://formulate.readthedocs.io/en/latest/guide/issues.html) for the
-details.
+## Documentation
+
+- [Full documentation](https://formulate.readthedocs.io/)
+- [Supported expressions](https://formulate.readthedocs.io/latest/guide/expressions.html) —
+  every operator, function and constant, and how each is spelled in each language
+- [Common issues](https://formulate.readthedocs.io/latest/guide/issues.html) —
+  where the languages disagree, and what formulate does about it
+- [API reference](https://formulate.readthedocs.io/latest/api/api.html)
+- [Contributing](https://formulate.readthedocs.io/latest/contributing/contributing.html)

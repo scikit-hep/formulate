@@ -1,5 +1,14 @@
 # Licensed under a 3-clause BSD style license, see LICENSE.
 
+"""Conversion of a lark parse tree into the backend-neutral AST.
+
+This is where a language's surface syntax stops mattering: namespaces
+(``TMath::``), the trailing ``$`` on ROOT's array functions, and the function
+and constant aliases are all resolved here, so what comes out is written purely
+in the canonical names of :mod:`formulate.identifiers`. A name that resolves to
+nothing raises here rather than later.
+"""
+
 import functools
 from ast import literal_eval
 from collections.abc import Callable, Sequence

@@ -44,6 +44,28 @@ def test_tmath_max_to_python():
     assert out == "np.maximum(a, b)"
 
 
+@pytest.mark.parametrize(
+    "expression,expected_name",
+    [
+        ("TMath::Min(a, b)", "TMath::Min"),
+        ("TMath::Max(a, b)", "TMath::Max"),
+    ],
+)
+def test_unsupported_tmath_error_names_what_was_written(expression, expected_name):
+    # The canonical name (tmath_min) is internal and would mean nothing here.
+    with pytest.raises(ValueError) as excinfo:
+        formulate.from_root(expression).to_numexpr()
+    message = str(excinfo.value)
+    assert message == f'Function "{expected_name}" is not supported in NumExpr.'
+    assert "tmath_" not in message
+
+
+def test_unsupported_function_error_uses_its_own_name():
+    with pytest.raises(ValueError) as excinfo:
+        formulate.from_numexpr("where(a, b, c)").to_root()
+    assert str(excinfo.value) == 'Function "where" is not supported in ROOT.'
+
+
 # --- Bare $ functions without parentheses ---
 
 
