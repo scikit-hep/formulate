@@ -335,13 +335,12 @@ class BinaryOperator(AST):
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in {backend.name}.'
             raise ValueError(msg)
-        parenthesize = symbol not in backend.unparenthesized_ops
-
-        def build(left: str, right: str) -> str:
-            out = f"{left} {symbol} {right}"
-            return f"({out})" if parenthesize else out
-
-        return build
+        # A comma is punctuation rather than an operator: it hugs the operand on
+        # its left, so it renders as ``x, y`` and not as ``x , y``.
+        separator = f"{symbol} " if symbol == "," else f" {symbol} "
+        if symbol in backend.unparenthesized_ops:
+            return lambda left, right: f"{left}{separator}{right}"
+        return lambda left, right: f"({left}{separator}{right})"
 
 
 @dataclass(frozen=True, slots=True)
@@ -361,7 +360,7 @@ class Matrix(AST):
 
     def _format(self, *parts: str) -> str:
         var_str, *indices = parts
-        return "{}[{}]".format(var_str, ", ".join(indices))
+        return f"{var_str}[{', '.join(indices)}]"
 
     def _serializer(self, backend: _Backend) -> Callable[..., str]:
         if backend.index_format is None:

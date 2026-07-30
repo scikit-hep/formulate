@@ -131,4 +131,4 @@ def test_multi_out_is_not_parenthesized():
 
 
 def test_multi_out_becomes_a_comma_in_python():
-    assert formulate.from_root("a:b").to_python() == "a , b"
+    assert formulate.from_root("a:b").to_python() == "a, b"

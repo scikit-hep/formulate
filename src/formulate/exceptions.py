@@ -83,7 +83,7 @@ def debug_numexpr(exp: str, error: lark.LarkError) -> ParseError:
         suggestions.append("- Use '|' instead of '||' or 'or'.")
     if re.search(r"!(?!\=)", exp):
         suggestions.append("- Use '~' instead of '!'.")
-    if any(comp in exp for comp in ["<", ">", "<=", ">=", "==", "!="]):
+    if any(comp in exp for comp in ["<", ">", "==", "!="]):
         suggestions.append(
             "- Make sure you don't have chained comparisons "
             "(e.g., 'a < b < c'), as these are not supported."
