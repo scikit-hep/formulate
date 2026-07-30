@@ -32,11 +32,10 @@ prek run --all-files        # ruff, ruff-format, mypy (strict, src only), codesp
 and what `nox -s lint` runs. pre-commit.ci (configured by the `ci:` block in the config) still
 runs `pre-commit` proper on pull requests, so hooks must stay compatible with both.
 
-`tests/test_constants.py` is the only file that evaluates expressions with the real engines;
-it `importorskip`s `ROOT`, which CI installs only on Linux/Python 3.10. Everything else runs
-everywhere. `numexpr` is not a test dependency in `pyproject.toml` (it comes in via `[docs]`),
-so a bare `pip install -e ".[test]"` will skip nothing but will fail to import `numexpr` in
-`test_constants.py` — install `.[dev]`.
+`tests/test_constants.py` is the only file that evaluates expressions with the real engines.
+It imports `numexpr` at module scope — so `numexpr` is in the `test` extra, not just `docs`,
+or the suite cannot be collected at all — and `importorskip`s `ROOT`, which CI installs only
+on Linux/Python 3.10. So `.[test]` runs everything except the ROOT half, which skips.
 
 ## Architecture
 

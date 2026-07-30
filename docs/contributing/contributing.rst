@@ -34,8 +34,8 @@ Setting Up Your Development Environment
        pip install -e ".[dev]"
 
    The ``dev`` extra pulls in the test and docs requirements plus ``prek``.
-   Installing only ``.[test]`` is enough to run most of the suite, but leaves
-   out ``numexpr``, which ``tests/test_constants.py`` needs.
+   ``.[test]`` on its own is enough to run the whole suite; ``.[docs]`` on its
+   own is enough to build the documentation.
 
 5. **Set Up Pre-commit Hooks**
 
