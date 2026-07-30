@@ -20,7 +20,7 @@
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/formulate
 [pypi-version]:             https://img.shields.io/pypi/v/formulate
 [rtd-badge]:                https://readthedocs.org/projects/formulate/badge/?version=latest
-[rtd-link]:                 https://formulate.readthedocs.io/en/latest/?badge=latest
+[rtd-link]:                 https://formulate.readthedocs.io/latest/?badge=latest
 [sk-badge]:                 https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
 
 <!-- prettier-ignore-end -->
@@ -142,17 +142,10 @@ Run `formulate --help` for the full list of options.
 
 ## Documentation
 
-- [Supported expressions](https://formulate.readthedocs.io/en/latest/guide/expressions.html) —
+- [Full documentation](https://formulate.readthedocs.io/)
+- [Supported expressions](https://formulate.readthedocs.io/latest/guide/expressions.html) —
   every operator, function and constant, and how each is spelled in each language
-- [Common issues](https://formulate.readthedocs.io/en/latest/guide/issues.html) —
+- [Common issues](https://formulate.readthedocs.io/latest/guide/issues.html) —
   where the languages disagree, and what formulate does about it
-- [API reference](https://formulate.readthedocs.io/en/latest/api/api.html)
-- [Contributing](https://formulate.readthedocs.io/en/latest/contributing/contributing.html)
-
-## Limitations
-
-Anything with no faithful equivalent in the target language raises `ValueError`
-rather than converting to something subtly different. The one exception is `%`,
-which converts silently even though ROOT and numexpr do not compute the same
-thing. See [Common
-Issues](https://formulate.readthedocs.io/en/latest/guide/issues.html).
+- [API reference](https://formulate.readthedocs.io/latest/api/api.html)
+- [Contributing](https://formulate.readthedocs.io/latest/contributing/contributing.html)
