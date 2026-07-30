@@ -56,8 +56,7 @@ jobs:
 
       - name: Install package
         run: |
-          uv pip install pytest-cov
-          uv pip install -U .[dev,test]
+          uv pip install -U .[test]
 
       - name: Test with pytest
         run: |
