@@ -194,14 +194,12 @@ def test_every_root_constant_spelling_parses_back_to_its_canonical_name(
     canonical, root_repr
 ):
     parsed = formulate.from_root(root_repr)
-    if root_repr.startswith("-"):
-        # -TMath::Qe() and -TMath::Infinity() parse as a negation of the
-        # positive constant rather than as an atom of their own.
-        assert parsed.operator == "neg"
-        assert ROOT_CONSTANTS[parsed.operand.name] == root_repr.removeprefix("-")
-        assert parsed.to_root() == f"({root_repr})"
-    elif root_repr.startswith("("):
-        # hbarc is spelled as a product of two other constants
+    if root_repr.startswith("("):
+        # Compound spellings: hbarc is a product of two other constants, and
+        # (-TMath::Qe()) / (-TMath::Infinity()) are a negation of one.  They
+        # parse to that expression rather than to an atom of their own, but the
+        # parentheses have to survive so the sign cannot escape a surrounding
+        # ** -- see test_negative_constants_stay_atomic_under_pow.
         assert parsed.to_root() == root_repr
     else:
         assert parsed.name == canonical
@@ -210,14 +208,44 @@ def test_every_root_constant_spelling_parses_back_to_its_canonical_name(
 
 @pytest.mark.parametrize("canonical", sorted(NUMEXPR_CONSTANTS))
 def test_every_numexpr_constant_is_inlined_as_a_literal(canonical):
+    value = NUMEXPR_CONSTANTS[canonical]
     rendered = formulate.from_root(canonical).to_numexpr()
-    assert rendered == str(NUMEXPR_CONSTANTS[canonical])
+    # Negative values are parenthesized so that ** cannot steal the sign
+    expected = f"({value})" if isinstance(value, float) and value < 0 else str(value)
+    assert rendered == expected
 
 
 @pytest.mark.parametrize("canonical", sorted(CONSTANTS_MISSING_FROM_NUMEXPR))
 def test_constants_absent_from_numexpr_raise_a_clear_error(canonical):
     with pytest.raises(ValueError, match="not supported in NumExpr"):
         formulate.from_root(canonical).to_numexpr()
+
+
+# --- A constant whose spelling is not an atom has to stay parenthesized ---
+#
+# ROOT writes eminus and neginf as a negation, and NumExpr/Python inline eminus
+# as a negative number.  '**' binds tighter than unary minus in all three
+# languages, so an unparenthesized spelling would let the sign escape the
+# exponent: `eminus ** 2` would mean `-(eplus ** 2)` and come out negative.
+
+
+@pytest.mark.parametrize(
+    "canonical,expected",
+    [("eminus", "pow(neg(eplus), 2)"), ("neginf", "pow(neg(inf), 2)")],
+)
+def test_negative_constants_stay_atomic_under_pow(canonical, expected):
+    squared = formulate.from_root(f"{canonical} ** 2")
+    assert str(squared) == f"pow({canonical}, 2)"
+    # ROOT has no single name for either of these, so a round trip opens the
+    # spelling up into a negation -- of the base, not of the whole power.
+    assert str(formulate.from_root(squared.to_root())) == expected
+
+
+@pytest.mark.parametrize("source", ["from_root", "from_numexpr"])
+@pytest.mark.parametrize("backend", ["to_numexpr", "to_python"])
+def test_inlined_negative_constant_keeps_its_sign_inside_an_exponent(source, backend):
+    rendered = getattr(getattr(formulate, source)("eminus ** 2"), backend)()
+    assert eval(rendered) == pytest.approx(NUMEXPR_CONSTANTS["eminus"] ** 2)
 
 
 # --- Function names are case insensitive ---

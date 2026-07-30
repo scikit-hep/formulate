@@ -274,6 +274,11 @@ class Symbol(AST):
                 msg = f'Constant "{self.name}" is not supported in {backend.name}.'
                 raise ValueError(msg)
             text = str(const)
+            if isinstance(const, (bool, int, float)) and const < 0:
+                # A bare negative number is not an atom: ** binds tighter than
+                # unary minus, so the sign would escape the exponent and
+                # ``eminus ** 2`` would come out negative.
+                text = f"({text})"
         return lambda: text
 
 
