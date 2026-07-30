@@ -18,6 +18,7 @@ Formulate is maintained by:
 * **Chris Burr** — original author
 * **Jonas Eschle** — core developer
 * **Aryan Roy** — core developer
+* **Andres Rios-Tascon** — core developer
 * **The Scikit-HEP admins**, who maintain the package as part of the project
 
 Everyone who has contributed is listed on the `contributors page
