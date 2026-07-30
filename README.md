@@ -149,12 +149,10 @@ Run `formulate --help` for the full list of options.
 - [API reference](https://formulate.readthedocs.io/en/latest/api/api.html)
 - [Contributing](https://formulate.readthedocs.io/en/latest/contributing/contributing.html)
 
-## Caveats
+## Limitations
 
-`%` is the one operator whose meaning changes when converted: ROOT truncates
-its operands to integers, numexpr does floating-point modulo, and the two only
-agree for non-negative whole numbers. Everything else that has no equivalent in
-the target language raises `ValueError` rather than converting to something
-subtly different. See [Common
-Issues](https://formulate.readthedocs.io/en/latest/guide/issues.html) for the
-details.
+Anything with no faithful equivalent in the target language raises `ValueError`
+rather than converting to something subtly different. The one exception is `%`,
+which converts silently even though ROOT and numexpr do not compute the same
+thing. See [Common
+Issues](https://formulate.readthedocs.io/en/latest/guide/issues.html).
