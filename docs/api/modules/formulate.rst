@@ -7,4 +7,5 @@ fails. Everything you can do with a parsed expression is documented under
 
 .. automodule:: formulate
    :members:
+   :member-order: bysource
    :show-inheritance:
