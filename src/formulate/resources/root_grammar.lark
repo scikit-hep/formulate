@@ -3,10 +3,17 @@
 # The bitwise operators &, |, ~ are not supported, and the bitwise operator ^ is interpreted as exponentiation.
 # Shift operators are also not supported.
 
-start: expression
+start: outputs
+
+# ':' separates the several expressions of a TTree::Draw, so it is only
+# meaningful at the very top of one. It is not an operator: making it one would
+# let it appear inside parentheses and function arguments, where ROOT does not
+# accept it and where serialization -- which never parenthesizes ':' -- would
+# reassociate it, so `(a:b)+c` came back as `a:(b+c)`.
+outputs: expression
+       | outputs ":" expression -> multi_out
 
 expression: disjunction
-          | expression ":" disjunction -> multi_out
 
 disjunction: conjunction
            | disjunction "||" conjunction -> or

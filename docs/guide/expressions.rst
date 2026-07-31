@@ -159,6 +159,13 @@ comma-separated list that Python reads as a tuple:
 NumExpr evaluates a single expression and has no equivalent, so converting one
 of these raises.
 
+``:`` separates whole expressions rather than combining two values, so it is
+only accepted between them -- ``a:b`` and ``a+1 : b*2`` are fine, but
+``(a:b)+c`` and ``sqrt(a:b)`` are rejected, as they are by ROOT. This is also
+what lets it be the one operator that is never parenthesized: were it allowed
+to nest, ``(a:b)+c`` would have to serialize as ``a : b + c`` and would read
+back as ``a:(b+c)``.
+
 Indexing
 ----------------
 

@@ -177,3 +177,30 @@ def test_multi_out_is_not_parenthesized():
 
 def test_multi_out_becomes_a_comma_in_python():
     assert formulate.from_root("a:b").to_python() == "a, b"
+
+
+@pytest.mark.parametrize(
+    "expr",
+    [
+        "(a:b)+c",
+        "(a:b)",
+        "-(a:b)",
+        "sqrt(a:b)",
+        "TMath::Max(a:b, c)",
+        "arr[a:b]",
+    ],
+)
+def test_multi_out_is_rejected_below_the_top_level(expr):
+    """Because ':' is never parenthesized, a nested one could not be written
+    back out unambiguously: `(a:b)+c` used to serialize as `a : b + c` and
+    re-parse as `a:(b+c)`. ROOT does not accept these either -- ':' is how
+    TTree::Draw separates whole expressions, not an operator.
+    """
+    with pytest.raises(formulate.ParseError):
+        formulate.from_root(expr)
+
+
+def test_multi_out_survives_a_round_trip_at_the_top_level():
+    for expr in ("a:b", "a:b:c", "a+1:b*2"):
+        serialized = formulate.from_root(expr).to_root()
+        assert formulate.from_root(serialized).to_root() == serialized

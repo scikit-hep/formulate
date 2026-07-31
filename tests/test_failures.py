@@ -123,6 +123,7 @@ def test_parse_error_says_so_when_it_has_no_suggestions():
         ("a|b", "Use '||' instead of '|'."),
         ("a||b|c", "Use '||' instead of '|'."),
         ("~a", "Use '!' instead of '~'."),
+        ("(a:b)+c", "':' separates the expressions of a TTree::Draw"),
     ],
 )
 def test_root_suggestions(expr, suggestion):
@@ -146,6 +147,14 @@ def test_numexpr_suggestions(expr, suggestion):
     with pytest.raises(ParseError) as excinfo:
         formulate.from_numexpr(expr)
     assert suggestion in str(excinfo.value)
+
+
+def test_namespace_colons_do_not_trigger_the_multi_out_suggestion():
+    """'TMath::' is two colons, not the ':' separator, so a failure that merely
+    mentions a namespace must not be blamed on multi-output syntax."""
+    with pytest.raises(ParseError) as excinfo:
+        formulate.from_root("TMath::Sqrt(x")
+    assert "TTree::Draw" not in str(excinfo.value)
 
 
 def test_not_equal_does_not_trigger_the_bang_suggestion():
