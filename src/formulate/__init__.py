@@ -20,6 +20,7 @@ The parsed expression also reports what it refers to, through
 
 import functools
 import importlib.resources
+from typing import Literal
 
 import lark
 
@@ -33,7 +34,7 @@ __all__ = ["from_numexpr", "from_root", "ParseError", "__version__"]  # noqa: RU
 
 
 @functools.cache
-def _get_parser(parser_type: str) -> lark.Lark:
+def _get_parser(parser_type: Literal["root", "numexpr"]) -> lark.Lark:
     grammar = (
         importlib.resources.files(__package__)
         / "resources"

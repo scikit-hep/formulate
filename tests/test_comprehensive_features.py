@@ -238,7 +238,7 @@ def test_function_translations_go_both_ways(numexpr_expr, root_expr):
         ("avogadro", 6.02214076e23, "TMath::Na()"),
         ("k_boltzmann", 1.380649e-23, "TMath::K()"),
         ("c_light", 299792458.0, "TMath::C()"),
-        ("eminus", -1.602176634e-19, "-TMath::Qe()"),
+        ("eminus", -1.602176634e-19, "(-TMath::Qe())"),
         ("eplus", 1.602176634e-19, "TMath::Qe()"),
         ("h_planck", 6.62607015e-34, "TMath::H()"),
         ("hbar", 6.62607015e-34, "TMath::Hbar()"),
@@ -318,5 +318,5 @@ def test_variables_preserve_first_appearance_order():
 def test_zero_argument_call_has_no_symbols():
     parsed = formulate.from_root("Length$")
     assert isinstance(parsed, Call)
-    assert parsed.arguments == []
+    assert parsed.arguments == ()
     assert parsed.variables == OrderedSet()

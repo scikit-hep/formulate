@@ -61,7 +61,7 @@ def _get_function_name(node: lark.Tree) -> str:
             raise ValueError(msg)
         # Build a namespace-qualified identifier for functions that have both
         # a namespaced scalar form (TMath::Min) and a bare array form (Min$).
-        func_lower = pieces[1].lower().rstrip("$")
+        func_lower = pieces[1].lower().removesuffix("$")
         qualified = f"{namespace}_{func_lower}"
         if qualified in FUNCTIONS:
             return qualified
@@ -71,10 +71,7 @@ def _get_function_name(node: lark.Tree) -> str:
         msg = f'Unknown function or constant "{full_name}"'
         raise ValueError(msg)
     # Now we normalize the name and make sure it is supported
-    name = name.lower()
-    # strip $ from ROOT keywords
-    if name.endswith("$"):
-        name = name[:-1]
+    name = name.lower().removesuffix("$")  # strip $ from ROOT keywords
     name = FUNCTION_ALIASES.get(name, name)
     name = CONSTANTS_FUNCTION_ALIASES.get(name, name)
     name = CONSTANTS_ALIASES.get(name, name)
@@ -106,7 +103,7 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
 
         case lark.Tree("matr", (array, *indices)):
             children = [array, *(elem.children[0] for elem in indices)]
-            return children, lambda mat, *ind: AST.Matrix(mat, list(ind))
+            return children, lambda mat, *ind: AST.Matrix(mat, ind)
 
         case lark.Tree("func", (func_name, trailer)):
             func_name = _get_function_name(func_name)
@@ -123,7 +120,7 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
 
             arg_list = trailer.children[0]
             arguments = () if arg_list is None else tuple(arg_list.children)
-            return arguments, lambda *args: AST.Call(func_name, list(args))
+            return arguments, lambda *args: AST.Call(func_name, args)
 
         case lark.Tree("symbol", children):
             var_name = _get_var_name(children[0])
@@ -131,9 +128,9 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
                 var_name = var_name.lower()  # This makes it not a keyword
             # Bare ROOT $ functions (e.g. Length$, Sum$) used without parens
             if var_name.endswith("$"):
-                func_name = var_name[:-1].lower()
+                func_name = var_name.removesuffix("$").lower()
                 if func_name in FUNCTIONS:
-                    return (), _constant(AST.Call(func_name, []))
+                    return (), _constant(AST.Call(func_name, ()))
             if any(
                 not part.isidentifier() or iskeyword(part)
                 for part in var_name.split(".")

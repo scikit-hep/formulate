@@ -90,9 +90,9 @@ class AST(metaclass=ABCMeta):
     """Base class of every expression node.
 
     Instances are produced by :func:`formulate.from_root` and
-    :func:`formulate.from_numexpr`, not constructed directly, and are immutable:
-    converting an expression never modifies it, so one parsed expression can be
-    rendered to as many backends as needed.
+    :func:`formulate.from_numexpr`, not constructed directly, and are immutable
+    and hashable: converting an expression never modifies it, so one parsed
+    expression can be rendered to as many backends as needed.
 
     ``str(node)`` gives a language-independent view of the tree in canonical
     names (``add(x, pow(y, 2))``), which is useful when debugging a conversion;
@@ -274,6 +274,11 @@ class Symbol(AST):
                 msg = f'Constant "{self.name}" is not supported in {backend.name}.'
                 raise ValueError(msg)
             text = str(const)
+            if isinstance(const, (bool, int, float)) and const < 0:
+                # A bare negative number is not an atom: ** binds tighter than
+                # unary minus, so the sign would escape the exponent and
+                # ``eminus ** 2`` would come out negative.
+                text = f"({text})"
         return lambda: text
 
 
@@ -330,13 +335,12 @@ class BinaryOperator(AST):
         if symbol is None:
             msg = f'Operator "{self.operator}" is not supported in {backend.name}.'
             raise ValueError(msg)
-        parenthesize = symbol not in backend.unparenthesized_ops
-
-        def build(left: str, right: str) -> str:
-            out = f"{left} {symbol} {right}"
-            return f"({out})" if parenthesize else out
-
-        return build
+        # A comma is punctuation rather than an operator: it hugs the operand on
+        # its left, so it renders as ``x, y`` and not as ``x , y``.
+        separator = f"{symbol} " if symbol == "," else f" {symbol} "
+        if symbol in backend.unparenthesized_ops:
+            return lambda left, right: f"{left}{separator}{right}"
+        return lambda left, right: f"({left}{separator}{right})"
 
 
 @dataclass(frozen=True, slots=True)
@@ -349,14 +353,14 @@ class Matrix(AST):
     """
 
     var: AST
-    indices: list[AST]
+    indices: tuple[AST, ...]
 
     def _children(self) -> Sequence[AST]:
         return (self.var, *self.indices)
 
     def _format(self, *parts: str) -> str:
         var_str, *indices = parts
-        return "{}[{}]".format(var_str, ", ".join(indices))
+        return f"{var_str}[{', '.join(indices)}]"
 
     def _serializer(self, backend: _Backend) -> Callable[..., str]:
         if backend.index_format is None:
@@ -382,7 +386,7 @@ class Call(AST):
     """
 
     function: str
-    arguments: list[AST]
+    arguments: tuple[AST, ...]
 
     def _children(self) -> Sequence[AST]:
         return self.arguments

@@ -94,6 +94,24 @@ def test_root_and_numexpr_constants_hold_the_same_value(canonical, root_repr):
 
 
 @pytest.mark.parametrize(
+    "canonical,root_repr",
+    sorted(item for item in ROOT_CONSTANTS.items() if item[1].startswith("(")),
+)
+def test_compound_root_constant_spelling_is_atomic_under_pow(canonical, root_repr):
+    """A spelling that is an expression rather than a name must stay wrapped.
+
+    ``**`` binds tighter than unary minus, so an unparenthesized
+    ``-TMath::Qe()`` under an exponent would be read by ROOT as
+    ``-(TMath::Qe() ** 2)``.
+    """
+    assert_same_value(
+        root_eval(f"({root_repr}) ** 2"),
+        root_eval(formulate.from_root(f"{canonical} ** 2").to_root()),
+        f"ROOT pow of {canonical}",
+    )
+
+
+@pytest.mark.parametrize(
     "canonical", sorted(set(ROOT_CONSTANTS) - set(NUMEXPR_CONSTANTS))
 )
 def test_constants_root_has_but_numexpr_lacks(canonical):

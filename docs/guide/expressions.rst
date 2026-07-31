@@ -456,6 +456,11 @@ NumExpr has no symbolic constants, so converting to it — and to Python, for th
 numeric ones — substitutes the value. This is a one-way street: see
 :ref:`issues-constants-round-trip`.
 
+A few constants have no single-name spelling in a backend — ``hbarc`` is a
+product, ``eminus`` and ``neginf`` are negations — and those are emitted
+parenthesized, exactly as shown below, so that they keep binding as one atom
+under ``**``.
+
 Mathematical constants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -563,8 +568,8 @@ Values come from :mod:`hepunits`, in SI units, matching what ``TMath`` returns.
      - C
    * - ``eminus``
      - ``e_minus``
-     - ``-TMath::Qe()``
-     - ``-1.602176634e-19``
+     - ``(-TMath::Qe())``
+     - ``(-1.602176634e-19)``
      - C
 
 .. note::
@@ -604,7 +609,7 @@ Booleans and special values
      - ``float('inf')``
    * - ``neginf``
      - ``negative_infinity``
-     - ``-TMath::Infinity()``
+     - ``(-TMath::Infinity())``
      - —
      - ``float('-inf')``
    * - ``nan``

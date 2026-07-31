@@ -73,7 +73,7 @@ def test_bare_length_dollar():
     expr = formulate.from_root("Length$")
     assert isinstance(expr, Call)
     assert expr.function == "length"
-    assert expr.arguments == []
+    assert expr.arguments == ()
 
 
 def test_bare_sum_dollar():
@@ -131,4 +131,4 @@ def test_multi_out_is_not_parenthesized():
 
 
 def test_multi_out_becomes_a_comma_in_python():
-    assert formulate.from_root("a:b").to_python() == "a , b"
+    assert formulate.from_root("a:b").to_python() == "a, b"
