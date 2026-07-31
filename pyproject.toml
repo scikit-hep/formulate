@@ -168,6 +168,24 @@ py-version = "3.10"
 ignore-paths = ["src/formulate/_version.py"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
+# pylint's default, plus `AST`: `formulate.AST` is public API, so the module
+# cannot be renamed to snake_case without breaking imports.
+basic.module-rgx = "(([a-z_][a-z0-9_]*)|(AST))$"
+# The node protocol -- see AST.py. These are private to the package rather than
+# to the instance: the base class and `fold` deliberately call them on nodes
+# other than self, which is what makes every traversal live in one place. The
+# remainder are pylint's own defaults, kept.
+classes.exclude-protected = [
+    "_children",
+    "_key",
+    "_format",
+    "_serializer",
+    "_asdict",
+    "_fields",
+    "_replace",
+    "_source",
+    "_make",
+]
 messages_control.disable = [
     "design",
     "fixme",
