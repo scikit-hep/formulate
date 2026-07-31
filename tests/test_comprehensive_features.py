@@ -240,18 +240,23 @@ def test_function_translations_go_both_ways(numexpr_expr, root_expr):
         ("c_light", 299792458.0, "TMath::C()"),
         ("eminus", -1.602176634e-19, "(-TMath::Qe())"),
         ("eplus", 1.602176634e-19, "TMath::Qe()"),
+        # h/2pi and hbar*c, in the same SI (joule-based) units as the rest of
+        # the table -- not the natural units hepunits states them in.
         ("h_planck", 6.62607015e-34, "TMath::H()"),
-        ("hbar", 6.62607015e-34, "TMath::Hbar()"),
-        ("hbarc", 1.97326968e-16, "(TMath::Hbar() * TMath::C())"),
+        ("hbar", 1.054571817e-34, "TMath::Hbar()"),
+        ("hbarc", 3.16152677e-26, "(TMath::Hbar() * TMath::C())"),
     ],
 )
 def test_constant_translations(canonical, value, root_expr):
     assert formulate.from_numexpr(canonical).to_root() == root_expr
-    # Both spellings must inline to the same number in NumExpr
+    # Both spellings must inline to the same number in NumExpr.  The comparison
+    # is relative with no absolute floor: np.isclose's default atol of 1e-8
+    # exceeds several of these constants outright, so it would accept any value
+    # at all for them -- including zero.
     from_canonical = eval(formulate.from_numexpr(canonical).to_numexpr())
     from_root = eval(formulate.from_root(root_expr).to_numexpr())
-    assert np.isclose(from_canonical, value)
-    assert np.isclose(from_root, value)
+    assert np.isclose(from_canonical, value, rtol=1e-8, atol=0.0)
+    assert np.isclose(from_root, value, rtol=1e-8, atol=0.0)
 
 
 # --- variables / named_constants / unnamed_constants ---

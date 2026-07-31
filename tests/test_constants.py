@@ -60,11 +60,25 @@ def numexpr_eval_with(expression: str, **values: float) -> float:
     )
 
 
+# Compared *relatively*, with no absolute floor.  np.isclose's default atol of
+# 1e-8 is larger than several of the constants checked here -- hbar is 1e-34 --
+# so under it any two of them compare equal, and equal to zero, which makes
+# this file's central claim vacuous for exactly the values hardest to eyeball.
+#
+# 1e-8 is a bound on how far the two engines are actually observed to disagree,
+# not a round number: every comparison below is bit-exact except hbar and hbarc
+# at 6e-10, where ROOT hardcodes CODATA's rounded 1.054571817e-34 and hepunits
+# divides the exact h by 2*pi.  Tightening past that is what fails.
+RELATIVE_TOLERANCE = 1e-8
+
+
 def assert_same_value(left: float, right: float, context: str) -> None:
     if np.isnan(left):
         assert np.isnan(right), f"{context}: {left} != {right}"
     else:
-        assert np.isclose(left, right), f"{context}: {left} != {right}"
+        assert np.isclose(left, right, rtol=RELATIVE_TOLERANCE, atol=0.0), (
+            f"{context}: {left} != {right}"
+        )
 
 
 # --- Constants ---
