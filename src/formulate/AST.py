@@ -126,6 +126,11 @@ class AST(metaclass=ABCMeta):
     use the ``to_*`` methods to get something an engine will accept.
     """
 
+    # The node types are all slotted dataclasses, but a slotted class inheriting
+    # from an unslotted one still gets a __dict__, which would undo that for
+    # every node in the tree.
+    __slots__ = ()
+
     @abstractmethod
     def _children(self) -> Sequence["AST"]: ...  # pragma: no cover
 
