@@ -144,6 +144,31 @@ def test_python_only_literal_forms_are_rejected(expr):
         formulate.from_numexpr(expr)
 
 
+@pytest.mark.parametrize("parse", [formulate.from_root, formulate.from_numexpr])
+def test_a_literal_too_large_for_a_double_becomes_the_inf_constant(parse):
+    """None of the three languages can write infinity as a literal, so an
+    overflowing one is handed to the constant machinery instead of being
+    emitted as a bare ``inf`` that no engine would accept back."""
+    parsed = parse("1e999")
+    assert parsed == Symbol("inf")
+    assert parsed.named_constants == OrderedSet(["inf"])
+    assert parsed.unnamed_constants == OrderedSet()
+
+    assert parsed.to_root() == "TMath::Infinity()"
+    assert parsed.to_python() == "float('inf')"
+    with pytest.raises(ValueError, match="not supported in NumExpr"):
+        parsed.to_numexpr()
+
+
+@pytest.mark.parametrize("parse", [formulate.from_root, formulate.from_numexpr])
+def test_a_literal_a_double_can_still_hold_stays_a_literal(parse):
+    """The boundary the test above depends on: 1e300 is finite, so it is
+    unaffected and still round-trips through NumExpr."""
+    parsed = parse("1e300")
+    assert parsed == Literal(1e300)
+    assert parsed.to_numexpr() == "1e+300"
+
+
 # --- String handling ---
 
 

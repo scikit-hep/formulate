@@ -88,6 +88,13 @@ Two that are easy to trip over:
   convert to numexpr's ``min`` and ``max``.
 * numexpr's ``contains()`` is a string operation with no ROOT or NumPy
   counterpart.
+* A numeric literal too large for a double, such as ``1e999``, overflows to
+  infinity. None of the three languages can write infinity as a *literal*, so
+  it is read as the ``inf`` constant above and follows exactly the same rules:
+  ``TMath::Infinity()`` for ROOT, ``float('inf')`` for Python, and the
+  ``ValueError`` shown above for numexpr. It is reported under
+  :attr:`~formulate.AST.AST.named_constants` rather than
+  :attr:`~formulate.AST.AST.unnamed_constants` for the same reason.
 
 ``^`` is exponentiation in ROOT and XOR in numexpr
 ---------------------------------------------------------------------------
