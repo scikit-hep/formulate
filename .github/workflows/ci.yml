@@ -67,9 +67,16 @@ jobs:
         run: |
           pytest -vv --cov=formulate --cov-branch --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
-      # Skipped when CD calls this workflow: `github.event_name` is then the
-      # caller's `release`. That run is a gate on publishing, it reports a
-      # commit codecov already has, and it is passed no token to upload with.
+      # Skipped when CD calls this workflow. That run is a gate on publishing:
+      # it reports a commit codecov already has, and is passed no token to
+      # upload with.
+      #
+      # The condition tests the *caller's* event, which is what `github` holds
+      # in a called workflow -- `github.event_name` is never `workflow_call`,
+      # however much it looks as though it should be. Rewriting this as
+      # `== 'workflow_call'` is a standing temptation and silently breaks it,
+      # since that matches nothing and the steps then run everywhere. See
+      # actions/runner#3146.
       - name: Upload coverage to Codecov
         if: runner.os == 'Linux' && matrix.python-version == '3.10' && github.event_name != 'release'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
