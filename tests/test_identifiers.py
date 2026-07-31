@@ -161,6 +161,27 @@ def test_contains_is_not_offered_by_the_python_backend():
         formulate.from_numexpr("contains(s, t)").to_python()
 
 
+def test_complex_is_not_offered_by_the_python_backend():
+    """np.complex128 is a scalar type constructor, not the element-wise
+    counterpart of NumExpr's complex(): it raises TypeError on array input, so
+    emitting it would produce code that only works for the 0-d case."""
+    assert "complex" not in PYTHON_FUNCTIONS
+    with pytest.raises(ValueError, match="not supported in Python"):
+        formulate.from_numexpr("complex(a, b)").to_python()
+
+    # The premise, so this test fails rather than goes stale if NumPy ever
+    # makes np.complex128 element-wise.
+    with pytest.raises(TypeError):
+        np.complex128(np.array([1.0, 2.0]), np.array([3.0, 4.0]))
+
+
+def test_complex_still_converts_between_numexpr_and_itself():
+    """Only the Python backend loses it; NumExpr keeps its own spelling."""
+    assert formulate.from_numexpr("complex(a, b)").to_numexpr() == "complex(a, b)"
+    with pytest.raises(ValueError, match="not supported in ROOT"):
+        formulate.from_numexpr("complex(a, b)").to_root()
+
+
 @pytest.mark.parametrize(
     "rendering",
     [pytest.param(value, id=name) for name, value in sorted(PYTHON_CONSTANTS.items())],

@@ -88,6 +88,10 @@ Two that are easy to trip over:
   convert to numexpr's ``min`` and ``max``.
 * numexpr's ``contains()`` is a string operation with no ROOT or NumPy
   counterpart.
+* numexpr's ``complex(a, b)`` builds a complex array element-wise. NumPy's
+  ``np.complex128`` is a scalar type constructor, not that function, so it is
+  not used as a translation: ``to_python()`` raises rather than emit a call
+  that raises ``TypeError`` the moment its arguments are arrays.
 * A numeric literal too large for a double, such as ``1e999``, overflows to
   infinity. None of the three languages can write infinity as a *literal*, so
   it is read as the ``inf`` constant above and follows exactly the same rules:

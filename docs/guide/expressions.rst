@@ -404,7 +404,7 @@ NumExpr-specific functions
    * - ``complex``
      - —
      - ``complex``
-     - ``np.complex128``
+     - —
    * - ``contains``
      - —
      - ``contains``
@@ -412,6 +412,13 @@ NumExpr-specific functions
 
 ``contains`` is a substring test, and NumPy has no equivalent that can be
 written as a single function name, so it converts to neither of the other two.
+
+``complex`` is the same story. ``np.complex128`` looks like the counterpart,
+but it is a scalar *type* constructor rather than an element-wise function: it
+accepts 0-d input only and raises ``TypeError`` on arrays, which is what these
+expressions are almost always evaluated against. The element-wise form is
+``a + 1j*b``, an expression rather than a name, so ``to_python()`` refuses it
+instead of emitting something that works only for single values.
 
 ROOT-specific functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
