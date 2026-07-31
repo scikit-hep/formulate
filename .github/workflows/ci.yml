@@ -2,11 +2,10 @@ name: unittests
 
 on:
   # Callable so that CD can require this whole matrix before publishing;
-  # GitHub has no way to depend on a job in another workflow.
+  # GitHub has no way to depend on a job in another workflow. That call wants
+  # the tests as a gate and nothing else, so it uploads no coverage and needs
+  # no secrets.
   workflow_call:
-    secrets:
-      CODECOV_TOKEN:
-        required: false
   workflow_dispatch:
   push:
     tags:
@@ -68,14 +67,17 @@ jobs:
         run: |
           pytest -vv --cov=formulate --cov-branch --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
+      # Skipped when CD calls this workflow: `github.event_name` is then the
+      # caller's `release`. That run is a gate on publishing, it reports a
+      # commit codecov already has, and it is passed no token to upload with.
       - name: Upload coverage to Codecov
-        if: runner.os == 'Linux' && matrix.python-version == '3.10'
+        if: runner.os == 'Linux' && matrix.python-version == '3.10' && github.event_name != 'release'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() && runner.os == 'Linux' && matrix.python-version == '3.10' }}
+        if: ${{ !cancelled() && runner.os == 'Linux' && matrix.python-version == '3.10' && github.event_name != 'release' }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
