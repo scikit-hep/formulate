@@ -74,6 +74,32 @@ def test_nodes_compare_by_value(left, right, equal):
     assert (left == right) is equal
 
 
+def test_identical_objects_short_circuit():
+    """Both the whole-tree fast path and the per-child one inside the walk."""
+    node = Call("sqrt", (Symbol("a"),))
+    assert node == node
+    shared = Symbol("a")
+    assert BinaryOperator("add", shared, Literal(1)) == BinaryOperator(
+        "add", shared, Literal(1)
+    )
+
+
+def test_comparison_with_a_non_node_is_not_implemented():
+    """Returning NotImplemented rather than False is what lets Python fall back
+    to the other operand's __eq__, and keeps `!=` consistent."""
+    assert Symbol("a").__eq__("a") is NotImplemented
+    assert Symbol("a") != "a"
+
+
+def test_nodes_of_the_same_type_but_different_arity_differ():
+    """Arity is not part of `_key`, so it is the child count that separates
+    these -- a shape the grammar cannot produce for Call, but Matrix can."""
+    assert Call("sqrt", (Symbol("a"),)) != Call("sqrt", (Symbol("a"), Symbol("b")))
+    assert Matrix(Symbol("a"), (Literal(0),)) != Matrix(
+        Symbol("a"), (Literal(0), Literal(1))
+    )
+
+
 def test_nodes_are_immutable():
     with pytest.raises(AttributeError):
         Symbol("a").name = "b"

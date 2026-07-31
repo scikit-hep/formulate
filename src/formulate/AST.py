@@ -103,12 +103,55 @@ class AST(metaclass=ABCMeta):
     def _children(self) -> Sequence["AST"]: ...  # pragma: no cover
 
     @abstractmethod
+    def _key(self) -> tuple[Any, ...]: ...  # pragma: no cover
+
+    @abstractmethod
     def _format(self, *parts: str) -> str: ...  # pragma: no cover
 
     @abstractmethod
     def _serializer(
         self, backend: _Backend
     ) -> Callable[..., str]: ...  # pragma: no cover
+
+    def __eq__(self, other: object) -> bool:
+        """Compare two trees structurally, without recursing.
+
+        The dataclass-generated ``__eq__`` compares field tuples, and a field
+        holding a child node makes that a recursive descent -- which blows the
+        interpreter stack on trees the rest of this class handles fine.
+        """
+        if self is other:
+            return True
+        if not isinstance(other, AST):
+            return NotImplemented
+        stack: list[tuple[AST, AST]] = [(self, other)]
+        while stack:
+            left, right = stack.pop()
+            if left is right:
+                continue
+            if type(left) is not type(right) or left._key() != right._key():
+                return False
+            left_children, right_children = left._children(), right._children()
+            if len(left_children) != len(right_children):
+                return False
+            # Lengths were just checked, so strict= can never trip here; it is
+            # there to keep that a stated invariant rather than a silent one.
+            stack.extend(zip(left_children, right_children, strict=True))
+        return True
+
+    def __hash__(self) -> int:
+        """Hash the tree bottom-up, for the same reason ``__eq__`` is iterative.
+
+        Equal trees have equal types, keys and child structure, so they hash
+        alike.
+        """
+        return fold(
+            self,
+            lambda node: (
+                node._children(),
+                lambda *children: hash((type(node), node._key(), children)),
+            ),
+        )
 
     def _walk(self) -> Iterator["AST"]:
         """Yield every node in the tree, parents first and left to right.
@@ -232,7 +275,7 @@ class AST(metaclass=ABCMeta):
         )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Literal(AST):
     """A number written out in the expression text, such as ``2`` or ``1.5``."""
 
@@ -240,6 +283,9 @@ class Literal(AST):
 
     def _children(self) -> Sequence[AST]:
         return ()
+
+    def _key(self) -> tuple[Any, ...]:
+        return (self.value,)
 
     def _format(self, *_parts: str) -> str:
         return str(self.value)
@@ -249,7 +295,7 @@ class Literal(AST):
         return lambda: text
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Symbol(AST):
     """A value referred to by name: a variable, or a named constant.
 
@@ -262,6 +308,9 @@ class Symbol(AST):
 
     def _children(self) -> Sequence[AST]:
         return ()
+
+    def _key(self) -> tuple[Any, ...]:
+        return (self.name,)
 
     def _format(self, *_parts: str) -> str:
         return self.name
@@ -282,7 +331,7 @@ class Symbol(AST):
         return lambda: text
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class UnaryOperator(AST):
     """An operation with a single operand.
 
@@ -296,6 +345,9 @@ class UnaryOperator(AST):
 
     def _children(self) -> Sequence[AST]:
         return (self.operand,)
+
+    def _key(self) -> tuple[Any, ...]:
+        return (self.operator,)
 
     def _format(self, *parts: str) -> str:
         return f"{self.operator}({parts[0]})"
@@ -311,7 +363,7 @@ class UnaryOperator(AST):
         return lambda operand: f"({symbol}{operand})"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class BinaryOperator(AST):
     """An operation with two operands.
 
@@ -326,6 +378,9 @@ class BinaryOperator(AST):
 
     def _children(self) -> Sequence[AST]:
         return (self.left, self.right)
+
+    def _key(self) -> tuple[Any, ...]:
+        return (self.operator,)
 
     def _format(self, *parts: str) -> str:
         return f"{self.operator}({parts[0]}, {parts[1]})"
@@ -343,7 +398,7 @@ class BinaryOperator(AST):
         return lambda left, right: f"({left}{separator}{right})"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Matrix(AST):
     """An indexed access, ``var[i]`` or ``var[i][j]``.
 
@@ -357,6 +412,9 @@ class Matrix(AST):
 
     def _children(self) -> Sequence[AST]:
         return (self.var, *self.indices)
+
+    def _key(self) -> tuple[Any, ...]:
+        return ()
 
     def _format(self, *parts: str) -> str:
         var_str, *indices = parts
@@ -376,7 +434,7 @@ class Matrix(AST):
         return build
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Call(AST):
     """A function applied to zero or more arguments.
 
@@ -390,6 +448,9 @@ class Call(AST):
 
     def _children(self) -> Sequence[AST]:
         return self.arguments
+
+    def _key(self) -> tuple[Any, ...]:
+        return (self.function,)
 
     def _format(self, *parts: str) -> str:
         return f"{self.function}({', '.join(parts)})"
