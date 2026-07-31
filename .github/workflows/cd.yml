@@ -32,10 +32,67 @@ jobs:
 
       - uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df # v2.18.0
 
+  # The full test matrix, as a gate on publishing. It is skipped outside a
+  # release because the same workflow already runs on every push and pull
+  # request; running it here too would only duplicate it.
+  tests:
+    name: Tests
+    if: github.event_name == 'release' && github.event.action == 'published'
+    uses: ./.github/workflows/ci.yml
+    # Passed explicitly rather than inherited: this is the only secret the
+    # called workflow uses.
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # Tests run from a checkout exercise the source tree, so they cannot catch a
+  # packaging mistake -- a grammar left out of the wheel, say, since the .lark
+  # files are package data. Install what was actually built and test that.
+  smoke:
+    name: Test the built ${{ matrix.package }}
+    needs: [dist]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: wheel
+            pattern: "*.whl"
+          - package: sdist
+            pattern: "*.tar.gz"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: Packages
+          path: dist
+
+      - name: Install the built ${{ matrix.package }}
+        env:
+          PACKAGE_PATTERN: ${{ matrix.pattern }}
+        run: |
+          package=$(find dist -maxdepth 1 -name "${PACKAGE_PATTERN}")
+          test -f "${package}" || { echo "no unique ${PACKAGE_PATTERN} in dist/"; exit 1; }
+          python -m pip install "${package}[test]"
+
+      - name: Run the test suite against the installed package
+        # The package lives in src/ and the pytest config sets no pythonpath,
+        # so `import formulate` from the checkout root can only resolve to what
+        # was just installed. The path is printed to keep that checkable.
+        run: |
+          python -c "import formulate, pathlib; print(pathlib.Path(formulate.__file__).parent)"
+          python -m pytest tests -q
+
   deploy:
     name: Deploy to PyPI
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: [dist]
+    needs: [dist, tests, smoke]
     runs-on: ubuntu-latest
     environment:
       name: pypi

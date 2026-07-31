@@ -1,6 +1,12 @@
 name: unittests
 
 on:
+  # Callable so that CD can require this whole matrix before publishing;
+  # GitHub has no way to depend on a job in another workflow.
+  workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: false
   workflow_dispatch:
   push:
     tags:
