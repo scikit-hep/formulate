@@ -63,6 +63,13 @@ def debug_root(exp: str, error: lark.LarkError) -> ParseError:
         suggestions.append("- Use '||' instead of '|'.")
     if "~" in exp:
         suggestions.append("- Use '!' instead of '~'.")
+    # A lone ':', so that the '::' of TMath::Sqrt does not trigger this.
+    if re.search(r"(?<!:):(?!:)", exp):
+        suggestions.append(
+            "- ':' separates the expressions of a TTree::Draw and is only "
+            "allowed between whole expressions, not inside parentheses or "
+            "function arguments."
+        )
     return _build_parse_error(exp, error, suggestions)
 
 

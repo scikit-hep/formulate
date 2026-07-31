@@ -144,6 +144,33 @@ def test_python_only_literal_forms_are_rejected(expr):
         formulate.from_numexpr(expr)
 
 
+@pytest.mark.parametrize("parse", [formulate.from_root, formulate.from_numexpr])
+def test_a_literal_too_large_for_a_double_becomes_the_inf_constant(parse):
+    """None of the three languages can write infinity as a literal, so an
+    overflowing one is handed to the constant machinery instead of being
+    emitted as a bare ``inf`` that no engine would accept back."""
+    parsed = parse("1e999")
+    assert isinstance(parsed, Symbol)
+    assert parsed.name == "inf"
+    assert parsed.named_constants == OrderedSet(["inf"])
+    assert parsed.unnamed_constants == OrderedSet()
+
+    assert parsed.to_root() == "TMath::Infinity()"
+    assert parsed.to_python() == "float('inf')"
+    with pytest.raises(ValueError, match="not supported in NumExpr"):
+        parsed.to_numexpr()
+
+
+@pytest.mark.parametrize("parse", [formulate.from_root, formulate.from_numexpr])
+def test_a_literal_a_double_can_still_hold_stays_a_literal(parse):
+    """The boundary the test above depends on: 1e300 is finite, so it is
+    unaffected and still round-trips through NumExpr."""
+    parsed = parse("1e300")
+    assert isinstance(parsed, Literal)
+    assert parsed.value == 1e300
+    assert parsed.to_numexpr() == "1e+300"
+
+
 # --- String handling ---
 
 
@@ -185,7 +212,7 @@ def test_contains_is_a_numexpr_only_function():
     ],
 )
 def test_root_and_numexpr_parsers_build_the_same_tree(expr):
-    assert formulate.from_root(expr) == formulate.from_numexpr(expr)
+    assert str(formulate.from_root(expr)) == str(formulate.from_numexpr(expr))
 
 
 # --- Translation tables ---
@@ -240,18 +267,23 @@ def test_function_translations_go_both_ways(numexpr_expr, root_expr):
         ("c_light", 299792458.0, "TMath::C()"),
         ("eminus", -1.602176634e-19, "(-TMath::Qe())"),
         ("eplus", 1.602176634e-19, "TMath::Qe()"),
+        # h/2pi and hbar*c, in the same SI (joule-based) units as the rest of
+        # the table -- not the natural units hepunits states them in.
         ("h_planck", 6.62607015e-34, "TMath::H()"),
-        ("hbar", 6.62607015e-34, "TMath::Hbar()"),
-        ("hbarc", 1.97326968e-16, "(TMath::Hbar() * TMath::C())"),
+        ("hbar", 1.054571817e-34, "TMath::Hbar()"),
+        ("hbarc", 3.16152677e-26, "(TMath::Hbar() * TMath::C())"),
     ],
 )
 def test_constant_translations(canonical, value, root_expr):
     assert formulate.from_numexpr(canonical).to_root() == root_expr
-    # Both spellings must inline to the same number in NumExpr
+    # Both spellings must inline to the same number in NumExpr.  The comparison
+    # is relative with no absolute floor: np.isclose's default atol of 1e-8
+    # exceeds several of these constants outright, so it would accept any value
+    # at all for them -- including zero.
     from_canonical = eval(formulate.from_numexpr(canonical).to_numexpr())
     from_root = eval(formulate.from_root(root_expr).to_numexpr())
-    assert np.isclose(from_canonical, value)
-    assert np.isclose(from_root, value)
+    assert np.isclose(from_canonical, value, rtol=1e-8, atol=0.0)
+    assert np.isclose(from_root, value, rtol=1e-8, atol=0.0)
 
 
 # --- variables / named_constants / unnamed_constants ---

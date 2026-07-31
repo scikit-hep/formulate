@@ -159,6 +159,13 @@ comma-separated list that Python reads as a tuple:
 NumExpr evaluates a single expression and has no equivalent, so converting one
 of these raises.
 
+``:`` separates whole expressions rather than combining two values, so it is
+only accepted between them -- ``a:b`` and ``a+1 : b*2`` are fine, but
+``(a:b)+c`` and ``sqrt(a:b)`` are rejected, as they are by ROOT. This is also
+what lets it be the one operator that is never parenthesized: were it allowed
+to nest, ``(a:b)+c`` would have to serialize as ``a : b + c`` and would read
+back as ``a:(b+c)``.
+
 Indexing
 ----------------
 
@@ -397,7 +404,7 @@ NumExpr-specific functions
    * - ``complex``
      - —
      - ``complex``
-     - ``np.complex128``
+     - —
    * - ``contains``
      - —
      - ``contains``
@@ -405,6 +412,13 @@ NumExpr-specific functions
 
 ``contains`` is a substring test, and NumPy has no equivalent that can be
 written as a single function name, so it converts to neither of the other two.
+
+``complex`` is the same story. ``np.complex128`` looks like the counterpart,
+but it is a scalar *type* constructor rather than an element-wise function: it
+accepts 0-d input only and raises ``TypeError`` on arrays, which is what these
+expressions are almost always evaluated against. The element-wise form is
+``a + 1j*b``, an expression rather than a name, so ``to_python()`` refuses it
+instead of emitting something that works only for single values.
 
 ROOT-specific functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -634,7 +648,12 @@ you want when deciding which branches to read from a file:
    print(list(expr.named_constants))
    print(list(expr.unnamed_constants))
 
-Names come out in the order they first appear, and each is reported once.
+Names come out in the order they first appear, and each is reported once. They
+are reported as ROOT spells them, which for a dotted branch name is *not* how
+``to_numexpr()`` writes it — numexpr cannot take a dot, so those names are
+hex-encoded on the way out and it is the encoded name you must supply when you
+evaluate. See :ref:`issues-dotted-names`.
+
 ``str()`` on the expression shows the parsed structure in canonical names, which
 is the quickest way to check how something was grouped:
 

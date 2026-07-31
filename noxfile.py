@@ -96,9 +96,12 @@ def build(session: nox.Session) -> None:
     Build an SDist and wheel.
     """
 
-    build_p = DIR.joinpath("build")
-    if build_p.exists():
-        shutil.rmtree(build_p)
+    # `python -m build` writes into dist/ without clearing it first, so stale
+    # wheels and sdists from earlier versions would otherwise pile up there and
+    # be picked up by anything that globs dist/*.
+    dist_p = DIR.joinpath("dist")
+    if dist_p.exists():
+        shutil.rmtree(dist_p)
 
     session.install("build")
     session.run("python", "-m", "build")

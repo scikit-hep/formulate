@@ -66,6 +66,51 @@ def test_unsupported_function_error_uses_its_own_name():
     assert str(excinfo.value) == 'Function "where" is not supported in ROOT.'
 
 
+# --- branch.leaf is one name, not an attribute access ---
+
+
+def test_dotted_names_survive_the_backends_that_have_them():
+    expr = formulate.from_root("branch.leaf + 1")
+    assert expr.variables == {"branch.leaf"}
+    assert expr.to_root() == "(branch.leaf + 1)"
+    assert expr.to_python() == "(branch.leaf + 1)"
+
+
+@pytest.mark.parametrize(
+    "name,encoded",
+    [
+        ("branch.leaf", "branch_2e_leaf"),  # '.' is 0x2e
+        ("x.y.z", "x_2e_y_2e_z"),
+        # '_' is escaped as 0x5f inside a name that is being encoded, so this
+        # cannot collide with the encoding of `a.b.c`.
+        ("a.b_c", "a_2e_b_5f_c"),
+        # Names NumExpr can already spell are left exactly as written, which is
+        # why an underscore on its own is not encoded.
+        ("pt_corrected", "pt_corrected"),
+        ("pt", "pt"),
+    ],
+)
+def test_numexpr_names_are_hex_encoded_only_where_they_have_to_be(name, encoded):
+    """NumExpr rejects any expression containing a dot and has no quoting
+    syntax, so a name it cannot spell is encoded the way uproot encodes C++
+    classnames rather than emitted as-is or refused."""
+    assert formulate.from_root(name).to_numexpr() == encoded
+
+
+def test_only_the_offending_symbol_is_encoded():
+    assert (
+        formulate.from_root("branch.leaf + other").to_numexpr()
+        == "(branch_2e_leaf + other)"
+    )
+
+
+def test_encoding_is_not_undone_on_the_way_back():
+    """from_numexpr does not decode: a branch really named `branch_2e_leaf` is
+    indistinguishable from an encoded `branch.leaf`, and silently renaming the
+    former would be worse than not restoring the latter."""
+    assert formulate.from_numexpr("branch_2e_leaf").to_root() == "branch_2e_leaf"
+
+
 # --- Bare $ functions without parentheses ---
 
 
@@ -132,3 +177,30 @@ def test_multi_out_is_not_parenthesized():
 
 def test_multi_out_becomes_a_comma_in_python():
     assert formulate.from_root("a:b").to_python() == "a, b"
+
+
+@pytest.mark.parametrize(
+    "expr",
+    [
+        "(a:b)+c",
+        "(a:b)",
+        "-(a:b)",
+        "sqrt(a:b)",
+        "TMath::Max(a:b, c)",
+        "arr[a:b]",
+    ],
+)
+def test_multi_out_is_rejected_below_the_top_level(expr):
+    """Because ':' is never parenthesized, a nested one could not be written
+    back out unambiguously: `(a:b)+c` used to serialize as `a : b + c` and
+    re-parse as `a:(b+c)`. ROOT does not accept these either -- ':' is how
+    TTree::Draw separates whole expressions, not an operator.
+    """
+    with pytest.raises(formulate.ParseError):
+        formulate.from_root(expr)
+
+
+def test_multi_out_survives_a_round_trip_at_the_top_level():
+    for expr in ("a:b", "a:b:c", "a+1:b*2"):
+        serialized = formulate.from_root(expr).to_root()
+        assert formulate.from_root(serialized).to_root() == serialized

@@ -116,6 +116,7 @@ ROOT_ONLY_EXPRESSIONS = [
     "Length$(a)",
     "Length$()",
     "a:b",
+    "branch.leaf",
     "TMath::Pi()",
     "TMath::Infinity()",
     "TMath::QuietNaN()",

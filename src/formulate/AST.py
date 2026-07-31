@@ -16,6 +16,7 @@ how "this construct has no faithful equivalent here" is expressed, and raises
 ``ValueError`` rather than emitting something subtly different.
 """
 
+import re
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
@@ -55,6 +56,9 @@ class _Backend:
     index_format: str | None = (
         "python"  # None = forbidden, "root" = [x][y], "python" = [x,y]
     )
+    # Whether a name this backend cannot spell is hex-encoded rather than
+    # emitted as written. See `_encode_name`.
+    encode_invalid_names: bool = False
 
 
 _NUMEXPR = _Backend(
@@ -64,6 +68,7 @@ _NUMEXPR = _Backend(
     constants=NUMEXPR_CONSTANTS,
     pow_as_operator=True,
     index_format=None,
+    encode_invalid_names=True,
 )
 
 _ROOT = _Backend(
@@ -86,18 +91,48 @@ _PYTHON = _Backend(
 )
 
 
+# ROOT branch names are not always identifiers -- `branch.leaf` is one name with
+# a dot in it, not an attribute access -- but NumExpr rejects any expression
+# containing one ("forbidden control characters") and has no quoting syntax to
+# get around it. Uproot has the same problem with C++ classnames and solves it
+# by hex-encoding, so formulate spells names the same way uproot does: a run of
+# characters that cannot appear in an identifier becomes those bytes in hex,
+# wrapped in underscores, making `branch.leaf` into `branch_2e_leaf`.
+#
+# A dot is the only such character that can reach here: `toast` requires every
+# dot-separated part of a symbol to be a Python identifier, so anything else is
+# a parse error long before this. The pattern is still uproot's, so that names
+# encode identically in both packages, which also means underscores are part of
+# a run: `a.b_c` encodes to `a_2e_b_5f_c` rather than to an `a_2e_b_c` that a
+# branch really called `a_2e_b_c` would collide with.
+_ENCODE_RUN = re.compile(r"[^A-Za-z0-9]+")
+
+
+def _encode_name(name: str) -> str:
+    """Hex-encode the parts of `name` that cannot appear in an identifier."""
+    return _ENCODE_RUN.sub(lambda run: f"_{run.group().encode().hex()}_", name)
+
+
 class AST(metaclass=ABCMeta):
     """Base class of every expression node.
 
     Instances are produced by :func:`formulate.from_root` and
-    :func:`formulate.from_numexpr`, not constructed directly, and are immutable
-    and hashable: converting an expression never modifies it, so one parsed
+    :func:`formulate.from_numexpr`, not constructed directly, and are
+    immutable: converting an expression never modifies it, so one parsed
     expression can be rendered to as many backends as needed.
 
     ``str(node)`` gives a language-independent view of the tree in canonical
     names (``add(x, pow(y, 2))``), which is useful when debugging a conversion;
     use the ``to_*`` methods to get something an engine will accept.
+
+    Nodes are deliberately neither comparable nor hashable. ``==`` and
+    ``hash()`` both raise ``TypeError``; see :meth:`__eq__`.
     """
+
+    # The node types are all slotted dataclasses, but a slotted class inheriting
+    # from an unslotted one still gets a __dict__, which would undo that for
+    # every node in the tree.
+    __slots__ = ()
 
     @abstractmethod
     def _children(self) -> Sequence["AST"]: ...  # pragma: no cover
@@ -109,6 +144,38 @@ class AST(metaclass=ABCMeta):
     def _serializer(
         self, backend: _Backend
     ) -> Callable[..., str]: ...  # pragma: no cover
+
+    def __eq__(self, other: object) -> bool:
+        """Always raise: expression equality is not something this package answers.
+
+        Structural equality is easy to provide and wrong often enough to
+        mislead. It would report ``a + b`` and ``b + a`` as different
+        expressions, along with ``x * 1`` and ``x``, ``(a + b) + c`` and
+        ``a + (b + c)``, and any spelling of a constant that is not the one
+        that happened to be parsed. Deciding those properly is computer
+        algebra, which is a long way outside what a syntax translator can
+        promise.
+
+        Comparing the serializations is well defined and is what the tests in
+        this package do: ``str(node)`` for the canonical form, or one of the
+        ``to_*`` renderings for a particular language. Those are deterministic
+        and fully parenthesized, so equal strings mean identically shaped
+        trees -- the honest version of what a structural ``==`` would have
+        said.
+        """
+        msg = (
+            "AST nodes cannot be compared. Equality would have to choose "
+            "between a structural answer, which calls 'a + b' and 'b + a' "
+            "different, and a semantic one, which is out of scope for this "
+            "package. Compare str(node), or node.to_root() / .to_numexpr() / "
+            ".to_python(), all of which are canonical."
+        )
+        raise TypeError(msg)
+
+    # Unhashable for the same reason: a hash has to agree with an equality that
+    # does not exist. `None` rather than a raising method so that the object is
+    # honestly not Hashable, as `isinstance(node, Hashable)` reports.
+    __hash__ = None  # type: ignore[assignment]
 
     def _walk(self) -> Iterator["AST"]:
         """Yield every node in the tree, parents first and left to right.
@@ -232,7 +299,7 @@ class AST(metaclass=ABCMeta):
         )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Literal(AST):
     """A number written out in the expression text, such as ``2`` or ``1.5``."""
 
@@ -249,7 +316,7 @@ class Literal(AST):
         return lambda: text
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Symbol(AST):
     """A value referred to by name: a variable, or a named constant.
 
@@ -279,10 +346,12 @@ class Symbol(AST):
                 # unary minus, so the sign would escape the exponent and
                 # ``eminus ** 2`` would come out negative.
                 text = f"({text})"
+        elif backend.encode_invalid_names and "." in self.name:
+            text = _encode_name(self.name)
         return lambda: text
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class UnaryOperator(AST):
     """An operation with a single operand.
 
@@ -311,7 +380,7 @@ class UnaryOperator(AST):
         return lambda operand: f"({symbol}{operand})"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class BinaryOperator(AST):
     """An operation with two operands.
 
@@ -343,7 +412,7 @@ class BinaryOperator(AST):
         return lambda left, right: f"({left}{separator}{right})"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Matrix(AST):
     """An indexed access, ``var[i]`` or ``var[i][j]``.
 
@@ -376,7 +445,7 @@ class Matrix(AST):
         return build
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class Call(AST):
     """A function applied to zero or more arguments.
 

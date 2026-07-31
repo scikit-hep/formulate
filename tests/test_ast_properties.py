@@ -9,6 +9,8 @@ BinaryOperator with an operator no backend supports) and pin the behaviour of
 
 from __future__ import annotations
 
+from collections.abc import Hashable
+
 import pytest
 from ordered_set import OrderedSet
 
@@ -42,11 +44,11 @@ def test_str_representation(node, expected):
     assert str(node) == expected
 
 
-# --- Nodes are frozen value objects ---
+# --- Nodes are frozen, and neither comparable nor hashable ---
 
 
 @pytest.mark.parametrize(
-    "left,right,equal",
+    "left,right,same",
     [
         (Literal(1.0), Literal(1.0), True),
         (Literal(1.0), Literal(2.0), False),
@@ -68,10 +70,47 @@ def test_str_representation(node, expected):
         (Call("sqrt", (Symbol("a"),)), Call("sqrt", (Symbol("a"),)), True),
         (Call("sqrt", (Symbol("a"),)), Call("abs", (Symbol("a"),)), False),
         (Matrix(Symbol("a"), (Literal(0),)), Matrix(Symbol("a"), (Literal(0),)), True),
+        (
+            Matrix(Symbol("a"), (Literal(0),)),
+            Matrix(Symbol("a"), (Literal(0), Literal(1))),
+            False,
+        ),
     ],
 )
-def test_nodes_compare_by_value(left, right, equal):
-    assert (left == right) is equal
+def test_the_canonical_string_distinguishes_nodes(left, right, same):
+    """With `==` gone, the serialization is what tells two trees apart. It is
+    deterministic and fully parenthesized, so identically shaped trees give the
+    identical string and differently shaped ones do not -- which is the part of
+    equality this package can actually promise."""
+    assert (str(left) == str(right)) is same
+
+
+def test_nodes_cannot_be_compared():
+    """Equality would have to choose between a structural answer, which calls
+    `a + b` and `b + a` different expressions, and a semantic one, which is
+    computer algebra rather than translation. It raises instead of quietly
+    giving the misleading one."""
+    left = formulate.from_root("a+b")
+    right = formulate.from_root("a+b")
+    for operation in (
+        lambda: left == right,
+        lambda: left != right,
+        lambda: left == "a+b",  # including against a non-node
+        lambda: left in [right],  # and wherever a container reaches for ==
+    ):
+        with pytest.raises(TypeError, match="cannot be compared"):
+            operation()
+
+
+def test_nodes_cannot_be_hashed():
+    """`__hash__` is None rather than a method that raises, so a node is
+    honestly not Hashable rather than merely failing when hashed."""
+    parsed = formulate.from_root("a+b")
+    with pytest.raises(TypeError, match="unhashable type"):
+        hash(parsed)
+    with pytest.raises(TypeError, match="unhashable type"):
+        {parsed}  # noqa: B018
+    assert not isinstance(parsed, Hashable)
 
 
 def test_nodes_are_immutable():
@@ -79,12 +118,9 @@ def test_nodes_are_immutable():
         Symbol("a").name = "b"
 
 
-def test_every_node_of_a_parsed_tree_is_hashable():
-    # Children are held in tuples, not lists, so a node can be used as a dict
-    # key or set member -- Call and Matrix are the ones that hold several.
+def test_a_parsed_tree_can_hold_every_node_type():
     parsed = formulate.from_root("TMath::Max(a[0][1], -b) + !c > pi")
-    node_types = {type(node).__name__ for node in parsed._walk()}
-    assert node_types == {
+    assert {type(node).__name__ for node in parsed._walk()} == {
         "Literal",
         "Symbol",
         "UnaryOperator",
@@ -92,15 +128,11 @@ def test_every_node_of_a_parsed_tree_is_hashable():
         "Matrix",
         "Call",
     }
-    assert len({hash(node) for node in parsed._walk()}) > 1
-    assert hash(parsed) == hash(
-        formulate.from_root("TMath::Max(a[0][1], -b) + !c > pi")
-    )
 
 
-def test_equal_expressions_from_different_sources_compare_equal():
-    assert formulate.from_root("a+b") == formulate.from_numexpr("a+b")
-    assert formulate.from_root("a+b") != formulate.from_numexpr("b+a")
+def test_the_two_parsers_build_the_same_tree_for_shared_syntax():
+    assert str(formulate.from_root("a+b")) == str(formulate.from_numexpr("a+b"))
+    assert str(formulate.from_root("a+b")) != str(formulate.from_numexpr("b+a"))
 
 
 # --- Symbol classification ---

@@ -36,8 +36,10 @@ def fold(
     while stack:
         item = stack.pop()
         # An exact type check, not isinstance: it is what tells a pending
-        # builder apart from a node, and nodes are never plain tuples.
-        if type(item) is tuple:
+        # builder apart from a node, and nodes are never plain tuples. A node
+        # that subclassed tuple would satisfy isinstance and be mistaken for a
+        # builder, so the stricter check is the point here.
+        if type(item) is tuple:  # pylint: disable=unidiomatic-typecheck
             build, nargs = item
             if nargs:
                 parts = results[-nargs:]

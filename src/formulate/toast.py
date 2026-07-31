@@ -10,6 +10,7 @@ nothing raises here rather than later.
 """
 
 import functools
+import math
 from ast import literal_eval
 from collections.abc import Callable, Sequence
 from keyword import iskeyword
@@ -95,17 +96,19 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
     errors it raises — happens here, before they are visited.
     """
     match ptnode:
-        case lark.Tree(operator, (left, right)) if operator in BINARY_OPERATORS:
+        case lark.Tree(data=operator, children=(left, right)) if (
+            operator in BINARY_OPERATORS
+        ):
             return (left, right), functools.partial(AST.BinaryOperator, operator)
 
-        case lark.Tree(operator, operand) if operator in UNARY_OPERATORS:
+        case lark.Tree(data=operator, children=operand) if operator in UNARY_OPERATORS:
             return (operand[0],), functools.partial(AST.UnaryOperator, operator)
 
-        case lark.Tree("matr", (array, *indices)):
+        case lark.Tree(data="matr", children=(array, *indices)):
             children = [array, *(elem.children[0] for elem in indices)]
             return children, lambda mat, *ind: AST.Matrix(mat, ind)
 
-        case lark.Tree("func", (func_name, trailer)):
+        case lark.Tree(data="func", children=(func_name, trailer)):
             func_name = _get_function_name(func_name)
 
             # In case the function is actually a constant
@@ -122,7 +125,7 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
             arguments = () if arg_list is None else tuple(arg_list.children)
             return arguments, lambda *args: AST.Call(func_name, args)
 
-        case lark.Tree("symbol", children):
+        case lark.Tree(data="symbol", children=children):
             var_name = _get_var_name(children[0])
             if var_name in ("True", "False"):
                 var_name = var_name.lower()  # This makes it not a keyword
@@ -139,10 +142,19 @@ def _expand(ptnode: lark.Tree) -> tuple[Sequence[Any], Callable[..., AST.AST]]:
                 raise SyntaxError(msg)
             return (), _constant(AST.Symbol(var_name))
 
-        case lark.Tree("literal", children):
-            return (), _constant(AST.Literal(literal_eval(children[0])))
+        case lark.Tree(data="literal", children=children):
+            value = literal_eval(children[0])
+            # A literal too big for a double overflows to infinity, and there
+            # is no way to write infinity as a *literal* in any of the three
+            # languages -- rendering it would emit a bare `inf`, which is not
+            # valid input to any of them. It is exactly the canonical `inf`
+            # constant though, which already knows that ROOT spells it
+            # `TMath::Infinity()` and that NumExpr cannot spell it at all.
+            if isinstance(value, float) and math.isinf(value):
+                return (), _constant(AST.Symbol("inf"))
+            return (), _constant(AST.Literal(value))
 
-        case lark.Tree(_, (child,)):
+        case lark.Tree(children=(child,)):
             return (child,), lambda child_exp: child_exp
 
         case _:  # pragma: no cover

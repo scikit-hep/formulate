@@ -18,7 +18,7 @@ prek install                # hook runner; reads .pre-commit-config.yaml
 
 pytest                      # all tests
 pytest tests/test_root.py -k tmath_min       # single file / single test
-pytest --cov=formulate --cov-branch          # with coverage
+pytest --cov=formulate                       # with coverage; fails under 100%
 
 nox                         # default: lint + pylint + tests
 nox -s tests                # tests in an isolated env
@@ -60,7 +60,13 @@ Pipeline, in order:
    children. Every traversal lives on the base class and is iterative: `__str__` and
    `_to_backend` are both `_traversal.fold` calls, and `_walk` backs `variables` /
    `named_constants` / `unnamed_constants`. Nothing here recurses, so depth is bounded by
-   memory, not by the stack. The three public `to_*` methods just pass the corresponding
+   memory, not by the stack. **Nodes are deliberately not comparable or hashable**: `__eq__`
+   raises and `__hash__` is `None`, because structural equality would call `a + b` and
+   `b + a` different expressions while semantic equality is computer algebra, well outside
+   what a syntax translator can promise. Compare `str(node)` or a `to_*` rendering instead —
+   serialization is canonical, which is what the tests do. The nodes are declared `eq=False`
+   so the dataclass does not generate an `__eq__`/`__hash__` that would override that; a new
+   node type must repeat it. The three public `to_*` methods just pass the corresponding
    `_Backend` instance (`_ROOT`, `_NUMEXPR`, `_PYTHON`). There is no per-backend visitor
    class — a new backend is a new `_Backend` literal plus new tables. Every node validates in
    `_serializer`, which runs before its children are visited, so an expression with more than
@@ -129,13 +135,21 @@ contains a lone `&`. New syntax that people commonly get wrong belongs here.
 
 ## Constraints to respect
 
-- **Coverage is enforced at 100%** for both project and patch (`codecov.yml`, threshold 0).
-  Genuinely unreachable code is marked `# pragma: no cover`; prefer deleting dead branches.
+- **Coverage is enforced at 100%** for both project and patch (`codecov.yml`, threshold 0),
+  and locally too: `[tool.coverage]` in `pyproject.toml` turns on branch coverage and sets
+  `fail_under = 100`, so any `--cov` run — `nox -s coverage`, or CI — fails on a gap rather
+  than only being caught by codecov after a push. That also means `--cov` on a filtered
+  subset of tests will fail; leave it off when running one test. The suite reaches 100%
+  without ROOT installed, so every job in the matrix can meet it. Genuinely unreachable code
+  is marked `# pragma: no cover`; prefer deleting dead branches.
 - `filterwarnings = ["error"]` and `xfail_strict` are on — a new warning fails the suite.
 - mypy runs `--strict` over `src` only; the package ships `py.typed`.
 - Supported Python is 3.10+, and the CI matrix includes Windows and free-threaded 3.14.
 - **No recursive tree walks.** `_traversal.fold` and `AST._walk` are the only two, and both
-  use an explicit stack, so peak frame depth is a small constant whatever the expression size.
+  use an explicit stack, so peak frame depth is a small constant whatever the expression
+  size. Watch for walks arriving implicitly rather than being written: a dataclass-generated
+  `__eq__`/`__hash__` would recurse through child fields, which is one more reason the nodes
+  set `eq=False`.
   `tests/test_performance.py` runs at CPython's default recursion limit on purpose and nests
   1,000 levels deep, so a recursive walk added back anywhere fails there. The sizes in that file are
   bounded by its 3s timing budget on the slowest job (Windows/3.10 under coverage), not by the

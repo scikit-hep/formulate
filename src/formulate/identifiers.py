@@ -369,12 +369,22 @@ ROOT_FUNCTIONS = {
 """ROOT's spelling of each function it supports."""
 
 PYTHON_FUNCTIONS = {
-    # NumExpr's contains() is a substring test with no NumPy equivalent that can
-    # be written as a single function name (np.strings.find(a, b) != -1 is an
-    # expression, not a name), so Python rejects it just as ROOT does.
-    **{name: func for name, func in NUMEXPR_FUNCTIONS.items() if name != "contains"},
+    # Two NumExpr functions have no NumPy equivalent that can be written as a
+    # single function name, so Python rejects them just as ROOT does:
+    #
+    # contains()  a substring test; np.strings.find(a, b) != -1 is an
+    #             expression, not a name.
+    # complex()   element-wise construction from a real and an imaginary part.
+    #             np.complex128 looks like the counterpart but is a scalar type
+    #             constructor: it takes 0-d input only and raises TypeError on
+    #             arrays, which is the shape this library exists to convert. The
+    #             element-wise form is a + 1j*b, again an expression.
+    **{
+        name: func
+        for name, func in NUMEXPR_FUNCTIONS.items()
+        if name not in ("contains", "complex")
+    },
     "pow": "power",
-    "complex": "complex128",
     # np.minimum/maximum are the element-wise equivalents of TMath::Min/Max
     "tmath_min": "minimum",
     "tmath_max": "maximum",
