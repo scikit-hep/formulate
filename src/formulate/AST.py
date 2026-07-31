@@ -16,6 +16,7 @@ how "this construct has no faithful equivalent here" is expressed, and raises
 ``ValueError`` rather than emitting something subtly different.
 """
 
+import re
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
@@ -55,6 +56,9 @@ class _Backend:
     index_format: str | None = (
         "python"  # None = forbidden, "root" = [x][y], "python" = [x,y]
     )
+    # Whether a name this backend cannot spell is hex-encoded rather than
+    # emitted as written. See `_encode_name`.
+    encode_invalid_names: bool = False
 
 
 _NUMEXPR = _Backend(
@@ -64,6 +68,7 @@ _NUMEXPR = _Backend(
     constants=NUMEXPR_CONSTANTS,
     pow_as_operator=True,
     index_format=None,
+    encode_invalid_names=True,
 )
 
 _ROOT = _Backend(
@@ -84,6 +89,28 @@ _PYTHON = _Backend(
     unparenthesized_ops=frozenset({","}),
     unary_functions=PYTHON_UNARY_FUNCTIONS,
 )
+
+
+# ROOT branch names are not always identifiers -- `branch.leaf` is one name with
+# a dot in it, not an attribute access -- but NumExpr rejects any expression
+# containing one ("forbidden control characters") and has no quoting syntax to
+# get around it. Uproot has the same problem with C++ classnames and solves it
+# by hex-encoding, so formulate spells names the same way uproot does: a run of
+# characters that cannot appear in an identifier becomes those bytes in hex,
+# wrapped in underscores, making `branch.leaf` into `branch_2e_leaf`.
+#
+# A dot is the only such character that can reach here: `toast` requires every
+# dot-separated part of a symbol to be a Python identifier, so anything else is
+# a parse error long before this. The pattern is still uproot's, so that names
+# encode identically in both packages, which also means underscores are part of
+# a run: `a.b_c` encodes to `a_2e_b_5f_c` rather than to an `a_2e_b_c` that a
+# branch really called `a_2e_b_c` would collide with.
+_ENCODE_RUN = re.compile(r"[^A-Za-z0-9]+")
+
+
+def _encode_name(name: str) -> str:
+    """Hex-encode the parts of `name` that cannot appear in an identifier."""
+    return _ENCODE_RUN.sub(lambda run: f"_{run.group().encode().hex()}_", name)
 
 
 class AST(metaclass=ABCMeta):
@@ -328,6 +355,8 @@ class Symbol(AST):
                 # unary minus, so the sign would escape the exponent and
                 # ``eminus ** 2`` would come out negative.
                 text = f"({text})"
+        elif backend.encode_invalid_names and "." in self.name:
+            text = _encode_name(self.name)
         return lambda: text
 
 

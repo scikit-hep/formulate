@@ -152,3 +152,45 @@ original name:
    '3.141592653589793'
 
 The value is preserved; only the spelling is lost.
+
+.. _issues-dotted-names:
+
+Dotted branch names are hex-encoded for numexpr
+---------------------------------------------------------------------------
+
+ROOT's ``branch.leaf`` is a single branch name that happens to contain a dot,
+not an attribute access. numexpr rejects any expression containing one
+("forbidden control characters") and has no quoting syntax to get around it, so
+formulate encodes the name the same way uproot encodes C++ class names: each
+run of characters that cannot appear in an identifier becomes those bytes in
+hexadecimal, wrapped in underscores.
+
+.. jupyter-execute::
+
+   import formulate
+
+   formulate.from_root("branch.leaf > 10").to_numexpr()
+
+**This is the name you have to supply when you evaluate.** ``.`` is ``0x2e``,
+so the array above must be passed to numexpr as ``branch_2e_leaf``, not as
+``branch.leaf``. :attr:`~formulate.AST.AST.variables` reports the original
+name, since the tree keeps ROOT's spelling:
+
+.. jupyter-execute::
+
+   list(formulate.from_root("branch.leaf > 10").variables)
+
+Underscores are encoded too when they sit inside a name that is being encoded,
+which is what keeps ``a.b_c`` (``a_2e_b_5f_c``) distinct from a branch really
+called ``a_2e_b_c``. Names that numexpr can already spell are passed through
+untouched, so an ordinary ``pt_corrected`` is left alone.
+
+The encoding is not undone on the way back: ``from_numexpr`` cannot tell an
+encoded ``branch.leaf`` from a branch genuinely named ``branch_2e_leaf``, and
+silently renaming the latter would be worse than not restoring the former. A
+ROOT → numexpr → ROOT round trip therefore keeps the encoded spelling, in the
+same way it keeps the numeric value of a named constant.
+
+ROOT and Python are unaffected. Note that ``to_python()`` emits the dot as
+written, where it is a genuine attribute lookup — which is what you want only
+if you evaluate against an object rather than a dict keyed by branch name.

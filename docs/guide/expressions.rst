@@ -634,7 +634,12 @@ you want when deciding which branches to read from a file:
    print(list(expr.named_constants))
    print(list(expr.unnamed_constants))
 
-Names come out in the order they first appear, and each is reported once.
+Names come out in the order they first appear, and each is reported once. They
+are reported as ROOT spells them, which for a dotted branch name is *not* how
+``to_numexpr()`` writes it — numexpr cannot take a dot, so those names are
+hex-encoded on the way out and it is the encoded name you must supply when you
+evaluate. See :ref:`issues-dotted-names`.
+
 ``str()`` on the expression shows the parsed structure in canonical names, which
 is the quickest way to check how something was grouped:
 
