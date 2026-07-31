@@ -96,6 +96,24 @@ testpaths = [
 ]
 
 
+# Coverage is measured with branches and required to be complete, matching what
+# codecov.yml enforces on a pull request. Keeping it here rather than in the CI
+# invocation means `pytest --cov=formulate` and `nox -s coverage` hold a change
+# to the same standard before it is pushed. The full suite reaches 100% without
+# ROOT installed, so every job in the matrix can meet this, not just the one
+# that uploads.
+[tool.coverage.run]
+branch = true
+source = ["formulate"]
+
+[tool.coverage.report]
+fail_under = 100
+# Only the default. The `raise NotImplementedError` exclusion this replaces was
+# redundant: both raises sit under an `else:` already marked `# pragma: no
+# cover`, which is how this package spells genuinely unreachable code.
+exclude_lines = ["pragma: no cover"]
+
+
 [tool.mypy]
 files = "src"
 python_version = "3.10"

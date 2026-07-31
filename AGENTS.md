@@ -18,7 +18,7 @@ prek install                # hook runner; reads .pre-commit-config.yaml
 
 pytest                      # all tests
 pytest tests/test_root.py -k tmath_min       # single file / single test
-pytest --cov=formulate --cov-branch          # with coverage
+pytest --cov=formulate                       # with coverage; fails under 100%
 
 nox                         # default: lint + pylint + tests
 nox -s tests                # tests in an isolated env
@@ -132,8 +132,13 @@ contains a lone `&`. New syntax that people commonly get wrong belongs here.
 
 ## Constraints to respect
 
-- **Coverage is enforced at 100%** for both project and patch (`codecov.yml`, threshold 0).
-  Genuinely unreachable code is marked `# pragma: no cover`; prefer deleting dead branches.
+- **Coverage is enforced at 100%** for both project and patch (`codecov.yml`, threshold 0),
+  and locally too: `[tool.coverage]` in `pyproject.toml` turns on branch coverage and sets
+  `fail_under = 100`, so any `--cov` run — `nox -s coverage`, or CI — fails on a gap rather
+  than only being caught by codecov after a push. That also means `--cov` on a filtered
+  subset of tests will fail; leave it off when running one test. The suite reaches 100%
+  without ROOT installed, so every job in the matrix can meet it. Genuinely unreachable code
+  is marked `# pragma: no cover`; prefer deleting dead branches.
 - `filterwarnings = ["error"]` and `xfail_strict` are on — a new warning fails the suite.
 - mypy runs `--strict` over `src` only; the package ships `py.typed`.
 - Supported Python is 3.10+, and the CI matrix includes Windows and free-threaded 3.14.
