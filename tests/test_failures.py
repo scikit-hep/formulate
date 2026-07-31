@@ -192,7 +192,10 @@ def test_invalid_characters(s):
     """Text made only of punctuation should never parse."""
     # Skip strings that contain only whitespace or valid operators
     assume(not s.isspace())
-    assume(not all(c in "+-*/()<>=!&|^~_\r " for c in s))  # TODO: why does _ not fail?
+    # '_' is a valid symbol on its own, and every kind of whitespace is ignored
+    # by the grammar rather than rejected, so a string made only of those parses
+    # and is not a counterexample.
+    assume(not all(c in "+-*/()<>=!&|^~_" or c.isspace() for c in s))
 
     with pytest.raises(ParseError):
         formulate.from_root(s)
