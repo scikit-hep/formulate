@@ -55,15 +55,18 @@ Pipeline, in order:
    that assembles the AST node from them.
 3. **`AST.py`** — six frozen dataclass node types (`Literal`, `Symbol`, `UnaryOperator`,
    `BinaryOperator`, `Matrix`, `Call`) plus a `_Backend` descriptor. A node type implements
-   exactly four things: `_children()`, `_key()` — the node's own data, everything that is
-   not a child — `_format(*parts)` for `str()`, and `_serializer(backend)`, which returns
-   the builder that joins its already-serialized children. Every traversal lives on the base
-   class and is iterative: `__str__`, `_to_backend` and `__hash__` are all `_traversal.fold`
-   calls, `__eq__` walks two trees on an explicit stack of pairs, and `_walk` backs
-   `variables` / `named_constants` / `unnamed_constants`. Nothing here recurses, so depth is
-   bounded by memory, not by the stack. The nodes are declared `eq=False` precisely so the
-   dataclass does not generate the recursive `__eq__`/`__hash__` that would undo this; a new
-   node type must repeat that. The three public `to_*` methods just pass the corresponding
+   exactly three things: `_children()`, `_format(*parts)` for `str()`, and
+   `_serializer(backend)`, which returns the builder that joins its already-serialized
+   children. Every traversal lives on the base class and is iterative: `__str__` and
+   `_to_backend` are both `_traversal.fold` calls, and `_walk` backs `variables` /
+   `named_constants` / `unnamed_constants`. Nothing here recurses, so depth is bounded by
+   memory, not by the stack. **Nodes are deliberately not comparable or hashable**: `__eq__`
+   raises and `__hash__` is `None`, because structural equality would call `a + b` and
+   `b + a` different expressions while semantic equality is computer algebra, well outside
+   what a syntax translator can promise. Compare `str(node)` or a `to_*` rendering instead —
+   serialization is canonical, which is what the tests do. The nodes are declared `eq=False`
+   so the dataclass does not generate an `__eq__`/`__hash__` that would override that; a new
+   node type must repeat it. The three public `to_*` methods just pass the corresponding
    `_Backend` instance (`_ROOT`, `_NUMEXPR`, `_PYTHON`). There is no per-backend visitor
    class — a new backend is a new `_Backend` literal plus new tables. Every node validates in
    `_serializer`, which runs before its children are visited, so an expression with more than
@@ -142,11 +145,11 @@ contains a lone `&`. New syntax that people commonly get wrong belongs here.
 - `filterwarnings = ["error"]` and `xfail_strict` are on — a new warning fails the suite.
 - mypy runs `--strict` over `src` only; the package ships `py.typed`.
 - Supported Python is 3.10+, and the CI matrix includes Windows and free-threaded 3.14.
-- **No recursive tree walks.** `_traversal.fold`, `AST._walk` and `AST.__eq__` are the only
-  three, and all use an explicit stack, so peak frame depth is a small constant whatever the
-  expression size. Watch for walks arriving implicitly rather than being written: the
-  dataclass-generated `__eq__`/`__hash__` recurse through child fields, which is why the
-  nodes set `eq=False` and the base class implements both itself.
+- **No recursive tree walks.** `_traversal.fold` and `AST._walk` are the only two, and both
+  use an explicit stack, so peak frame depth is a small constant whatever the expression
+  size. Watch for walks arriving implicitly rather than being written: a dataclass-generated
+  `__eq__`/`__hash__` would recurse through child fields, which is one more reason the nodes
+  set `eq=False`.
   `tests/test_performance.py` runs at CPython's default recursion limit on purpose and nests
   1,000 levels deep, so a recursive walk added back anywhere fails there. The sizes in that file are
   bounded by its 3s timing budget on the slowest job (Windows/3.10 under coverage), not by the

@@ -150,7 +150,8 @@ def test_a_literal_too_large_for_a_double_becomes_the_inf_constant(parse):
     overflowing one is handed to the constant machinery instead of being
     emitted as a bare ``inf`` that no engine would accept back."""
     parsed = parse("1e999")
-    assert parsed == Symbol("inf")
+    assert isinstance(parsed, Symbol)
+    assert parsed.name == "inf"
     assert parsed.named_constants == OrderedSet(["inf"])
     assert parsed.unnamed_constants == OrderedSet()
 
@@ -165,7 +166,8 @@ def test_a_literal_a_double_can_still_hold_stays_a_literal(parse):
     """The boundary the test above depends on: 1e300 is finite, so it is
     unaffected and still round-trips through NumExpr."""
     parsed = parse("1e300")
-    assert parsed == Literal(1e300)
+    assert isinstance(parsed, Literal)
+    assert parsed.value == 1e300
     assert parsed.to_numexpr() == "1e+300"
 
 
@@ -210,7 +212,7 @@ def test_contains_is_a_numexpr_only_function():
     ],
 )
 def test_root_and_numexpr_parsers_build_the_same_tree(expr):
-    assert formulate.from_root(expr) == formulate.from_numexpr(expr)
+    assert str(formulate.from_root(expr)) == str(formulate.from_numexpr(expr))
 
 
 # --- Translation tables ---

@@ -117,13 +117,16 @@ class AST(metaclass=ABCMeta):
     """Base class of every expression node.
 
     Instances are produced by :func:`formulate.from_root` and
-    :func:`formulate.from_numexpr`, not constructed directly, and are immutable
-    and hashable: converting an expression never modifies it, so one parsed
+    :func:`formulate.from_numexpr`, not constructed directly, and are
+    immutable: converting an expression never modifies it, so one parsed
     expression can be rendered to as many backends as needed.
 
     ``str(node)`` gives a language-independent view of the tree in canonical
     names (``add(x, pow(y, 2))``), which is useful when debugging a conversion;
     use the ``to_*`` methods to get something an engine will accept.
+
+    Nodes are deliberately neither comparable nor hashable. ``==`` and
+    ``hash()`` both raise ``TypeError``; see :meth:`__eq__`.
     """
 
     # The node types are all slotted dataclasses, but a slotted class inheriting
@@ -135,9 +138,6 @@ class AST(metaclass=ABCMeta):
     def _children(self) -> Sequence["AST"]: ...  # pragma: no cover
 
     @abstractmethod
-    def _key(self) -> tuple[Any, ...]: ...  # pragma: no cover
-
-    @abstractmethod
     def _format(self, *parts: str) -> str: ...  # pragma: no cover
 
     @abstractmethod
@@ -146,44 +146,36 @@ class AST(metaclass=ABCMeta):
     ) -> Callable[..., str]: ...  # pragma: no cover
 
     def __eq__(self, other: object) -> bool:
-        """Compare two trees structurally, without recursing.
+        """Always raise: expression equality is not something this package answers.
 
-        The dataclass-generated ``__eq__`` compares field tuples, and a field
-        holding a child node makes that a recursive descent -- which blows the
-        interpreter stack on trees the rest of this class handles fine.
+        Structural equality is easy to provide and wrong often enough to
+        mislead. It would report ``a + b`` and ``b + a`` as different
+        expressions, along with ``x * 1`` and ``x``, ``(a + b) + c`` and
+        ``a + (b + c)``, and any spelling of a constant that is not the one
+        that happened to be parsed. Deciding those properly is computer
+        algebra, which is a long way outside what a syntax translator can
+        promise.
+
+        Comparing the serializations is well defined and is what the tests in
+        this package do: ``str(node)`` for the canonical form, or one of the
+        ``to_*`` renderings for a particular language. Those are deterministic
+        and fully parenthesized, so equal strings mean identically shaped
+        trees -- the honest version of what a structural ``==`` would have
+        said.
         """
-        if self is other:
-            return True
-        if not isinstance(other, AST):
-            return NotImplemented
-        stack: list[tuple[AST, AST]] = [(self, other)]
-        while stack:
-            left, right = stack.pop()
-            if left is right:
-                continue
-            if type(left) is not type(right) or left._key() != right._key():
-                return False
-            left_children, right_children = left._children(), right._children()
-            if len(left_children) != len(right_children):
-                return False
-            # Lengths were just checked, so strict= can never trip here; it is
-            # there to keep that a stated invariant rather than a silent one.
-            stack.extend(zip(left_children, right_children, strict=True))
-        return True
-
-    def __hash__(self) -> int:
-        """Hash the tree bottom-up, for the same reason ``__eq__`` is iterative.
-
-        Equal trees have equal types, keys and child structure, so they hash
-        alike.
-        """
-        return fold(
-            self,
-            lambda node: (
-                node._children(),
-                lambda *children: hash((type(node), node._key(), children)),
-            ),
+        msg = (
+            "AST nodes cannot be compared. Equality would have to choose "
+            "between a structural answer, which calls 'a + b' and 'b + a' "
+            "different, and a semantic one, which is out of scope for this "
+            "package. Compare str(node), or node.to_root() / .to_numexpr() / "
+            ".to_python(), all of which are canonical."
         )
+        raise TypeError(msg)
+
+    # Unhashable for the same reason: a hash has to agree with an equality that
+    # does not exist. `None` rather than a raising method so that the object is
+    # honestly not Hashable, as `isinstance(node, Hashable)` reports.
+    __hash__ = None  # type: ignore[assignment]
 
     def _walk(self) -> Iterator["AST"]:
         """Yield every node in the tree, parents first and left to right.
@@ -316,9 +308,6 @@ class Literal(AST):
     def _children(self) -> Sequence[AST]:
         return ()
 
-    def _key(self) -> tuple[Any, ...]:
-        return (self.value,)
-
     def _format(self, *_parts: str) -> str:
         return str(self.value)
 
@@ -340,9 +329,6 @@ class Symbol(AST):
 
     def _children(self) -> Sequence[AST]:
         return ()
-
-    def _key(self) -> tuple[Any, ...]:
-        return (self.name,)
 
     def _format(self, *_parts: str) -> str:
         return self.name
@@ -380,9 +366,6 @@ class UnaryOperator(AST):
     def _children(self) -> Sequence[AST]:
         return (self.operand,)
 
-    def _key(self) -> tuple[Any, ...]:
-        return (self.operator,)
-
     def _format(self, *parts: str) -> str:
         return f"{self.operator}({parts[0]})"
 
@@ -412,9 +395,6 @@ class BinaryOperator(AST):
 
     def _children(self) -> Sequence[AST]:
         return (self.left, self.right)
-
-    def _key(self) -> tuple[Any, ...]:
-        return (self.operator,)
 
     def _format(self, *parts: str) -> str:
         return f"{self.operator}({parts[0]}, {parts[1]})"
@@ -446,9 +426,6 @@ class Matrix(AST):
 
     def _children(self) -> Sequence[AST]:
         return (self.var, *self.indices)
-
-    def _key(self) -> tuple[Any, ...]:
-        return ()
 
     def _format(self, *parts: str) -> str:
         var_str, *indices = parts
@@ -482,9 +459,6 @@ class Call(AST):
 
     def _children(self) -> Sequence[AST]:
         return self.arguments
-
-    def _key(self) -> tuple[Any, ...]:
-        return (self.function,)
 
     def _format(self, *parts: str) -> str:
         return f"{self.function}({', '.join(parts)})"

@@ -177,7 +177,6 @@ basic.module-rgx = "(([a-z_][a-z0-9_]*)|(AST))$"
 # remainder are pylint's own defaults, kept.
 classes.exclude-protected = [
     "_children",
-    "_key",
     "_format",
     "_serializer",
     "_asdict",

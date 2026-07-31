@@ -97,23 +97,6 @@ def test_deeply_nested_calls_survive_every_walk():
     assert parsed.variables == {"a"}
 
 
-def test_deeply_nested_calls_compare_and_hash():
-    """`==` and `hash` are walks too, and were the last recursive ones: the
-    dataclass-generated versions descend one frame per level and raise
-    RecursionError on a tree every other walk here handles."""
-    expression = "sqrt(" * DEEP_NESTING + "a" + ")" * DEEP_NESTING
-    parsed = formulate.from_root(expression)
-    same = formulate.from_root(expression)
-    different = formulate.from_root("sqrt(" * DEEP_NESTING + "b" + ")" * DEEP_NESTING)
-
-    assert parsed == same
-    assert parsed != different
-    assert hash(parsed) == hash(same)
-    # A difference at the very bottom still has to be found, so this is the
-    # case that walks the full depth rather than stopping at the root.
-    assert len({parsed, same, different}) == 2
-
-
 @pytest.mark.parametrize(
     "name,length,parse,serialize",
     [
