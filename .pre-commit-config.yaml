@@ -19,7 +19,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/mgedmin/check-manifest
-    rev: "61edb7590386f8b78000219b503e81e24b48c712" # frozen: 0.51
+    rev: "ca7d0d8de779a87ff1458fa81a2788b07a518bcd"  # frozen: 0.51
     hooks:
       - id: check-manifest
         stages: [manual]
@@ -42,7 +42,7 @@ repos:
 
   # Notebook formatting
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: d31b7eae1767c43460afb3ba130e0a6602933abe # frozen: 1.9.1
+    rev: f96ec7f3b26a32619435686eb5813235f7e3327e  # frozen: 1.9.1
     hooks:
       - id: nbqa-isort
         additional_dependencies: [isort]
@@ -52,12 +52,12 @@ repos:
         args: [--py310-plus]
 
   - repo: https://github.com/kynan/nbstripout
-    rev: 34071b78c181af3bf5af955c1426466e096fc3db # frozen: 0.9.1
+    rev: f5da19ce3b7b40e97c12ee9cd8ce97f48f97ddf7  # frozen: 0.9.1
     hooks:
       - id: nbstripout
 
   - repo: https://github.com/MarcoGorelli/auto-walrus
-    rev: d376c6a49feac78bc2115bf3df7e862629cce612 # frozen: 0.4.1
+    rev: 1743edbed52f3d61886b59d98a27164a8af29c0d  # frozen: 0.4.1
     hooks:
       - id: auto-walrus
 
@@ -68,7 +68,7 @@ repos:
   #      - id: oxipng
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 6b63472e72e1a91ed8a2f6d483790dfb644fa1d3 # frozen: 0.37.4
+    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658  # frozen: 0.37.4
     hooks:
       - id: check-github-workflows
       - id: check-github-actions
@@ -81,7 +81,7 @@ repos:
       - id: rm-unneeded-f-str
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "2700fd5671c633760d912769c041bfcde2b9a01b" # frozen: v0.15.22
+    rev: "39d9ac5938dadb73df0564a45f163e25ff9fa6e2"  # frozen: v0.16.1
     hooks:
       - id: ruff-check
         types_or: [python, pyi, jupyter]
@@ -98,7 +98,7 @@ repos:
         args: []
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: "fda77690955e9b63c6687d8806bafd56a526e45f" # frozen: 1.20.0
+    rev: "dda8db18cfc68df532abf33b185ecd12d5b7b326"  # frozen: 1.20.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==24.*]
@@ -112,13 +112,13 @@ repos:
         args: ["-L", "gaus"]
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "9337a74165b178ae2c766f60bee7252a0f06f3e8" # frozen: v3.9.5
+    rev: "0ee178619d696787ca73d210cc191d720868c631"  # frozen: v3.9.6
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: 64a97fb7fa63188393d3215c6e312f5f9c6d0f78 # frozen: v1.27.0
+    rev: 451b56af716f9f0d0c2b816503a3fd0cf8b036fa  # frozen: v1.29.0
     hooks:
       - id: zizmor
         files: '^\.github/'
