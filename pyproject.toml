@@ -85,10 +85,6 @@ exclude-newer = "7 days"
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/formulate/_version.py"
-envs.default.dependencies = [
-    "pytest",
-    "pytest-cov",
-]
 
 
 [tool.pytest.ini_options]
