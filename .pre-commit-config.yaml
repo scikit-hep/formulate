@@ -1,4 +1,7 @@
 ci:
+  # pre-commit.ci uses these as the commit message *and* the title of the pull
+  # request it opens, so they have to stay Conventional Commits for the
+  # semantic-pr-title workflow to pass.
   autoupdate_commit_msg: "chore: update pre-commit hooks"
   autofix_commit_msg: "style: pre-commit fixes"
   autoupdate_schedule: monthly
