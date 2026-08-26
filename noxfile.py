@@ -1,3 +1,9 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = ["nox>=2025.2.9"]
+# ///
+"""Task runner. Run a session with `nox -s <name>`, or `./noxfile.py -s <name>`."""
+
 from __future__ import annotations
 
 import argparse
@@ -8,8 +14,7 @@ import nox
 
 DIR = Path(__file__).parent.resolve()
 
-nox.needs_version = ">=2024.4.15"
-nox.options.sessions = ["lint", "pylint", "tests"]
+nox.needs_version = ">=2025.2.9"
 nox.options.default_venv_backend = "uv|virtualenv"
 
 
@@ -42,7 +47,7 @@ def tests(session: nox.Session) -> None:
     session.run("pytest", *session.posargs)
 
 
-@nox.session
+@nox.session(default=False)
 def coverage(session: nox.Session) -> None:
     """
     Run tests and compute coverage.
@@ -52,7 +57,7 @@ def coverage(session: nox.Session) -> None:
     tests(session)
 
 
-@nox.session
+@nox.session(default=False)
 def docs(session: nox.Session) -> None:
     """
     Build the docs. Pass "--serve" to serve.
@@ -71,7 +76,7 @@ def docs(session: nox.Session) -> None:
         session.run("python", "-m", "http.server", "8000", "-d", "_build/html")
 
 
-@nox.session
+@nox.session(default=False)
 def build_api_docs(session: nox.Session) -> None:
     """
     Build (regenerate) API docs.
@@ -90,7 +95,7 @@ def build_api_docs(session: nox.Session) -> None:
     )
 
 
-@nox.session
+@nox.session(default=False)
 def build(session: nox.Session) -> None:
     """
     Build an SDist and wheel.
@@ -105,3 +110,7 @@ def build(session: nox.Session) -> None:
 
     session.install("build")
     session.run("python", "-m", "build")
+
+
+if __name__ == "__main__":
+    nox.main()

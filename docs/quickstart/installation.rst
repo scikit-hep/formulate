@@ -52,8 +52,8 @@ To install Formulate from source:
 
        pip install -e .
 
-   Add the ``dev`` extra — ``pip install -e ".[dev]"`` — if you intend to run
-   the tests, the linters or the docs build. See
+   Add the ``dev`` dependency group — ``pip install -e . --group dev`` — if you
+   intend to run the tests, the linters or the docs build. See
    :doc:`../contributing/contributing` for what that gets you.
 
 Verifying Installation

@@ -57,12 +57,17 @@ docs = [
     "jupyter-sphinx>=0.3.2",
     "numexpr",
 ]
-dev = [
-    "formulate[docs]",
-    "formulate[test]",
-    "prek",
-]
-all = ["formulate[docs]", "formulate[test]", "formulate[dev]"]
+
+[dependency-groups]
+# Development tooling, as a dependency group rather than an extra: it is never
+# useful to an installed copy of the package, so it has no business being
+# published with one. The `test` and `docs` extras above stay extras because
+# they *are* asked for that way -- the CD smoke job installs the built wheel
+# with `[test]`, and Read the Docs installs the package with `[docs]`, neither
+# of which a dependency group can express.
+test = ["formulate[test]"]
+docs = ["formulate[docs]"]
+dev = [{ include-group = "test" }, { include-group = "docs" }, "prek"]
 
 [project.urls]
 Homepage = "https://github.com/Scikit-HEP/formulate"

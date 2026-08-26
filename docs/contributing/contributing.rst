@@ -31,18 +31,19 @@ Setting Up Your Development Environment
 
    .. code-block:: bash
 
-       pip install -e ".[dev]"
+       pip install -e . --group dev
 
-   The ``dev`` extra pulls in the test and docs requirements plus ``prek``.
-   ``.[test]`` on its own is enough to run the whole suite; ``.[docs]`` on its
-   own is enough to build the documentation.
+   The ``dev`` dependency group pulls in the test and docs requirements plus
+   ``prek`` (``uv sync`` installs it too, and ``--group`` needs pip 25.1 or
+   newer). ``.[test]`` on its own is enough to run the whole suite; ``.[docs]``
+   on its own is enough to build the documentation.
 
 5. **Set Up Pre-commit Hooks**
 
    Formulate uses pre-commit hooks to ensure code quality. They are run with
    `prek <https://github.com/j178/prek>`_, a faster drop-in replacement for
    ``pre-commit`` that reads the same ``.pre-commit-config.yaml``. It is
-   installed by the ``dev`` extra above, so you only need to install the hooks:
+   installed by the ``dev`` group above, so you only need to install the hooks:
 
    .. code-block:: bash
 

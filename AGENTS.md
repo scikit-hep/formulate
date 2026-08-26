@@ -13,7 +13,7 @@ There is also a `formulate` CLI (`src/formulate/cli.py`).
 ## Commands
 
 ```bash
-pip install -e ".[dev]"     # dev install
+pip install -e . --group dev # dev install
 prek install                # hook runner; reads .pre-commit-config.yaml
 
 pytest                      # all tests
