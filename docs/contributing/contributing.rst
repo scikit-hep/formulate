@@ -100,7 +100,7 @@ Development Workflow
    .. code-block:: bash
 
        git add .
-       git commit -m "Add feature X" or "Fix bug Y"
+       git commit -m "feat: add feature X" or "fix: correct bug Y"
 
 5. **Push Your Changes**
 
@@ -113,6 +113,11 @@ Development Workflow
 6. **Create a Pull Request**
 
    Go to the `Formulate repository <https://github.com/scikit-hep/formulate>`_ and create a pull request from your branch.
+
+   Pull requests are squash-merged, so the **title** of the pull request is
+   what ends up in the history on ``main``. It must be a `Conventional Commit
+   <https://www.conventionalcommits.org/>`_ — a CI job rejects the pull request
+   otherwise. See "Commit Messages" under `Coding Guidelines`_ below.
 
 Using nox
 ----------------------------------------------
@@ -164,9 +169,18 @@ Coding Guidelines
 
 4. **Commit Messages**
 
-   - Write clear, concise commit messages
-   - Start with a short summary line (50 chars or less)
+   Formulate follows `Conventional Commits
+   <https://www.conventionalcommits.org/>`_: a summary line of the form
+   ``type(optional scope): description``, for example ``fix(root): keep the
+   sign of negative constants under pow``. The allowed types are ``build``,
+   ``chore``, ``ci``, ``docs``, ``feat``, ``fix``, ``perf``, ``refactor``,
+   ``revert``, ``style`` and ``test``.
+
+   - Keep the summary line short (50 chars or less) and in the imperative mood
    - Optionally, follow with a blank line and a more detailed explanation
+   - The pull request title must follow the same convention, since that is what
+     the squash merge records; ``.github/workflows/semantic-pr-title.yml``
+     checks it on every push to the pull request
 
 Adding a function or a constant
 ------------------------------------------------
