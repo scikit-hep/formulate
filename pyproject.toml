@@ -39,6 +39,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# formulate only rewrites expression strings, so nothing is needed to import
+# it. What people reach for next is an engine to evaluate the NumExpr output
+# with, hence `pip install formulate[numexpr]`.
+numexpr = ["numexpr"]
+
+# Everything below is for working *on* formulate, and is a dependency group
+# rather than an extra: none of it is useful to an installed copy, so none of
+# it has any business being published with one. Install with
+# `pip install -e . --group dev`, or `uv sync`.
+[dependency-groups]
 test = [
     "pytest>=6",
     "pytest-cov>=3",
@@ -58,15 +68,6 @@ docs = [
     "numexpr",
 ]
 
-[dependency-groups]
-# Development tooling, as a dependency group rather than an extra: it is never
-# useful to an installed copy of the package, so it has no business being
-# published with one. The `test` and `docs` extras above stay extras because
-# they *are* asked for that way -- the CD smoke job installs the built wheel
-# with `[test]`, and Read the Docs installs the package with `[docs]`, neither
-# of which a dependency group can express.
-test = ["formulate[test]"]
-docs = ["formulate[docs]"]
 dev = [{ include-group = "test" }, { include-group = "docs" }, "prek"]
 
 [project.urls]

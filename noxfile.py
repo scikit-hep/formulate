@@ -43,7 +43,7 @@ def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests.
     """
-    session.install(".[test]")
+    session.install("--group=test", ".")
     session.run("pytest", *session.posargs)
 
 
@@ -67,7 +67,7 @@ def docs(session: nox.Session) -> None:
     parser.add_argument("--serve", action="store_true", help="Serve after building")
     args = parser.parse_args(session.posargs)
 
-    session.install(".[docs]")
+    session.install("--group=docs", ".")
     session.chdir("docs")
     session.run("sphinx-build", "-M", "html", ".", "_build")
 

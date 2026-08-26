@@ -75,7 +75,11 @@ jobs:
         run: |
           package=$(find dist -maxdepth 1 -name "${PACKAGE_PATTERN}")
           test -f "${package}" || { echo "no unique ${PACKAGE_PATTERN} in dist/"; exit 1; }
-          python -m pip install "${package}[test]"
+          # The package comes from dist/, the test dependencies from the
+          # checkout's `test` group -- `--group` wants a pyproject.toml, not
+          # the artifact, and needs pip 25.1 or newer.
+          python -m pip install --upgrade pip
+          python -m pip install "${package}" --group test
 
       - name: Run the test suite against the installed package
         # The package lives in src/ and the pytest config sets no pythonpath,

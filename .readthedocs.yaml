@@ -8,13 +8,13 @@ build:
   os: ubuntu-lts-latest
   tools:
     python: "latest"
-
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
+  # `python.install` cannot ask for a dependency group, so the install step is
+  # spelled out here instead; Read the Docs still builds and activates the
+  # environment around it. `--group` needs pip 25.1 or newer.
+  jobs:
+    install:
+      - python -m pip install --upgrade pip
+      - python -m pip install . --group docs
 
 sphinx:
   configuration: docs/conf.py

@@ -16,6 +16,17 @@ environment:
 
     pip install formulate
 
+Formulate itself never evaluates anything, so it needs neither engine. If you
+want to *run* the NumExpr expressions it writes, the ``numexpr`` extra brings
+that engine along:
+
+.. code-block:: bash
+
+    pip install "formulate[numexpr]"
+
+ROOT has no such extra, as it is not installable from PyPI; use conda-forge for
+it.
+
 For development or to get the latest unreleased changes, you can install directly from GitHub:
 
 .. code-block:: bash

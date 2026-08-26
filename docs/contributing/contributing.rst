@@ -35,8 +35,8 @@ Setting Up Your Development Environment
 
    The ``dev`` dependency group pulls in the test and docs requirements plus
    ``prek`` (``uv sync`` installs it too, and ``--group`` needs pip 25.1 or
-   newer). ``.[test]`` on its own is enough to run the whole suite; ``.[docs]``
-   on its own is enough to build the documentation.
+   newer). ``--group test`` on its own is enough to run the whole suite;
+   ``--group docs`` on its own is enough to build the documentation.
 
 5. **Set Up Pre-commit Hooks**
 
