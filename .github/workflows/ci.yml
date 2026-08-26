@@ -15,8 +15,14 @@ on:
       - "ci/*"
   pull_request:
 
+# The literal in the group matters. In a called workflow `github.workflow` is
+# the *caller's* name, so without it the group this workflow computes when CD
+# calls it is byte-identical to CD's own -- and a called workflow that shares
+# its caller's group deadlocks against the run that started it. The gate job
+# is then cancelled before it starts, producing no job, no log and no
+# annotation; all that is visible is that the release failed to publish.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-unittests-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
