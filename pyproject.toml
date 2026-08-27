@@ -157,6 +157,20 @@ select = [
     "EXE", # flake8-executable
     "NPY", # NumPy specific rules
     "PD", # pandas-vet
+    "FA", # flake8-future-annotations
+    "FLY", # flynt
+    "DTZ", # flake8-datetimez
+    "TC", # flake8-type-checking
+    "BLE", # flake8-blind-except
+    "PYI", # flake8-pyi
+    "T10", # flake8-debugger
+    "LOG", # flake8-logging
+    "Q", # flake8-quotes
+    "FURB", # refurb
+    "SLOT", # flake8-slots
+    "TRY", # tryceratops
+    "RSE", # flake8-raise
+    "PERF", # perflint
 ]
 ignore = [
     "PLR", # Design related pylint codes

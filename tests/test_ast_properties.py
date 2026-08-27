@@ -96,7 +96,10 @@ def test_nodes_cannot_be_compared():
         lambda: left == right,
         lambda: left != right,
         lambda: left == "a+b",  # including against a non-node
-        lambda: left in [right],  # and wherever a container reaches for ==
+        # The single-item container is the point of the case, not an
+        # accident: it is the shortest thing that makes a container reach for
+        # `==` on our behalf.
+        lambda: left in [right],  # noqa: FURB171
     ):
         with pytest.raises(TypeError, match="cannot be compared"):
             operation()
