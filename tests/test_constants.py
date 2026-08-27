@@ -84,7 +84,7 @@ def assert_same_value(left: float, right: float, context: str) -> None:
 # --- Constants ---
 
 
-@pytest.mark.parametrize("canonical,root_repr", sorted(ROOT_CONSTANTS.items()))
+@pytest.mark.parametrize(("canonical", "root_repr"), sorted(ROOT_CONSTANTS.items()))
 def test_root_constant_survives_reserialization(canonical, root_repr):
     """Parsing ROOT's spelling and writing it back must not change its value."""
     assert_same_value(
@@ -95,7 +95,7 @@ def test_root_constant_survives_reserialization(canonical, root_repr):
 
 
 @pytest.mark.parametrize(
-    "canonical,root_repr",
+    ("canonical", "root_repr"),
     sorted(item for item in ROOT_CONSTANTS.items() if item[0] in NUMEXPR_CONSTANTS),
 )
 def test_root_and_numexpr_constants_hold_the_same_value(canonical, root_repr):
@@ -108,7 +108,7 @@ def test_root_and_numexpr_constants_hold_the_same_value(canonical, root_repr):
 
 
 @pytest.mark.parametrize(
-    "canonical,root_repr",
+    ("canonical", "root_repr"),
     sorted(item for item in ROOT_CONSTANTS.items() if item[1].startswith("(")),
 )
 def test_compound_root_constant_spelling_is_atomic_under_pow(canonical, root_repr):
@@ -137,7 +137,7 @@ def test_constants_root_has_but_numexpr_lacks(canonical):
 
 
 @pytest.mark.parametrize(
-    "source,language",
+    ("source", "language"),
     [
         ("True", "numexpr"),
         ("False", "numexpr"),
@@ -265,9 +265,9 @@ def test_element_wise_min_max_are_not_translated_to_numexpr():
     which is why the mapping is absent; ROOT and Python both keep working.
     """
     # Establish the premise: NumExpr really does reject the two-argument form.
-    # The exception type is not part of NumExpr's API, so only the failure is
-    # asserted.
-    with pytest.raises(Exception):
+    # Which exception it picks is incidental -- the message it comes with is
+    # about boolean operators, of all things -- so only the failure matters.
+    with pytest.raises(TypeError):
         numexpr.evaluate("min(x, y)", local_dict=VARIABLE_VALUES)
 
     for expr in ("TMath::Min(x, y)", "TMath::Max(x, y)"):
@@ -333,7 +333,7 @@ def test_tformula_cannot_compile_modulo_on_doubles():
 
 
 @pytest.mark.parametrize(
-    "index,a,b,expected_root,expected_numexpr",
+    ("index", "a", "b", "expected_root", "expected_numexpr"),
     [(index, *case) for index, case in enumerate(MODULO_CASES)],
     ids=[f"{a}%{b}" for a, b, _, _ in MODULO_CASES],
 )

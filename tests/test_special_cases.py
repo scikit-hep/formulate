@@ -70,7 +70,7 @@ def test_whitespace_between_tokens_is_insignificant(tokens, data):
 
 
 @pytest.mark.parametrize(
-    "reference,variation",
+    ("reference", "variation"),
     [
         ("sqrt(a)", "sqrt (a)"),
         ("sqrt(a)", "sqrt( a )"),
@@ -90,7 +90,7 @@ def test_root_whitespace_is_insignificant(reference, variation):
 
 
 @pytest.mark.parametrize(
-    "reference,variations",
+    ("reference", "variations"),
     [
         ("a+b", ["(a+b)", "((a+b))", "(a)+b", "a+(b)", "(a)+(b)"]),
         ("a-b", ["(a-b)", "((a-b))", "(a)-(b)"]),
@@ -118,7 +118,7 @@ def test_redundant_parentheses_do_not_change_the_tree(reference, variations):
 
 
 @pytest.mark.parametrize(
-    "reference,variation",
+    ("reference", "variation"),
     [
         ("a&&b", "(a)&&(b)"),
         ("a||b", "((a||b))"),
@@ -133,7 +133,7 @@ def test_root_redundant_parentheses_do_not_change_the_tree(reference, variation)
 
 
 @pytest.mark.parametrize(
-    "grouped,ungrouped",
+    ("grouped", "ungrouped"),
     [
         ("(a+b)*c", "a+b*c"),
         ("a*(b+c)", "a*b+c"),
@@ -179,7 +179,7 @@ INVALID_TEMPLATES = {
 }
 
 
-@pytest.mark.parametrize("template,fail_plusminus", INVALID_TEMPLATES.items())
+@pytest.mark.parametrize(("template", "fail_plusminus"), INVALID_TEMPLATES.items())
 @pytest.mark.parametrize("op", OPERATORS)
 def test_malformed_expressions_are_rejected(template, fail_plusminus, op):
     expr = template.format(op=op)
@@ -215,7 +215,7 @@ def test_structurally_broken_expressions_are_rejected(expr):
 
 
 @pytest.mark.parametrize(
-    "expr,expected",
+    ("expr", "expected"),
     [
         ("sqrt(a,)", "TMath::Sqrt(a)"),
         ("arctan2(a, b,)", "TMath::ATan2(a, b)"),

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 import formulate
@@ -45,25 +47,25 @@ def test_tmath_max_to_python():
 
 
 @pytest.mark.parametrize(
-    "expression,expected_name",
+    ("expression", "expected_name"),
     [
         ("TMath::Min(a, b)", "TMath::Min"),
         ("TMath::Max(a, b)", "TMath::Max"),
     ],
 )
 def test_unsupported_tmath_error_names_what_was_written(expression, expected_name):
-    # The canonical name (tmath_min) is internal and would mean nothing here.
-    with pytest.raises(ValueError) as excinfo:
+    expected = f'Function "{expected_name}" is not supported in NumExpr.'
+    with pytest.raises(ValueError, match=rf"^{re.escape(expected)}$") as excinfo:
         formulate.from_root(expression).to_numexpr()
-    message = str(excinfo.value)
-    assert message == f'Function "{expected_name}" is not supported in NumExpr.'
-    assert "tmath_" not in message
+    # The canonical name (tmath_min) is internal and would mean nothing here.
+    assert "tmath_" not in str(excinfo.value)
 
 
 def test_unsupported_function_error_uses_its_own_name():
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(
+        ValueError, match=r'^Function "where" is not supported in ROOT\.$'
+    ):
         formulate.from_numexpr("where(a, b, c)").to_root()
-    assert str(excinfo.value) == 'Function "where" is not supported in ROOT.'
 
 
 # --- branch.leaf is one name, not an attribute access ---
@@ -77,7 +79,7 @@ def test_dotted_names_survive_the_backends_that_have_them():
 
 
 @pytest.mark.parametrize(
-    "name,encoded",
+    ("name", "encoded"),
     [
         ("branch.leaf", "branch_2e_leaf"),  # '.' is 0x2e
         ("x.y.z", "x_2e_y_2e_z"),

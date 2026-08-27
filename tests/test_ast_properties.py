@@ -21,7 +21,7 @@ from formulate.AST import BinaryOperator, Call, Literal, Matrix, Symbol, UnaryOp
 
 
 @pytest.mark.parametrize(
-    "node,expected",
+    ("node", "expected"),
     [
         (Literal(3.14), "3.14"),
         (Literal(3), "3"),
@@ -48,7 +48,7 @@ def test_str_representation(node, expected):
 
 
 @pytest.mark.parametrize(
-    "left,right,same",
+    ("left", "right", "same"),
     [
         (Literal(1.0), Literal(1.0), True),
         (Literal(1.0), Literal(2.0), False),
@@ -258,7 +258,7 @@ def test_call_unsupported_function_raises():
 
 
 @pytest.mark.parametrize(
-    "value,expected", [(3, "3"), (3.0, "3.0"), (3.14, "3.14"), (1e-6, "1e-06")]
+    ("value", "expected"), [(3, "3"), (3.0, "3.0"), (3.14, "3.14"), (1e-6, "1e-06")]
 )
 def test_literals_keep_their_python_repr(value, expected):
     node = Literal(value)

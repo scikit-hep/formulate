@@ -72,7 +72,7 @@ def docs(session: nox.Session) -> None:
     session.run("sphinx-build", "-M", "html", ".", "_build")
 
     if args.serve:
-        print("Launching docs at http://localhost:8000/ - use Ctrl-C to quit")
+        session.log("Launching docs at http://localhost:8000/ - use Ctrl-C to quit")
         session.run("python", "-m", "http.server", "8000", "-d", "_build/html")
 
 

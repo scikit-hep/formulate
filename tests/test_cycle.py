@@ -196,7 +196,7 @@ def test_element_wise_min_max_have_no_numexpr_equivalent(root_expr):
 
 
 @pytest.mark.parametrize(
-    "root_expr,python_expr",
+    ("root_expr", "python_expr"),
     [
         ("TMath::Min(a, b)", "np.minimum(a, b)"),
         ("TMath::Max(a, b)", "np.maximum(a, b)"),
@@ -265,7 +265,7 @@ def test_numexpr_only_constructs_cannot_be_converted_to_root(expr):
 
 
 @pytest.mark.parametrize(
-    "expr,message",
+    ("expr", "message"),
     [
         ("a[0]", "forbidden in NumExpr"),
         ("TMath::Infinity()", "not supported in NumExpr"),

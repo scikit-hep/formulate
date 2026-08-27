@@ -98,7 +98,7 @@ def test_deeply_nested_calls_survive_every_walk():
 
 
 @pytest.mark.parametrize(
-    "name,length,parse,serialize",
+    ("name", "length", "parse", "serialize"),
     [
         ("root->python", EXPRESSION_LENGTH, formulate.from_root, "to_python"),
         ("numexpr->python", EXPRESSION_LENGTH, formulate.from_numexpr, "to_python"),
@@ -115,13 +115,12 @@ def test_parse_and_convert_stay_within_the_time_limit(name, length, parse, seria
 
     assert converted
     assert elapsed < TIME_LIMIT_SECONDS, (
-        f"{name} took {elapsed:.2f}s for a {length}-term expression, "
-        f"which exceeds the {TIME_LIMIT_SECONDS}s limit"
+        f"{name} took {elapsed:.2f}s for a {length}-term expression, which exceeds the {TIME_LIMIT_SECONDS}s limit"
     )
 
 
 @pytest.mark.parametrize(
-    "name,forward,backward",
+    ("name", "forward", "backward"),
     [
         ("root->numexpr->root", "to_numexpr", "to_root"),
         ("numexpr->root->numexpr", "to_root", "to_numexpr"),

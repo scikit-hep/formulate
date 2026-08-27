@@ -70,18 +70,20 @@ LEFT_ASSOCIATIVE_NUMEXPR_ONLY = [
 ]
 
 
-@pytest.mark.parametrize("source,parenthesized", LEFT_ASSOCIATIVE, ids=lambda x: x)
+@pytest.mark.parametrize(("source", "parenthesized"), LEFT_ASSOCIATIVE, ids=lambda x: x)
 def test_left_associative_operators(source, parenthesized):
     assert_same_tree_both(source, parenthesized)
 
 
-@pytest.mark.parametrize("source,parenthesized", RIGHT_ASSOCIATIVE, ids=lambda x: x)
+@pytest.mark.parametrize(
+    ("source", "parenthesized"), RIGHT_ASSOCIATIVE, ids=lambda x: x
+)
 def test_power_is_right_associative(source, parenthesized):
     assert_same_tree_both(source, parenthesized)
 
 
 @pytest.mark.parametrize(
-    "source,parenthesized", LEFT_ASSOCIATIVE_NUMEXPR_ONLY, ids=lambda x: x
+    ("source", "parenthesized"), LEFT_ASSOCIATIVE_NUMEXPR_ONLY, ids=lambda x: x
 )
 def test_left_associative_logical_operators(source, parenthesized):
     assert_same_tree_numexpr(source, parenthesized)
@@ -138,7 +140,9 @@ ARITHMETIC_PRECEDENCE = [
 ]
 
 
-@pytest.mark.parametrize("source,parenthesized", ARITHMETIC_PRECEDENCE, ids=lambda x: x)
+@pytest.mark.parametrize(
+    ("source", "parenthesized"), ARITHMETIC_PRECEDENCE, ids=lambda x: x
+)
 def test_arithmetic_precedence(source, parenthesized):
     assert_same_tree_both(source, parenthesized)
 
@@ -170,7 +174,9 @@ COMPARISON_PRECEDENCE = [
 ]
 
 
-@pytest.mark.parametrize("source,parenthesized", COMPARISON_PRECEDENCE, ids=lambda x: x)
+@pytest.mark.parametrize(
+    ("source", "parenthesized"), COMPARISON_PRECEDENCE, ids=lambda x: x
+)
 def test_comparison_precedence(source, parenthesized):
     assert_same_tree_both(source, parenthesized)
 
@@ -236,14 +242,14 @@ LOGICAL_PRECEDENCE_ROOT = [
 
 
 @pytest.mark.parametrize(
-    "source,parenthesized", LOGICAL_PRECEDENCE_NUMEXPR, ids=lambda x: x
+    ("source", "parenthesized"), LOGICAL_PRECEDENCE_NUMEXPR, ids=lambda x: x
 )
 def test_numexpr_logical_precedence(source, parenthesized):
     assert_same_tree_numexpr(source, parenthesized)
 
 
 @pytest.mark.parametrize(
-    "source,parenthesized", LOGICAL_PRECEDENCE_ROOT, ids=lambda x: x
+    ("source", "parenthesized"), LOGICAL_PRECEDENCE_ROOT, ids=lambda x: x
 )
 def test_root_logical_precedence(source, parenthesized):
     canonical = formulate.from_root(parenthesized).to_root()
@@ -272,7 +278,7 @@ def test_numexpr_rejects_chained_comparisons(expr):
 
 
 @pytest.mark.parametrize(
-    "expr,expected",
+    ("expr", "expected"),
     [
         ("a < b < c", "((a < b) < c)"),
         ("a == b == c", "((a == b) == c)"),
@@ -324,7 +330,7 @@ UNARY_PRECEDENCE = [
 ]
 
 
-@pytest.mark.parametrize("source,parenthesized", UNARY_PRECEDENCE, ids=lambda x: x)
+@pytest.mark.parametrize(("source", "parenthesized"), UNARY_PRECEDENCE, ids=lambda x: x)
 def test_unary_operator_precedence(source, parenthesized):
     assert_same_tree_both(source, parenthesized)
 
@@ -378,7 +384,7 @@ NESTED_FUNCTIONS = [
 
 
 @pytest.mark.parametrize(
-    "source,parenthesized",
+    ("source", "parenthesized"),
     FUNCTION_PRECEDENCE + FUNCTION_ARGUMENT_PRECEDENCE + NESTED_FUNCTIONS,
     ids=lambda x: x,
 )
@@ -411,7 +417,9 @@ PARENTHESES_OVERRIDE = [
 ]
 
 
-@pytest.mark.parametrize("grouped,ungrouped", PARENTHESES_OVERRIDE, ids=lambda x: x)
+@pytest.mark.parametrize(
+    ("grouped", "ungrouped"), PARENTHESES_OVERRIDE, ids=lambda x: x
+)
 def test_parentheses_change_the_tree(grouped, ungrouped):
     assert (
         formulate.from_numexpr(grouped).to_numexpr()
@@ -433,7 +441,9 @@ NESTED_PARENTHESES = [
 ]
 
 
-@pytest.mark.parametrize("source,parenthesized", NESTED_PARENTHESES, ids=lambda x: x)
+@pytest.mark.parametrize(
+    ("source", "parenthesized"), NESTED_PARENTHESES, ids=lambda x: x
+)
 def test_nested_parentheses(source, parenthesized):
     assert_same_tree_both(source, parenthesized)
 
@@ -450,7 +460,9 @@ LITERAL_PRECEDENCE = [
 ]
 
 
-@pytest.mark.parametrize("source,parenthesized", LITERAL_PRECEDENCE, ids=lambda x: x)
+@pytest.mark.parametrize(
+    ("source", "parenthesized"), LITERAL_PRECEDENCE, ids=lambda x: x
+)
 def test_numeric_literal_precedence(source, parenthesized):
     assert_same_tree_both(source, parenthesized)
 

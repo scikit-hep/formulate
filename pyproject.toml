@@ -177,10 +177,6 @@ ignore = [
 ]
 flake8-unused-arguments.ignore-variadic-names = true
 
-[tool.ruff.lint.per-file-ignores]
-"tests/**" = ["B017", "PT011", "PT006"] # TODO: these should be fixed
-"noxfile.py" = ["T20"]
-
 
 [tool.pylint]
 py-version = "3.10"

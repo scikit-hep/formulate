@@ -73,12 +73,12 @@ ROOT_ROUND_TRIPS = [
 ]
 
 
-@pytest.mark.parametrize("source,expected", NUMEXPR_TO_ROOT, ids=lambda x: x)
+@pytest.mark.parametrize(("source", "expected"), NUMEXPR_TO_ROOT, ids=lambda x: x)
 def test_numexpr_to_root(source, expected):
     assert formulate.from_numexpr(source).to_root() == expected
 
 
-@pytest.mark.parametrize("source,expected", ROOT_ROUND_TRIPS, ids=lambda x: x)
+@pytest.mark.parametrize(("source", "expected"), ROOT_ROUND_TRIPS, ids=lambda x: x)
 def test_root_to_root(source, expected):
     assert formulate.from_root(source).to_root() == expected
 
