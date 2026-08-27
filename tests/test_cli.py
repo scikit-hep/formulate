@@ -10,7 +10,7 @@ from formulate.cli import main, parse_args
 
 
 @pytest.mark.parametrize(
-    "args,expected",
+    ("args", "expected"),
     [
         (
             ["--from-root", "(A && B) || TMath::Sqrt(A)", "--to-numexpr"],
@@ -30,7 +30,7 @@ def test_conversions(args, expected):
 
 
 @pytest.mark.parametrize(
-    "args,expected",
+    ("args", "expected"),
     [
         # --variables
         (

@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade uv
-          uv pip install --system ".[docs]"
+          uv pip install --system --group docs .
 
       - name: Build documentation
         run: |

@@ -90,13 +90,13 @@ def test_unary_and_binary_operator_names_do_not_overlap():
     assert not UNARY_OPERATORS & BINARY_OPERATORS
 
 
-@pytest.mark.parametrize("alias,target", sorted(FUNCTION_ALIASES.items()))
+@pytest.mark.parametrize(("alias", "target"), sorted(FUNCTION_ALIASES.items()))
 def test_function_aliases_point_at_a_real_function(alias, target):
     assert target in FUNCTIONS
     assert alias not in FUNCTIONS, "an alias must not also be a canonical name"
 
 
-@pytest.mark.parametrize("alias,target", sorted(CONSTANTS_ALIASES.items()))
+@pytest.mark.parametrize(("alias", "target"), sorted(CONSTANTS_ALIASES.items()))
 def test_constant_aliases_point_at_a_real_constant(alias, target):
     assert target in CONSTANTS
     assert alias not in CONSTANTS, "an alias must not also be a canonical name"
@@ -114,7 +114,7 @@ def test_function_and_constant_names_do_not_collide():
 # --- Every table entry actually works end to end ---
 
 
-@pytest.mark.parametrize("canonical,root_name", sorted(ROOT_FUNCTIONS.items()))
+@pytest.mark.parametrize(("canonical", "root_name"), sorted(ROOT_FUNCTIONS.items()))
 def test_every_root_function_name_parses_and_round_trips(canonical, root_name):
     parsed = formulate.from_root(f"{root_name}(x)")
     assert parsed.function == canonical
@@ -127,7 +127,7 @@ def test_every_numexpr_function_name_parses_and_round_trips(numexpr_name):
     assert parsed.to_numexpr() == f"{numexpr_name}(x)"
 
 
-@pytest.mark.parametrize("alias,target", sorted(FUNCTION_ALIASES.items()))
+@pytest.mark.parametrize(("alias", "target"), sorted(FUNCTION_ALIASES.items()))
 def test_every_function_alias_resolves_when_parsed(alias, target):
     assert formulate.from_root(f"{alias}(x)").function == target
 
@@ -199,18 +199,20 @@ def test_every_canonical_constant_name_parses_as_that_constant(canonical):
     assert parsed.variables == set()
 
 
-@pytest.mark.parametrize("alias,target", sorted(CONSTANTS_ALIASES.items()))
+@pytest.mark.parametrize(("alias", "target"), sorted(CONSTANTS_ALIASES.items()))
 def test_every_constant_alias_resolves_when_parsed(alias, target):
     assert formulate.from_root(alias).name == target
 
 
-@pytest.mark.parametrize("alias,target", sorted(CONSTANTS_FUNCTION_ALIASES.items()))
+@pytest.mark.parametrize(
+    ("alias", "target"), sorted(CONSTANTS_FUNCTION_ALIASES.items())
+)
 def test_every_constant_function_alias_resolves_when_called(alias, target):
     # These spellings only exist in ROOT's function form, e.g. TMath::E()
     assert formulate.from_root(f"TMath::{alias}()").name == target
 
 
-@pytest.mark.parametrize("canonical,root_repr", sorted(ROOT_CONSTANTS.items()))
+@pytest.mark.parametrize(("canonical", "root_repr"), sorted(ROOT_CONSTANTS.items()))
 def test_every_root_constant_spelling_parses_back_to_its_canonical_name(
     canonical, root_repr
 ):
@@ -251,7 +253,7 @@ def test_constants_absent_from_numexpr_raise_a_clear_error(canonical):
 
 
 @pytest.mark.parametrize(
-    "canonical,expected",
+    ("canonical", "expected"),
     [("eminus", "pow(neg(eplus), 2)"), ("neginf", "pow(neg(inf), 2)")],
 )
 def test_negative_constants_stay_atomic_under_pow(canonical, expected):

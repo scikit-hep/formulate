@@ -59,7 +59,7 @@ ROOT_TO_PYTHON = [
 ]
 
 
-@pytest.mark.parametrize("source,expected", ROOT_TO_PYTHON, ids=lambda x: x)
+@pytest.mark.parametrize(("source", "expected"), ROOT_TO_PYTHON, ids=lambda x: x)
 def test_root_to_python(source, expected):
     assert formulate.from_root(source).to_python() == expected
 
@@ -70,7 +70,7 @@ def test_python_output_is_syntactically_valid(expected):
 
 
 @pytest.mark.parametrize(
-    "expr,expected",
+    ("expr", "expected"),
     [
         ("a+b*c", 2.0 + 3.0 * 4.0),
         ("(a+b)*c", (2.0 + 3.0) * 4.0),
@@ -122,7 +122,7 @@ def test_logical_not_of_a_comparison_is_unchanged_by_the_function_form():
 
 
 @pytest.mark.parametrize(
-    "expr,expected",
+    ("expr", "expected"),
     [
         ("pi", np.pi),
         ("sqrt2", np.sqrt(2)),
@@ -135,7 +135,7 @@ def test_finite_constants_are_inlined_as_numbers(expr, expected):
 
 
 @pytest.mark.parametrize(
-    "expr,check",
+    ("expr", "check"),
     [
         ("TMath::Infinity()", np.isposinf),
         ("-TMath::Infinity()", np.isneginf),
@@ -148,6 +148,6 @@ def test_non_finite_constants_are_rendered_as_python_floats(expr, check):
     assert check(eval(rendered))
 
 
-@pytest.mark.parametrize("expr,expected", [("true", True), ("false", False)])
+@pytest.mark.parametrize(("expr", "expected"), [("true", True), ("false", False)])
 def test_boolean_constants(expr, expected):
     assert eval(formulate.from_root(expr).to_python()) is expected

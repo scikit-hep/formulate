@@ -13,7 +13,7 @@ There is also a `formulate` CLI (`src/formulate/cli.py`).
 ## Commands
 
 ```bash
-pip install -e ".[dev]"     # dev install
+pip install -e . --group dev # dev install
 prek install                # hook runner; reads .pre-commit-config.yaml
 
 pytest                      # all tests
@@ -28,14 +28,14 @@ prek run --all-files        # ruff, ruff-format, mypy (strict, src only), codesp
 ```
 
 `prek` is a drop-in, much faster reimplementation of `pre-commit` — same
-`.pre-commit-config.yaml`, same hook IDs, same subcommands. It is what the `dev` extra installs
+`.pre-commit-config.yaml`, same hook IDs, same subcommands. It is what the `dev` group installs
 and what `nox -s lint` runs. pre-commit.ci (configured by the `ci:` block in the config) still
 runs `pre-commit` proper on pull requests, so hooks must stay compatible with both.
 
 `tests/test_constants.py` is the only file that evaluates expressions with the real engines.
-It imports `numexpr` at module scope — so `numexpr` is in the `test` extra, not just `docs`,
+It imports `numexpr` at module scope — so `numexpr` is in the `test` group, not just `docs`,
 or the suite cannot be collected at all — and `importorskip`s `ROOT`, which CI installs only
-on Linux/Python 3.10. So `.[test]` runs everything except the ROOT half, which skips.
+on Linux/Python 3.10. So `--group test` runs everything except the ROOT half, which skips.
 
 ## Architecture
 

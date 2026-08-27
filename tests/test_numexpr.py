@@ -54,7 +54,7 @@ NUMEXPR_ROUND_TRIPS = [
 ]
 
 
-@pytest.mark.parametrize("source,expected", NUMEXPR_ROUND_TRIPS, ids=lambda x: x)
+@pytest.mark.parametrize(("source", "expected"), NUMEXPR_ROUND_TRIPS, ids=lambda x: x)
 def test_to_numexpr(source, expected):
     assert formulate.from_numexpr(source).to_numexpr() == expected
 

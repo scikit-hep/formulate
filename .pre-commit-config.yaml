@@ -78,6 +78,12 @@ repos:
       - id: check-dependabot
       - id: check-readthedocs
 
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: 17e12779811926f000bdfa1795f9e3735dd71ac3 # frozen: 0.26
+    hooks:
+      - id: validate-pyproject
+        additional_dependencies: ["validate-pyproject-schema-store[all]"]
+
   - repo: https://github.com/dannysepler/rm_unneeded_f_str
     rev: 11ea2e723d469f5709897d038e6d2141e7123730 # frozen: v0.2.0
     hooks:

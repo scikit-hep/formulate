@@ -37,7 +37,7 @@ def test_double_star_is_exponentiation_in_both():
 
 
 @pytest.mark.parametrize(
-    "expr,root,python",
+    ("expr", "root", "python"),
     [
         ("arr[0]", "arr[0]", "arr[0]"),
         ("arr[i]", "arr[i]", "arr[i]"),
@@ -62,7 +62,7 @@ def test_numexpr_has_no_array_indexing():
 
 
 @pytest.mark.parametrize(
-    "expr,expected",
+    ("expr", "expected"),
     [
         ("Length$(arr)", "Length$(arr)"),
         ("Length$", "Length$()"),
@@ -117,7 +117,7 @@ def test_calling_a_constant_with_arguments_is_an_error():
 
 
 @pytest.mark.parametrize(
-    "expr,value",
+    ("expr", "value"),
     [
         ("42", 42),
         ("3.14159", 3.14159),
@@ -219,7 +219,7 @@ def test_root_and_numexpr_parsers_build_the_same_tree(expr):
 
 
 @pytest.mark.parametrize(
-    "numexpr_expr,root_expr",
+    ("numexpr_expr", "root_expr"),
     [
         ("sin(x)", "TMath::Sin(x)"),
         ("cos(x)", "TMath::Cos(x)"),
@@ -252,7 +252,7 @@ def test_function_translations_go_both_ways(numexpr_expr, root_expr):
 
 
 @pytest.mark.parametrize(
-    "canonical,value,root_expr",
+    ("canonical", "value", "root_expr"),
     [
         ("pi", 3.141592653589793, "TMath::Pi()"),
         ("exp1", 2.718281828459045, "TMath::E()"),
@@ -290,7 +290,7 @@ def test_constant_translations(canonical, value, root_expr):
 
 
 @pytest.mark.parametrize(
-    "expr,variables,named,unnamed",
+    ("expr", "variables", "named", "unnamed"),
     [
         ("2", [], [], [2]),
         ("2e-3", [], [], [2e-3]),
@@ -324,7 +324,7 @@ def test_symbol_and_constant_extraction_from_numexpr(expr, variables, named, unn
 
 
 @pytest.mark.parametrize(
-    "expr,variables,named,unnamed",
+    ("expr", "variables", "named", "unnamed"),
     [
         ("pi", [], ["pi"], []),
         ("arctan2(A, pi)", ["A"], ["pi"], []),

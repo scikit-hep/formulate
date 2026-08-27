@@ -67,7 +67,7 @@ jobs:
 
       - name: Install package
         run: |
-          uv pip install -U .[test]
+          uv pip install -U --group test .
 
       - name: Test with pytest
         run: |

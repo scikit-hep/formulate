@@ -116,7 +116,7 @@ def test_parse_error_says_so_when_it_has_no_suggestions():
 
 
 @pytest.mark.parametrize(
-    "expr,suggestion",
+    ("expr", "suggestion"),
     [
         ("a&b", "Use '&&' instead of '&'."),
         ("a&&b&c", "Use '&&' instead of '&'."),
@@ -133,7 +133,7 @@ def test_root_suggestions(expr, suggestion):
 
 
 @pytest.mark.parametrize(
-    "expr,suggestion",
+    ("expr", "suggestion"),
     [
         ("a && b", "Use '&' instead of '&&' or 'and'."),
         ("a and b", "Use '&' instead of '&&' or 'and'."),
