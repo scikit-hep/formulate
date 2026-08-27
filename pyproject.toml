@@ -173,7 +173,14 @@ select = [
     "PERF", # perflint
 ]
 ignore = [
-    "PLR", # Design related pylint codes
+    # Design: too many branches, returns, arguments. `_expand` is a dispatcher
+    # over parse-tree node types, so its branch count is the language's, not a
+    # tangle to be broken up -- which is why pylint's own `design` messages are
+    # off below as well. The rest of PLR is on.
+    "PLR09",
+    # Magic value in comparison: the values it finds are arities (`!= 2` for a
+    # binary operator's operands), where the literal is the clearest spelling.
+    "PLR2004",
 ]
 flake8-unused-arguments.ignore-variadic-names = true
 
