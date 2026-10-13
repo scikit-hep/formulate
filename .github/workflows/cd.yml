@@ -38,7 +38,7 @@ jobs:
   tests:
     name: Tests
     if: github.event_name == 'release' && github.event.action == 'published'
-    uses: ./.github/workflows/ci.yml
+    uses: $/.github/workflows/ci.yml
 
   # Tests run from a checkout exercise the source tree, so they cannot catch a
   # packaging mistake -- a grammar left out of the wheel, say, since the .lark
